@@ -90,20 +90,24 @@ As an ML tinkerer, I open the project in Chrome, select two Gemini-driven agents
 ## Technical considerations
 ### Integration points
 - Embed Gemini Nano via `@built-in-ai/core` API for browser-hosted inference.
+- Serve backend as a Cloudflare Worker using Hono, exposing REST endpoints consumed by the frontend.
 - Optional hooks for future analytics or storage service (define interface for leaderboard/log persistence).
 
 ### Data storage and privacy
-- Persist match logs (timestamps, reasoning text) and leaderboard totals in local storage or lightweight indexed DB, with abstraction to swap for backend later.
+- Persist match logs (timestamps, reasoning text) and leaderboard totals in Postgres via Drizzle ORM; mirror essential data client-side for responsiveness.
 - No personal data collected; ensure reasoning snippets remain scoped to game context.
 
 ### Scalability and performance
 - Optimize for in-browser execution; ensure GPU/WebAssembly compatibility on Chrome/Edge.
+- Optimize Worker cold-start by minimizing bundle size; cache DB connection handles via Drizzle.
 - Batch updates for leaderboard stats post-match to avoid UI thrash.
 
 ### Potential challenges
 - Ensuring deterministic tic tac toe rules with LLM outputs; may need guardrails to enforce valid moves.
 - Managing resource usage of Gemini Nano across multiple rounds without browser throttling.
 - Designing storage layer flexible enough for future server synchronization.
+- Handling network latency between Cloudflare Worker and Postgres (choose region close to users or leverage Cloudflare D1 later).
+- Configuring Sentry Workers integration to capture errors without impacting latency budgets.
 
 ## Milestones & sequencing
 ### Project estimate
