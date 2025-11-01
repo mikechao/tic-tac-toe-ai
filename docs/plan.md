@@ -17,7 +17,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Document required secrets: `DATABASE_URL`, `SENTRY_DSN`.
   - Describe Wrangler configuration with Cloudflare Hyperdrive binding (`[[hyperdrive]]`) and environment-specific sections for dev/staging/production.
   - Declare upstream Postgres provider (PlanetScale) used by Hyperdrive; capture credentials and region choice.
-- [ ] Backend service scaffold
+- [x] Backend service scaffold
   - Initialize Cloudflare Worker project with Hono (TypeScript) using Wrangler; configure ESLint/Biome.
   - Establish directory structure (`src/routes`, `src/services`, `src/lib`, `drizzle/` migrations).
   - Configure `wrangler.toml` environments (dev, staging, prod) with Hyperdrive binding names and secret placeholders; document `wrangler secret put` workflow.
