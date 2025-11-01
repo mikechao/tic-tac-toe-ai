@@ -25,10 +25,10 @@ src/
   routes/
     index.ts      // Root router registration & health check
     api/
-      router.ts   // Base API router placeholder (e.g., /api/version)
-  lib/            // Shared helpers (placeholder)
+      router.ts   // Aggregates API namespaces (e.g., /api/version)
+  lib/            // Shared helpers (db connection, utilities)
   services/       // External integrations (placeholder)
-drizzle/          // Future migrations + schema
+drizzle/          // Schema + SQL migrations
 .dev.vars         // Local Wrangler bindings (gitignored)
 .env.example      // Production/staging env template (committed)
 wrangler.toml     // Wrangler configuration (environments below)
@@ -99,10 +99,11 @@ curl http://127.0.0.1:8787/health
 - For new endpoints, add Hono routes under `src/routes/api/` and register them
   in `src/routes/api/router.ts`.
 - Database workflows:
-  - `pnpm --filter backend db:generate` – generate SQL migrations from `drizzle/schema.ts`
-  - `pnpm --filter backend db:migrate` – push schema to the configured database
-  - `pnpm db:migrate` – Turbo task fan-out for future multi-package usage
-  - Drizzle config lives at `drizzle.config.ts`, migrations output to `apps/backend/drizzle/migrations`
+- `pnpm --filter backend db:generate` – generate SQL migrations from `drizzle/schema.ts`
+- `pnpm --filter backend db:migrate` – push schema to the configured database
+- `pnpm --filter backend db:seed` – seed preset Gemini Nano model metadata
+- `pnpm db:migrate` – Turbo task fan-out for future multi-package usage
+- Drizzle config lives at `drizzle.config.ts`, migrations output to `apps/backend/drizzle/migrations`
 
 ## Production Deployment
 

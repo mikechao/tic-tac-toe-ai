@@ -8,7 +8,7 @@ export const models = pgTable('models', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-export const sessions = pgTable('sessions', {
+export const matches = pgTable('matches', {
   id: serial('id').primaryKey(),
   modelAId: integer('model_a_id').notNull().references(() => models.id),
   modelBId: integer('model_b_id').notNull().references(() => models.id),
@@ -18,7 +18,7 @@ export const sessions = pgTable('sessions', {
 
 export const games = pgTable('games', {
   id: serial('id').primaryKey(),
-  sessionId: integer('session_id').notNull().references(() => sessions.id),
+  matchId: integer('match_id').notNull().references(() => matches.id),
   round: integer('round').notNull(),
   winner: text('winner'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -32,4 +32,13 @@ export const moves = pgTable('moves', {
   actor: text('actor').notNull(),
   reasoning: text('reasoning'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const leaderboardStats = pgTable('leaderboard_stats', {
+  id: serial('id').primaryKey(),
+  modelId: integer('model_id').notNull().references(() => models.id).unique(),
+  wins: integer('wins').default(0).notNull(),
+  losses: integer('losses').default(0).notNull(),
+  ties: integer('ties').default(0).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

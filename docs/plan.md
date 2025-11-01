@@ -32,7 +32,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Set up Dependabot for npm/pnpm updates.
 
 ## 2. Backend Foundation
-- [ ] Database schema and migrations
+- [x] Database schema and migrations
   - Define tables: `models` (LLM metadata), `matches`, `games`, `moves`, `leaderboard_stats`.
   - Create initial migration and seed script for Gemini Nano model entries.
 - [ ] Authentication system
@@ -42,6 +42,9 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Add time utilities and validation helpers for move timestamps.
   - Create logging helper that wraps console output and forwards structured events to Sentry (sole logging sink).
   - Introduce Zod schema library; define shared request/response validators and type-safe parsing helpers.
+- [ ] Schema package
+  - Create shared `packages/schema` workspace exposing Zod contracts for API requests/responses.
+  - Ensure frontend consumes published types while backend remains authoritative over persistence models.
 - [ ] Base API structure
   - Configure Hono app with routing, JSON middleware, error handling, and structured console logging helper.
   - Add CORS config to accept frontend origin and handle preflights within Workers environment.
