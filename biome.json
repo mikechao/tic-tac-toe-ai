@@ -6,28 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false,
-    "experimentalScannerIgnores": [
-      "node_modules/",
-      "pnpm-lock.yaml",
-      "dist/",
-      "build/",
-      ".next/",
-      ".turbo/",
-      ".cache/",
-      "**/*.tsbuildinfo",
-      "**/*.gen.ts",
-      "**/routeTree.gen.ts",
-      "apps/frontend/src/routeTree.gen.ts",
-      "**/*.d.ts",
-      "extension/.wxt/",
-      "**/.output/",
-      "extension/chrome/",
-      "**/.wrangler/",
-      ".env*",
-      "*.log",
-      ".DS_Store"
-    ]
+    "ignoreUnknown": false
   },
   "formatter": {
     "enabled": true,
@@ -47,6 +26,14 @@
       "recommended": true
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/routeTree.gen.ts"],
+      "linter": {
+        "enabled": false
+      }
+    }
+  ],
   "assist": {
     "actions": {
       "source": {
