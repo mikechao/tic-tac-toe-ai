@@ -11,7 +11,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Package manager and workspace
   - Configure `pnpm-workspace.yaml` including apps and future `packages/*`.
   - Set Node version via `.nvmrc`/`.tool-versions` and install baseline dependencies per app (Vite/React frontend, Hono/Drizzle backend).
-- [ ] Development environment configuration
+- [x] Development environment configuration
   - Configure VS Code workspace settings (format on save, recommended extensions).
   - Set up environment variable templates (`.env.example`) for backend URL and feature flags.
   - Document required secrets: `DATABASE_URL`, `SENTRY_DSN`.
