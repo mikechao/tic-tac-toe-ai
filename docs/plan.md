@@ -27,7 +27,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Set up `drizzle.config.ts`, migrations directory, and scripts for generate/push/reset (run via Node/CI prior to Worker deploy).
   - Add Turborepo pipeline step `db:migrate` executing `drizzle-kit push` against target environment; integrate into CI before Worker deployment.
   - Choose Drizzle HTTP driver compatible with Hyperdrive/PlanetScale Postgres (e.g., `drizzle-orm/postgres-js` with `Hyperdrive` binding) and document instantiation.
-- [ ] CI/CD baseline
+- [x] CI/CD baseline
   - Configure GitHub Actions (lint, build, backend tests) with caching.
   - Set up Dependabot for npm/pnpm updates.
 

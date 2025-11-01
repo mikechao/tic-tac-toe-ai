@@ -34,6 +34,8 @@ This project uses [Vitest](https://vitest.dev/) for testing. You can run the tes
 pnpm test
 ```
 
+Automated CI runs linting, type-checking, tests, and the production build on every push and pull request via `.github/workflows/ci.yml`.
+
 ## Styling
 
 This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
