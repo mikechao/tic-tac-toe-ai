@@ -10,12 +10,17 @@
     "lint": "biome lint",
     "format": "biome format",
     "check": "biome check",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate --config ../../drizzle.config.ts",
+    "db:push": "drizzle-kit push --config ../../drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config ../../drizzle.config.ts",
+    "db:migrate": "drizzle-kit push --config ../../drizzle.config.ts"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.4",
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.4",
+    "postgres": "^3.4.4",
     "zod": "catalog:"
   },
   "devDependencies": {

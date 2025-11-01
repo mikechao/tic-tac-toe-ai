@@ -98,6 +98,11 @@ curl http://127.0.0.1:8787/health
   deployed Worker URL.
 - For new endpoints, add Hono routes under `src/routes/api/` and register them
   in `src/routes/api/router.ts`.
+- Database workflows:
+  - `pnpm --filter backend db:generate` – generate SQL migrations from `drizzle/schema.ts`
+  - `pnpm --filter backend db:migrate` – push schema to the configured database
+  - `pnpm db:migrate` – Turbo task fan-out for future multi-package usage
+  - Drizzle config lives at `drizzle.config.ts`, migrations output to `apps/backend/drizzle/migrations`
 
 ## Production Deployment
 
@@ -119,4 +124,3 @@ pnpm --filter backend wrangler publish --env production
 - Introduce services (e.g., telemetry, AI opponent proxies) in `src/services`
 - Expand API routers with session/match endpoints described in `docs/plan.md`
 - Integrate Sentry for observability once backend flows are implemented
-

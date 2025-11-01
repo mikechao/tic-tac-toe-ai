@@ -11,6 +11,7 @@
     "check": "turbo run check",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
+    "db:migrate": "turbo run db:migrate",
     "commitlint": "commitlint --edit ${1:-.git/COMMIT_EDITMSG}"
   },
   "devDependencies": {

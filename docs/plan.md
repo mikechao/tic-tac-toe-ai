@@ -22,7 +22,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Establish directory structure (`src/routes`, `src/services`, `src/lib`, `drizzle/` migrations).
   - Configure `wrangler.toml` environments (dev, staging, prod) with Hyperdrive binding names and secret placeholders; document `wrangler secret put` workflow.
   - Enable local development via `wrangler dev` (or Miniflare) with mock Hyperdrive settings; document how frontend hits local Worker endpoint during dev.
-- [ ] Database setup
+- [x] Database setup
   - Configure Drizzle ORM with Postgres via Cloudflare Hyperdrive HTTP connection.
   - Set up `drizzle.config.ts`, migrations directory, and scripts for generate/push/reset (run via Node/CI prior to Worker deploy).
   - Add Turborepo pipeline step `db:migrate` executing `drizzle-kit push` against target environment; integrate into CI before Worker deployment.

@@ -26,6 +26,10 @@
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
+    },
+    "db:migrate": {
+      "dependsOn": [],
+      "outputs": []
     }
   }
 }
