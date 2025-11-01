@@ -6,7 +6,16 @@ To run this application:
 
 ```bash
 pnpm install
-pnpm start
+pnpm dev
+```
+
+This spins up both the frontend Vite server on http://localhost:3000 and the Cloudflare Worker backend via Wrangler (local mode).
+
+Wrangler expects certain bindings (e.g., `DATABASE_URL`) to be present; during local development the env schema allows them to be unset. In production, configure them via `wrangler secret put` or environment-specific vars. To run just the frontend or backend you can use:
+
+```bash
+pnpm --filter frontend dev
+pnpm --filter backend dev
 ```
 
 # Building For Production

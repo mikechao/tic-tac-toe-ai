@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>
@@ -9,4 +9,3 @@ export type Env = z.infer<typeof envSchema>
 export function validateEnv(bindings: unknown): Env {
   return envSchema.parse(bindings)
 }
-
