@@ -13,16 +13,16 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@hono/zod-validator": "^0.2.2",
-    "drizzle-orm": "^0.36.1",
-    "hono": "^4.6.15",
+    "@hono/zod-validator": "^0.7.4",
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.10.4",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
-    "@cloudflare/workers-types": "^4.20241018.0",
-    "drizzle-kit": "^0.26.1",
-    "tsx": "^4.19.2",
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "drizzle-kit": "^0.31.6",
+    "tsx": "^4.20.6",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "wrangler": "^4.45.3"
