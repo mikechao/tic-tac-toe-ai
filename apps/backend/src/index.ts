@@ -1,8 +1,12 @@
-export function start(): void {
-  // Placeholder backend entry point; replace with Cloudflare Worker bootstrap when available.
-  console.log('Backend service bootstrap pending.')
-}
+import { Hono } from 'hono'
+import { handle } from 'hono/cloudflare-workers'
 
-if (import.meta.main) {
-  start()
-}
+import { validateEnv } from './env'
+import { registerRoutes } from './routes'
+
+const app = new Hono<{ Bindings: ReturnType<typeof validateEnv> }>()
+
+registerRoutes(app)
+
+export default handle(app)
+

@@ -8,7 +8,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Create Turborepo-based monorepo with `pnpm` workspaces; establish `apps/frontend` and `apps/backend` directories.
   - Configure base `turbo.json`, root `package.json`, and shared TypeScript/ESLint/Biome configs.
   - Add `.editorconfig`, `.eslintignore`, `.gitignore`, and commit linting (Conventional Commits).
-- [ ] Package manager and workspace
+- [x] Package manager and workspace
   - Configure `pnpm-workspace.yaml` including apps and future `packages/*`.
   - Set Node version via `.nvmrc`/`.tool-versions` and install baseline dependencies per app (Vite/React frontend, Hono/Drizzle backend).
 - [ ] Development environment configuration

@@ -4,18 +4,24 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc --project tsconfig.json",
+    "dev": "wrangler dev --local",
+    "build": "wrangler deploy --dry-run",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "lint": "biome lint",
     "format": "biome format",
     "check": "biome check",
     "test": "vitest run"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20241018.0",
+    "@hono/zod-validator": "^0.2.1",
+    "drizzle-orm": "^0.36.1",
+    "hono": "^4.6.15",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
-    "@types/node": "catalog:",
+    "drizzle-kit": "^0.26.1",
     "tsx": "^4.19.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
