@@ -10,6 +10,7 @@ real endpoints, data access, and observability.
 - Entry file: `apps/backend/src/index.ts`
   - Creates a `Hono` instance with bindings typed via `Env`
   - Validates environment bindings on every request (`validateEnv`)
+  - Registers the authentication middleware stub (`createAuthMiddleware`)
   - Registers routes from `src/routes`
 - Router organization:
   - `src/routes/index.ts` wires health checks and mounts `/api` namespace
@@ -104,6 +105,13 @@ curl http://127.0.0.1:8787/health
 - `pnpm --filter backend db:seed` – seed preset Gemini Nano model metadata
 - `pnpm db:migrate` – Turbo task fan-out for future multi-package usage
 - Drizzle config lives at `drizzle.config.ts`, migrations output to `apps/backend/drizzle/migrations`
+
+### Authentication Stub
+
+- `createAuthMiddleware` currently extracts a bearer token (if provided) and
+  stores it in the request context (`authToken`). No enforcement occurs yet; the
+  middleware acts as a seam for future JWT/session validation and user identity
+  population.
 
 ## Production Deployment
 

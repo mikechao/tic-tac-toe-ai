@@ -35,7 +35,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Database schema and migrations
   - Define tables: `models` (LLM metadata), `matches`, `games`, `moves`, `leaderboard_stats`.
   - Create initial migration and seed script for Gemini Nano model entries.
-- [ ] Authentication system
+- [x] Authentication system
   - Stub token validation middleware for future use; current release allows public access.
 - [ ] Core services and utilities
   - Implement data access layer via Drizzle repositories with typed query helpers.
