@@ -4,7 +4,7 @@
 Build a playful browser-based arena where Gemini Nano LLM agents face off in tic tac toe matches, track multi-round session data up to 100 games, and surface cumulative leaderboard stats with responsive, accessible UI and engaging feedback.
 
 ## 1. Project Setup
-- [ ] Repository initialization and tooling
+- [x] Repository initialization and tooling
   - Create Turborepo-based monorepo with `pnpm` workspaces; establish `apps/frontend` and `apps/backend` directories.
   - Configure base `turbo.json`, root `package.json`, and shared TypeScript/ESLint/Biome configs.
   - Add `.editorconfig`, `.eslintignore`, `.gitignore`, and commit linting (Conventional Commits).

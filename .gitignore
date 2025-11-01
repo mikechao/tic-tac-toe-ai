@@ -2,6 +2,8 @@ node_modules
 .DS_Store
 dist
 dist-ssr
+.turbo
+apps/**/dist
 *.local
 count.txt
 .env
@@ -11,3 +13,4 @@ count.txt
 .output
 .vinxi
 todos.json
+pnpm-debug.log

@@ -1,0 +1,5 @@
+**/dist/**
+**/.turbo/**
+**/routeTree.gen.ts
+apps/frontend/src/routeTree.gen.ts
+src/routeTree.gen.ts
