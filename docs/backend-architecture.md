@@ -23,12 +23,18 @@ real endpoints, data access, and observability.
 src/
   env.ts          // Zod-based environment schema & validator
   index.ts        // Worker entry, mounts Hono app
+  lib/
+    db.ts         // Drizzle connection factory
+    time.ts       // Common time utilities
   routes/
     index.ts      // Root router registration & health check
     api/
       router.ts   // Aggregates API namespaces (e.g., /api/version)
-  lib/            // Shared helpers (db connection, utilities)
-  services/       // External integrations (placeholder)
+  services/
+    auth.ts       // Bearer token stub middleware
+    logger.ts     // Consola + Sentry logging integration
+    match-repository.ts // Drizzle helpers for match persistence
+    schemas.ts     // Zod schemas for request/response validation
 drizzle/          // Schema + SQL migrations
 .dev.vars         // Local Wrangler bindings (gitignored)
 .env.example      // Production/staging env template (committed)
@@ -43,6 +49,7 @@ Bindings are validated with `validateEnv` in `src/env.ts`. Current schema:
 | -------------- | -------------------- | -------------------------------------------- |
 | `DATABASE_URL` | Optional in dev, req in deploy | Drizzle connection string via Hyperdrive |
 | `ENVIRONMENT`  | dev/staging/production | Used for logging & feature flags            |
+| `SENTRY_DSN`  | optional             | Enables Sentry logging when provided       |
 
 ### Local Development
 

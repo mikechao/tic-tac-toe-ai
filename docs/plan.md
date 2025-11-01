@@ -37,7 +37,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Create initial migration and seed script for Gemini Nano model entries.
 - [x] Authentication system
   - Stub token validation middleware for future use; current release allows public access.
-- [ ] Core services and utilities
+- [x] Core services and utilities
   - Implement data access layer via Drizzle repositories with typed query helpers.
   - Add time utilities and validation helpers for move timestamps.
   - Create logging helper that wraps console output and forwards structured events to Sentry (sole logging sink).

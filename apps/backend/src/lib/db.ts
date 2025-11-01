@@ -1,9 +1,11 @@
-import { drizzle } from 'drizzle-orm/postgres-js'
+import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
 import type { Env } from '../env'
 
-export function createDb(env: Env) {
+export type Database = PostgresJsDatabase
+
+export function createDb(env: Env): Database {
   if (!env.DATABASE_URL) {
     throw new Error('DATABASE_URL is required to create the database client')
   }

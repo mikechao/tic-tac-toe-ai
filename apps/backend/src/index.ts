@@ -3,11 +3,16 @@ import { Hono } from 'hono'
 import { validateEnv, type Env } from './env'
 import { registerRoutes } from './routes'
 import { createAuthMiddleware, type AuthVariables } from './services/auth'
+import { initLogger, type LoggerVariables } from './services/logger'
 
-const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
+type AppVariables = AuthVariables & LoggerVariables
+
+const app = new Hono<{ Bindings: Env; Variables: AppVariables }>()
 
 app.use('*', async (c, next) => {
-  validateEnv(c.env)
+  const env = validateEnv(c.env)
+  const logger = initLogger(env)
+  c.set('logger', logger)
   return next()
 })
 
