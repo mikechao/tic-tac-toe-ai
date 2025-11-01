@@ -42,7 +42,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Add time utilities and validation helpers for move timestamps.
   - Create logging helper that wraps console output and forwards structured events to Sentry (sole logging sink).
   - Introduce Zod schema library; define shared request/response validators and type-safe parsing helpers.
-- [ ] Schema package
+- [x] Schema package
   - Create shared `packages/schema` workspace exposing Zod contracts for API requests/responses.
   - Ensure frontend consumes published types while backend remains authoritative over persistence models.
 - [ ] Base API structure

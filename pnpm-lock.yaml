@@ -38,6 +38,9 @@ importers:
 
   apps/backend:
     dependencies:
+      '@arena/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
       '@hono/zod-validator':
         specifier: ^0.7.4
         version: 0.7.4(hono@4.10.4)(zod@4.1.12)
@@ -84,6 +87,9 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@arena/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
       '@tailwindcss/vite':
         specifier: ^4.1.16
         version: 4.1.16(vite@7.1.12(@types/node@22.18.13)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6))
@@ -196,6 +202,19 @@ importers:
       web-vitals:
         specifier: ^5.1.0
         version: 5.1.0
+
+  packages/schema:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.1.12
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 'catalog:'
+        version: 2.3.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
 packages:
 

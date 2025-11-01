@@ -1,14 +1,12 @@
 import { eq } from 'drizzle-orm'
 
+import type { CreateMatchRequest } from '@arena/schema'
+
 import type { Env } from '../env'
 import { createDb } from '../lib/db'
 import { matches } from '../drizzle/schema'
 
-export type CreateMatchInput = {
-  modelAId: number
-  modelBId: number
-  totalRounds: number
-}
+export type CreateMatchInput = CreateMatchRequest
 
 export async function createMatchRecord(env: Env, input: CreateMatchInput) {
   const db = createDb(env)
