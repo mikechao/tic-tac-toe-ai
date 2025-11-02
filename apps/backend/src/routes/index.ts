@@ -5,7 +5,7 @@ import type { AuthVariables } from '../services/auth'
 import type { LoggerVariables } from '../services/logger'
 import { registerApiRoutes } from './api/router'
 
-type AppVariables = AuthVariables & LoggerVariables
+type AppVariables = AuthVariables & LoggerVariables & { runtimeEnv: Env }
 
 export function registerRoutes(app: Hono<{ Bindings: Env; Variables: AppVariables }>): void {
   app.get('/health', (c) => c.json({ status: 'ok' }))

@@ -10,6 +10,7 @@ real endpoints, data access, and observability.
 - Entry file: `apps/backend/src/index.ts`
   - Creates a `Hono` instance with bindings typed via `Env`
   - Validates environment bindings on every request (`validateEnv`)
+  - Configures CORS + logging and wraps the app with Sentry (`withSentry`)
   - Registers the authentication middleware stub (`createAuthMiddleware`)
   - Registers routes from `src/routes`
 - Router organization:
@@ -32,7 +33,7 @@ src/
       router.ts   // Aggregates API namespaces (e.g., /api/version)
   services/
     auth.ts       // Bearer token stub middleware
-    logger.ts     // Consola + Sentry logging integration
+    logger.ts     // Structured logging with optional Sentry forwarding
     match-repository.ts // Drizzle helpers for match persistence
     schemas.ts     // Zod schemas for request/response validation
 drizzle/          // Schema + SQL migrations
@@ -40,6 +41,14 @@ drizzle/          // Schema + SQL migrations
 .env.example      // Production/staging env template (committed)
 wrangler.toml     // Wrangler configuration (environments below)
 ```
+
+## Request Lifecycle
+
+1. Environment bindings are validated and a request-scoped logger is initialised.
+2. CORS is configured using `FRONTEND_ORIGIN` when supplied; otherwise all origins are allowed for local development.
+3. Authentication middleware stores bearer tokens on the context for future identity enforcement.
+4. Routes execute under the Sentry wrapper (`withSentry`), enabling automatic error capture.
+5. 404 and error handlers emit structured JSON responses while logging to the central logger and Sentry.
 
 ## Environment Variables & Secrets
 
@@ -50,6 +59,7 @@ Bindings are validated with `validateEnv` in `src/env.ts`. Current schema:
 | `DATABASE_URL` | Optional in dev, req in deploy | Drizzle connection string via Hyperdrive |
 | `ENVIRONMENT`  | dev/staging/production | Used for logging & feature flags            |
 | `SENTRY_DSN`  | optional             | Enables Sentry logging when provided       |
+| `FRONTEND_ORIGIN` | optional             | Applied to CORS when present               |
 
 ### Local Development
 
@@ -58,6 +68,8 @@ Bindings are validated with `validateEnv` in `src/env.ts`. Current schema:
 ```ini
 DATABASE_URL="postgres://local:local@localhost:5432/tic_tac_toe_ai"
 ENVIRONMENT="development"
+SENTRY_DSN=""
+FRONTEND_ORIGIN="http://localhost:3000"
 ```
 
 > ⚠️ This file is gitignored. Update it with safe development credentials only.
@@ -107,11 +119,11 @@ curl http://127.0.0.1:8787/health
 - For new endpoints, add Hono routes under `src/routes/api/` and register them
   in `src/routes/api/router.ts`.
 - Database workflows:
-- `pnpm --filter backend db:generate` – generate SQL migrations from `drizzle/schema.ts`
-- `pnpm --filter backend db:migrate` – push schema to the configured database
-- `pnpm --filter backend db:seed` – seed preset Gemini Nano model metadata
-- `pnpm db:migrate` – Turbo task fan-out for future multi-package usage
-- Drizzle config lives at `drizzle.config.ts`, migrations output to `apps/backend/drizzle/migrations`
+  - `pnpm --filter backend db:generate` – generate SQL migrations from `drizzle/schema.ts`
+  - `pnpm --filter backend db:migrate` – push schema to the configured database
+  - `pnpm --filter backend db:seed` – seed preset Gemini Nano model metadata
+  - `pnpm db:migrate` – Turbo task fan-out for future multi-package usage
+  - Drizzle config lives at `drizzle.config.ts`, migrations output to `apps/backend/drizzle/migrations`
 
 ### Authentication Stub
 
@@ -139,4 +151,4 @@ pnpm --filter backend wrangler publish --env production
 - Add Drizzle configuration (`drizzle.config.ts`) and migrations under `drizzle/`
 - Introduce services (e.g., telemetry, AI opponent proxies) in `src/services`
 - Expand API routers with session/match endpoints described in `docs/plan.md`
-- Integrate Sentry for observability once backend flows are implemented
+- Extend Sentry logging with breadcrumbs/user context as gameplay routes mature

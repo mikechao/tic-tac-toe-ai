@@ -1,19 +1,15 @@
+import type { ConsolaInstance, LogObject } from 'consola'
+import { createConsola } from 'consola'
+import * as Sentry from '@sentry/cloudflare'
+
 import type { Env } from '../env'
 
-export type Logger = {
-  debug: (...args: unknown[]) => void
-  info: (...args: unknown[]) => void
-  warn: (...args: unknown[]) => void
-  error: (...args: unknown[]) => void
-}
-
 export type LoggerVariables = {
-  logger: Logger
+  logger: ConsolaInstance
 }
 
-let loggerInstance: Logger | undefined
+let consolaInstance: ConsolaInstance | undefined
 let sentryInitialized = false
-let sentryModule: typeof import('@sentry/cloudflare') | undefined
 
 function formatArgs(args: unknown[]): string {
   return args
@@ -29,74 +25,70 @@ function formatArgs(args: unknown[]): string {
     .join(' ')
 }
 
-async function withSentry(env: Env) {
-  if (!env.SENTRY_DSN) return undefined
-  if (sentryModule) return sentryModule
-
+function ensureSentry(env: Env) {
+  if (!env.SENTRY_DSN || sentryInitialized) return
   try {
-    const mod = await import('@sentry/cloudflare')
-    mod.init({
+    Sentry.init({
       dsn: env.SENTRY_DSN,
       environment: env.ENVIRONMENT ?? 'development',
       tracesSampleRate: 0,
     })
-    sentryModule = mod
     sentryInitialized = true
-    return mod
   } catch (error) {
-    console.warn('Unable to initialize Sentry; continuing with console logging only.', error)
-  }
-  return undefined
-}
-
-function sendToSentry(level: 'warning' | 'error', message: string) {
-  if (!sentryModule) return
-  if (level === 'error') {
-    sentryModule.captureMessage(message, 'error')
-  } else {
-    sentryModule.captureMessage(message, 'warning')
+    console.warn('Unable to initialise Sentry; continuing with console logging only.', error)
   }
 }
 
-function createLogger(env: Env): Logger {
-  const dispatch = (level: 'debug' | 'info' | 'warn' | 'error', ...args: unknown[]) => {
-    ;(console[level] as (...input: unknown[]) => void)(...args)
+const reporter = {
+  log(logObj: LogObject) {
+    const method = logObj.type && methodExists(logObj.type) ? logObj.type : 'log'
+    ;(console[method as keyof Console] as (...input: unknown[]) => void)(...logObj.args)
 
-    if (sentryInitialized && level !== 'debug' && sentryModule) {
-      const message = formatArgs(args)
-      if (level === 'warn') sendToSentry('warning', message)
-      if (level === 'error') sendToSentry('error', message)
+    if (!sentryInitialized) return
+
+    const message = formatArgs(logObj.args)
+    if (logObj.type === 'error' || logObj.type === 'fatal') {
+      const [first] = logObj.args
+      if (first instanceof Error) {
+        Sentry.captureException(first)
+        if (logObj.args.length > 1) {
+          Sentry.captureMessage(formatArgs(logObj.args.slice(1)), 'error')
+        }
+        return
+      }
+      Sentry.captureMessage(message, 'error')
+      return
     }
-  }
 
-  return {
-    debug: (...args) => dispatch('debug', ...args),
-    info: (...args) => dispatch('info', ...args),
-    warn: (...args) => dispatch('warn', ...args),
-    error: (...args) => dispatch('error', ...args),
-  }
-}
-
-export function initLogger(env: Env): Logger {
-  if (!loggerInstance) {
-    loggerInstance = createLogger(env)
-  }
-
-  if (env.SENTRY_DSN && !sentryInitialized) {
-    void withSentry(env)
-  }
-
-  return loggerInstance
-}
-
-export function getLogger(): Logger {
-  if (!loggerInstance) {
-    loggerInstance = {
-      debug: (...args) => console.debug(...args),
-      info: (...args) => console.info(...args),
-      warn: (...args) => console.warn(...args),
-      error: (...args) => console.error(...args),
+    if (logObj.type === 'warn') {
+      Sentry.captureMessage(message, 'warning')
     }
+  },
+}
+
+function methodExists(method: string): method is keyof Console {
+  return method in console && typeof (console as Record<string, unknown>)[method] === 'function'
+}
+
+export function initLogger(env: Env): ConsolaInstance {
+  if (!consolaInstance) {
+    consolaInstance = createConsola({
+      defaults: {
+        tag: 'backend',
+      },
+      reporters: [reporter],
+    })
+    consolaInstance.wrapConsole()
   }
-  return loggerInstance
+
+  ensureSentry(env)
+
+  return consolaInstance
+}
+
+export function getLogger(): ConsolaInstance {
+  if (!consolaInstance) {
+    consolaInstance = createConsola()
+  }
+  return consolaInstance
 }

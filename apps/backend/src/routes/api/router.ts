@@ -4,7 +4,7 @@ import type { Env } from '../../env'
 import type { AuthVariables } from '../../services/auth'
 import type { LoggerVariables } from '../../services/logger'
 
-type AppVariables = AuthVariables & LoggerVariables
+type AppVariables = AuthVariables & LoggerVariables & { runtimeEnv: Env }
 
 export function registerApiRoutes(app: Hono<{ Bindings: Env; Variables: AppVariables }>): void {
   app.get('/version', (c) => {

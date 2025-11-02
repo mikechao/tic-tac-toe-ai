@@ -1,19 +1,33 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { HTTPException } from 'hono/http-exception'
+import { withSentry } from '@sentry/cloudflare'
 
 import { validateEnv, type Env } from './env'
 import { registerRoutes } from './routes'
 import { createAuthMiddleware, type AuthVariables } from './services/auth'
 import { initLogger, type LoggerVariables } from './services/logger'
 
-type AppVariables = AuthVariables & LoggerVariables
+type RuntimeVariables = { runtimeEnv: Env }
+type AppVariables = AuthVariables & LoggerVariables & RuntimeVariables
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>()
 
 app.use('*', async (c, next) => {
   const env = validateEnv(c.env)
+  c.set('runtimeEnv', env)
   const logger = initLogger(env)
   c.set('logger', logger)
-  return next()
+
+  const corsHandler = cors({
+    origin: env.FRONTEND_ORIGIN ?? '*',
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    maxAge: 86400,
+  })
+
+  return corsHandler(c, next)
 })
 
 const authMiddleware = createAuthMiddleware()
@@ -21,4 +35,18 @@ app.use('*', authMiddleware)
 
 registerRoutes(app)
 
-export default app
+app.notFound((c) => {
+  c.var.logger.warn('Route not found', { path: c.req.path })
+  return c.json({ message: 'Not Found' }, 404)
+})
+
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    c.var.logger.warn('Handled HTTP exception', { status: err.status, message: err.message })
+    return err.getResponse()
+  }
+  c.var.logger.error('Unhandled error', err)
+  return c.json({ message: 'Internal Server Error' }, 500)
+})
+
+export default withSentry(app)
