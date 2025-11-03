@@ -1,6 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 
 import * as TanstackQuery from './integrations/tanstack-query/root-provider'
+import { PreferencesProvider } from './integrations/state/preferences'
 import { routeTree } from './routeTree.gen.ts'
 
 export const getRouter = () => {
@@ -12,7 +13,7 @@ export const getRouter = () => {
     defaultPreload: 'intent',
     Wrap: ({ children }: { children: React.ReactNode }) => (
       <TanstackQuery.Provider queryClient={queryClient}>
-        {children}
+        <PreferencesProvider>{children}</PreferencesProvider>
       </TanstackQuery.Provider>
     ),
   })

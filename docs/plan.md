@@ -82,7 +82,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Install Magic UI components, configure theming tokens (colors, spacing) in Tailwind.
 - [x] Routing system
   - Set up TanStack Router with routes for `arena` and `leaderboard`.
-- [ ] State management
+- [x] State management
   - Introduce TanStack Query for data fetching and mutations; define query clients and providers.
   - Add context/store for UI preferences (reduced motion).
 - [ ] API client scaffolding

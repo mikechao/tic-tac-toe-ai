@@ -148,6 +148,13 @@ h3,
   }
 }
 
+.reduce-motion * {
+  animation-duration: 0.01ms;
+  animation-iteration-count: 1;
+  transition-duration: 0.01ms;
+  scroll-behavior: auto;
+}
+
 @layer utilities {
   @keyframes marquee {
     0% {
