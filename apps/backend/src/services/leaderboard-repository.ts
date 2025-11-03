@@ -39,27 +39,25 @@ export async function applyGameOutcomeToLeaderboard(
   env: Env,
   match: MatchRecord,
   winner: GameWinner
-): Promise<void> {
+): Promise<number[]> {
   if (winner === 'modelA') {
     await Promise.all([
       applyDelta(env, match.modelAId, { wins: 1, losses: 0, ties: 0 }),
       applyDelta(env, match.modelBId, { wins: 0, losses: 1, ties: 0 }),
     ])
-    return
-  }
-
-  if (winner === 'modelB') {
+  } else if (winner === 'modelB') {
     await Promise.all([
       applyDelta(env, match.modelAId, { wins: 0, losses: 1, ties: 0 }),
       applyDelta(env, match.modelBId, { wins: 1, losses: 0, ties: 0 }),
     ])
-    return
+  } else {
+    await Promise.all([
+      applyDelta(env, match.modelAId, { wins: 0, losses: 0, ties: 1 }),
+      applyDelta(env, match.modelBId, { wins: 0, losses: 0, ties: 1 }),
+    ])
   }
 
-  await Promise.all([
-    applyDelta(env, match.modelAId, { wins: 0, losses: 0, ties: 1 }),
-    applyDelta(env, match.modelBId, { wins: 0, losses: 0, ties: 1 }),
-  ])
+  return [match.modelAId, match.modelBId]
 }
 
 function toLeaderboardEntry(record: typeof leaderboardStats.$inferSelect): LeaderboardEntry {
@@ -79,6 +77,9 @@ function toLeaderboardEntry(record: typeof leaderboardStats.$inferSelect): Leade
 
 export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
   const db = createDb(env)
-  const rows = await db.select().from(leaderboardStats).orderBy(desc(leaderboardStats.wins), desc(leaderboardStats.updatedAt))
+  const rows = await db
+    .select()
+    .from(leaderboardStats)
+    .orderBy(desc(leaderboardStats.wins), desc(leaderboardStats.updatedAt))
   return { entries: rows.map(toLeaderboardEntry) }
 }

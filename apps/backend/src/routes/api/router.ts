@@ -2,6 +2,7 @@ import type { Hono } from 'hono'
 
 import type { Env, WorkerEnv } from '../../env'
 import type { AuthVariables } from '../../services/auth'
+import { emitEvent } from '../../lib/events'
 import {
   createGameRecord,
   createMoveRecord,
@@ -163,6 +164,14 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
     const record = await createMatchRecord(runtimeEnv, parsed.data)
     const session = toMatchStatusResource(record, 0)
 
+    emitEvent('match:start', {
+      matchId: record.id,
+      modelAId: record.modelAId,
+      modelBId: record.modelBId,
+      totalRounds: record.totalRounds,
+      difficulty: record.difficulty,
+    })
+
     logger.info('Session created', { sessionId: session.id })
     return c.json({ session }, 201)
   })
@@ -245,11 +254,36 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
     }
 
     const gameRecord = await createGameRecord(runtimeEnv, match.id, parsed.data)
-    await applyGameOutcomeToLeaderboard(runtimeEnv, match, parsed.data.winner)
+    const affectedModelIds = await applyGameOutcomeToLeaderboard(runtimeEnv, match, parsed.data.winner)
 
     const game = toGameResource(gameRecord)
     const completedGames = await countGamesForMatch(runtimeEnv, match.id)
     const session = toMatchStatusResource(match, completedGames)
+
+    emitEvent('game:recorded', {
+      matchId: match.id,
+      gameId: game.id,
+      round: game.round,
+      winner: game.winner,
+    })
+
+    if (session.isComplete) {
+      emitEvent('match:end', {
+        matchId: session.id,
+        completedGames: session.completedGames,
+        currentGameIndex: session.currentGameIndex,
+        isComplete: session.isComplete,
+      })
+    } else {
+      emitEvent('match:update', {
+        matchId: session.id,
+        completedGames: session.completedGames,
+        currentGameIndex: session.currentGameIndex,
+        isComplete: session.isComplete,
+      })
+    }
+
+    emitEvent('leaderboard:update', { modelIds: affectedModelIds })
 
     logger.info('Game recorded for session', { sessionId: session.id, gameId: game.id, round: game.round })
     return c.json({ game, session }, 201)
@@ -358,6 +392,14 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
       reasoning: normalizedReasoning,
     })
     const move = toMoveResource(moveRecord)
+
+    emitEvent('move:recorded', {
+      gameId: move.gameId,
+      moveId: move.id,
+      moveIndex: move.moveIndex,
+      position: move.position,
+      actor: move.actor,
+    })
 
     logger.info('Move recorded for game', { gameId: game.id, moveId: move.id })
     return c.json({ move }, 201)

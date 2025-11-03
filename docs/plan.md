@@ -65,9 +65,9 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Data validation and processing
   - Ensure moves conform to tic tac toe rules using domain guards and Zod validation; reject invalid positions or duplicate moves.
   - Normalize reasoning text length (truncate/store preview plus full text if needed).
-- [ ] Storage strategy
+- [ ] Storage strategy (Skipping for now)
   - Implement archival retention (e.g., 30-day limitation) configuration placeholder.
-- [ ] External integration prep
+- [x] External integration prep
   - Provide interfaces for future analytics hooks (event emitter for match start/end).
 - [ ] Error handling
   - Return descriptive errors for invalid sessions, exceeding round limits, or persistence failures.
