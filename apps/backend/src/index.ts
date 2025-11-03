@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
-import { withSentry } from '@sentry/cloudflare'
+import * as Sentry from '@sentry/cloudflare'
+import type { ExportedHandler } from '@cloudflare/workers-types'
 
-import { validateEnv, type Env } from './env'
+import { validateEnv, type Env, type WorkerEnv } from './env'
 import { registerRoutes } from './routes'
 import { createAuthMiddleware, type AuthVariables } from './services/auth'
 import { initLogger, type LoggerVariables } from './services/logger'
@@ -11,7 +12,7 @@ import { initLogger, type LoggerVariables } from './services/logger'
 type RuntimeVariables = { runtimeEnv: Env }
 type AppVariables = AuthVariables & LoggerVariables & RuntimeVariables
 
-const app = new Hono<{ Bindings: Env; Variables: AppVariables }>()
+const app = new Hono<{ Bindings: WorkerEnv; Variables: AppVariables }>()
 
 app.use('*', async (c, next) => {
   const env = validateEnv(c.env)
@@ -49,4 +50,14 @@ app.onError((err, c) => {
   return c.json({ message: 'Internal Server Error' }, 500)
 })
 
-export default withSentry(app)
+const honoHandler = app as unknown as ExportedHandler<WorkerEnv>
+
+export default Sentry.withSentry(
+  (env) => ({
+    dsn: env.SENTRY_DSN,
+    environment: env.ENVIRONMENT ?? 'development',
+    release: env.CF_VERSION_METADATA ? `backend@${env.CF_VERSION_METADATA}` : undefined,
+    tracesSampleRate: 0,
+  }),
+  honoHandler
+)
