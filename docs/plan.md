@@ -88,7 +88,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] API client scaffolding
   - Create typed API client with Axios or fetch wrapper, handling base URL and error normalization.
   - Surface Sentry browser client configuration (e.g., `VITE_SENTRY_DSN`, sample rate env flags) and initialize within app entry.
-- [ ] Accessibility utilities
+- [x] Accessibility utilities
   - Implement focus management hooks, live region helpers.
 - [ ] Authentication UI placeholder
   - Provide hidden/disabled auth components for future role support; currently show no login.
