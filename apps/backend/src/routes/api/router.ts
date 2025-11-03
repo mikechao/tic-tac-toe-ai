@@ -2,6 +2,15 @@ import type { Hono } from 'hono'
 
 import type { Env, WorkerEnv } from '../../env'
 import type { AuthVariables } from '../../services/auth'
+import {
+  createGameRecord,
+  createMoveRecord,
+  findGameById,
+  findGameByMatchAndRound,
+  listMovesForGame,
+  type GameRecord,
+  type MoveRecord,
+} from '../../services/game-repository'
 import type { LoggerVariables } from '../../services/logger'
 import {
   countGamesForMatch,
@@ -9,10 +18,27 @@ import {
   findMatchById,
   type MatchRecord,
 } from '../../services/match-repository'
-import type { MatchStatusResource } from '../../services/schemas'
-import { createMatchSchema, matchParamsSchema } from '../../services/schemas'
+import type { GameResource, MatchStatusResource, MoveResource } from '../../services/schemas'
+import {
+  createGameSchema,
+  createMatchSchema,
+  createMoveSchema,
+  gameParamsSchema,
+  matchParamsSchema,
+} from '../../services/schemas'
 
 type AppVariables = AuthVariables & LoggerVariables & { runtimeEnv: Env }
+
+const winningLines: number[][] = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+]
 
 function toMatchStatusResource(record: MatchRecord, completedGames: number): MatchStatusResource {
   const safeCompletedGames = Math.max(0, Math.min(completedGames, record.totalRounds))
@@ -32,6 +58,63 @@ function toMatchStatusResource(record: MatchRecord, completedGames: number): Mat
     currentGameIndex,
     isComplete,
   }
+}
+
+function toGameResource(record: GameRecord): GameResource {
+  const createdAt =
+    record.createdAt instanceof Date ? record.createdAt.toISOString() : new Date(record.createdAt).toISOString()
+
+  return {
+    id: record.id,
+    matchId: record.matchId,
+    round: record.round,
+    winner: record.winner as GameResource['winner'],
+    board: record.boardState as GameResource['board'],
+    createdAt,
+  }
+}
+
+function toMoveResource(record: MoveRecord): MoveResource {
+  const createdAt =
+    record.createdAt instanceof Date ? record.createdAt.toISOString() : new Date(record.createdAt).toISOString()
+
+  return {
+    id: record.id,
+    gameId: record.gameId,
+    moveIndex: record.moveIndex,
+    position: record.position,
+    actor: record.actor as MoveResource['actor'],
+    reasoning: record.reasoning ?? undefined,
+    createdAt,
+  }
+}
+
+function hasWinner(board: GameResource['board'], actor: 'modelA' | 'modelB'): boolean {
+  return winningLines.some((line) => line.every((index) => board[index] === actor))
+}
+
+function boardStateMatchesWinner(board: GameResource['board'], winner: GameResource['winner']): boolean {
+  const modelACount = board.filter((cell) => cell === 'modelA').length
+  const modelBCount = board.filter((cell) => cell === 'modelB').length
+  const diff = Math.abs(modelACount - modelBCount)
+
+  if (diff > 1) {
+    return false
+  }
+
+  const modelAWins = hasWinner(board, 'modelA')
+  const modelBWins = hasWinner(board, 'modelB')
+
+  if (winner === 'modelA') {
+    return modelAWins && !modelBWins && modelACount === modelBCount + 1
+  }
+
+  if (winner === 'modelB') {
+    return modelBWins && !modelAWins && modelBCount === modelACount
+  }
+
+  // winner === 'tie'
+  return !modelAWins && !modelBWins
 }
 
 export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: AppVariables }>): void {
@@ -84,5 +167,134 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
     const session = toMatchStatusResource(match, completedGames)
 
     return c.json({ session })
+  })
+
+  app.post('/sessions/:matchId/games', async (c) => {
+    const { logger, runtimeEnv } = c.var
+
+    const paramsResult = matchParamsSchema.safeParse(c.req.param())
+    if (!paramsResult.success) {
+      logger.warn('Invalid session params received for game creation', { issues: paramsResult.error.issues })
+      return c.json({ message: 'Invalid session identifier', issues: paramsResult.error.issues }, 400)
+    }
+
+    const match = await findMatchById(runtimeEnv, paramsResult.data.matchId)
+    if (!match) {
+      logger.warn('Attempted to create game for missing session', { sessionId: paramsResult.data.matchId })
+      return c.json({ message: 'Session not found' }, 404)
+    }
+
+    let payload: unknown
+    try {
+      payload = await c.req.json()
+    } catch (error) {
+      logger.warn('Failed to parse game creation payload as JSON', { error })
+      return c.json({ message: 'Invalid JSON body' }, 400)
+    }
+
+    const parsed = createGameSchema.safeParse(payload)
+    if (!parsed.success) {
+      logger.warn('Game creation validation failed', { issues: parsed.error.issues })
+      return c.json({ message: 'Invalid request payload', issues: parsed.error.issues }, 400)
+    }
+
+    if (parsed.data.round < 1 || parsed.data.round > match.totalRounds) {
+      logger.warn('Game round is out of bounds for session', {
+        sessionId: match.id,
+        requestedRound: parsed.data.round,
+        totalRounds: match.totalRounds,
+      })
+      return c.json({ message: 'Round exceeds configured session length' }, 400)
+    }
+
+    const existingGame = await findGameByMatchAndRound(runtimeEnv, match.id, parsed.data.round)
+    if (existingGame) {
+      logger.warn('Game already exists for round', {
+        sessionId: match.id,
+        round: parsed.data.round,
+      })
+      return c.json({ message: 'Game already recorded for this round' }, 409)
+    }
+
+    if (!boardStateMatchesWinner(parsed.data.board, parsed.data.winner)) {
+      logger.warn('Board state does not align with declared winner', {
+        sessionId: match.id,
+        round: parsed.data.round,
+        winner: parsed.data.winner,
+      })
+      return c.json({ message: 'Board state does not match declared winner' }, 400)
+    }
+
+    const gameRecord = await createGameRecord(runtimeEnv, match.id, parsed.data)
+    const game = toGameResource(gameRecord)
+    const completedGames = await countGamesForMatch(runtimeEnv, match.id)
+    const session = toMatchStatusResource(match, completedGames)
+
+    logger.info('Game recorded for session', { sessionId: session.id, gameId: game.id, round: game.round })
+    return c.json({ game, session }, 201)
+  })
+
+  app.post('/games/:gameId/moves', async (c) => {
+    const { logger, runtimeEnv } = c.var
+
+    const paramsResult = gameParamsSchema.safeParse(c.req.param())
+    if (!paramsResult.success) {
+      logger.warn('Invalid game params received for move creation', { issues: paramsResult.error.issues })
+      return c.json({ message: 'Invalid game identifier', issues: paramsResult.error.issues }, 400)
+    }
+
+    const game = await findGameById(runtimeEnv, paramsResult.data.gameId)
+    if (!game) {
+      logger.warn('Move attempted for missing game', { gameId: paramsResult.data.gameId })
+      return c.json({ message: 'Game not found' }, 404)
+    }
+
+    let payload: unknown
+    try {
+      payload = await c.req.json()
+    } catch (error) {
+      logger.warn('Failed to parse move creation payload as JSON', { error })
+      return c.json({ message: 'Invalid JSON body' }, 400)
+    }
+
+    const parsed = createMoveSchema.safeParse(payload)
+    if (!parsed.success) {
+      logger.warn('Move creation validation failed', { issues: parsed.error.issues })
+      return c.json({ message: 'Invalid request payload', issues: parsed.error.issues }, 400)
+    }
+
+    const existingMoves = await listMovesForGame(runtimeEnv, game.id)
+    const expectedMoveIndex = existingMoves.length
+
+    if (parsed.data.moveIndex !== expectedMoveIndex) {
+      logger.warn('Move index out of sequence', {
+        gameId: game.id,
+        expectedMoveIndex,
+        receivedMoveIndex: parsed.data.moveIndex,
+      })
+      return c.json({ message: 'Moves must be logged sequentially' }, 409)
+    }
+
+    const expectedActor = expectedMoveIndex % 2 === 0 ? 'modelA' : 'modelB'
+    if (parsed.data.actor !== expectedActor) {
+      logger.warn('Move actor order invalid', {
+        gameId: game.id,
+        expectedActor,
+        receivedActor: parsed.data.actor,
+      })
+      return c.json({ message: 'Invalid actor for move order' }, 409)
+    }
+
+    const positionTaken = existingMoves.some((moveRecord) => moveRecord.position === parsed.data.position)
+    if (positionTaken) {
+      logger.warn('Move position already used', { gameId: game.id, position: parsed.data.position })
+      return c.json({ message: 'Position already occupied' }, 409)
+    }
+
+    const moveRecord = await createMoveRecord(runtimeEnv, game.id, parsed.data)
+    const move = toMoveResource(moveRecord)
+
+    logger.info('Move recorded for game', { gameId: game.id, moveId: move.id })
+    return c.json({ move }, 201)
   })
 }

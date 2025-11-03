@@ -56,7 +56,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Match configuration endpoints
   - POST `/sessions` to create session with LLM pair, difficulty, round count; validate 1–100 limit.
   - GET `/sessions/:id` for session status including current game index.
-- [ ] Game execution and logging endpoints
+- [x] Game execution and logging endpoints
   - POST `/sessions/:id/games` to record completed game result, winner, board state.
   - POST `/games/:id/moves` to append move detail (timestamp, reasoning, position).
 - [ ] Leaderboard aggregation
