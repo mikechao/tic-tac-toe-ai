@@ -85,7 +85,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] State management
   - Introduce TanStack Query for data fetching and mutations; define query clients and providers.
   - Add context/store for UI preferences (reduced motion).
-- [ ] API client scaffolding
+- [x] API client scaffolding
   - Create typed API client with Axios or fetch wrapper, handling base URL and error normalization.
   - Surface Sentry browser client configuration (e.g., `VITE_SENTRY_DSN`, sample rate env flags) and initialize within app entry.
 - [ ] Accessibility utilities
