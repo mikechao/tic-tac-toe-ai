@@ -42,6 +42,9 @@ const winningLines: number[][] = [
   [2, 4, 6],
 ]
 
+const MAX_REASONING_LENGTH = 1000
+const MAX_MOVES_PER_GAME = 9
+
 function toMatchStatusResource(record: MatchRecord, completedGames: number): MatchStatusResource {
   const safeCompletedGames = Math.max(0, Math.min(completedGames, record.totalRounds))
   const isComplete = safeCompletedGames >= record.totalRounds
@@ -116,7 +119,8 @@ function boardStateMatchesWinner(board: GameResource['board'], winner: GameResou
   }
 
   // winner === 'tie'
-  return !modelAWins && !modelBWins
+  const boardFull = board.every((cell) => cell !== null)
+  return !modelAWins && !modelBWins && boardFull && modelACount === modelBCount
 }
 
 export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: AppVariables }>): void {
@@ -242,6 +246,7 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
 
     const gameRecord = await createGameRecord(runtimeEnv, match.id, parsed.data)
     await applyGameOutcomeToLeaderboard(runtimeEnv, match, parsed.data.winner)
+
     const game = toGameResource(gameRecord)
     const completedGames = await countGamesForMatch(runtimeEnv, match.id)
     const session = toMatchStatusResource(match, completedGames)
@@ -282,6 +287,11 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
     const existingMoves = await listMovesForGame(runtimeEnv, game.id)
     const expectedMoveIndex = existingMoves.length
 
+    if (expectedMoveIndex >= MAX_MOVES_PER_GAME) {
+      logger.warn('Attempted to record move beyond board capacity', { gameId: game.id })
+      return c.json({ message: 'All moves already recorded for this game' }, 409)
+    }
+
     if (parsed.data.moveIndex !== expectedMoveIndex) {
       logger.warn('Move index out of sequence', {
         gameId: game.id,
@@ -307,7 +317,46 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
       return c.json({ message: 'Position already occupied' }, 409)
     }
 
-    const moveRecord = await createMoveRecord(runtimeEnv, game.id, parsed.data)
+    const board = (game.boardState ?? []) as GameResource['board']
+    const finalCellOwner = board[parsed.data.position]
+    if (finalCellOwner === null) {
+      logger.warn('Move position is empty in final board state', {
+        gameId: game.id,
+        position: parsed.data.position,
+      })
+      return c.json({ message: 'Final board state does not include this move' }, 409)
+    }
+
+    if (finalCellOwner !== parsed.data.actor) {
+      logger.warn('Move actor does not match final board cell owner', {
+        gameId: game.id,
+        position: parsed.data.position,
+        actor: parsed.data.actor,
+        cellOwner: finalCellOwner,
+      })
+      return c.json({ message: 'Move actor mismatch for recorded board state' }, 409)
+    }
+
+    const occupiedCells = board.filter((cell) => cell !== null).length
+    if (expectedMoveIndex >= occupiedCells) {
+      logger.warn('Move count exceeds occupied board cells', {
+        gameId: game.id,
+        occupiedCells,
+        attemptedIndex: expectedMoveIndex,
+      })
+      return c.json({ message: 'Move exceeds final board state' }, 409)
+    }
+
+    const trimmedReasoning = parsed.data.reasoning?.trim()
+    const normalizedReasoning =
+      trimmedReasoning && trimmedReasoning.length > 0
+        ? trimmedReasoning.slice(0, MAX_REASONING_LENGTH)
+        : undefined
+
+    const moveRecord = await createMoveRecord(runtimeEnv, game.id, {
+      ...parsed.data,
+      reasoning: normalizedReasoning,
+    })
     const move = toMoveResource(moveRecord)
 
     logger.info('Move recorded for game', { gameId: game.id, moveId: move.id })

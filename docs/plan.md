@@ -62,7 +62,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Leaderboard aggregation
   - GET `/leaderboard` returning global win/loss/tie stats per model.
   - Background job or transaction should upsert leaderboard totals after each game completion.
-- [ ] Data validation and processing
+- [x] Data validation and processing
   - Ensure moves conform to tic tac toe rules using domain guards and Zod validation; reject invalid positions or duplicate moves.
   - Normalize reasoning text length (truncate/store preview plus full text if needed).
 - [ ] Storage strategy
