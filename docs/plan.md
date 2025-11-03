@@ -69,9 +69,9 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Implement archival retention (e.g., 30-day limitation) configuration placeholder.
 - [x] External integration prep
   - Provide interfaces for future analytics hooks (event emitter for match start/end).
-- [ ] Error handling
+- [x] Error handling
   - Return descriptive errors for invalid sessions, exceeding round limits, or persistence failures.
-- [ ] Testing utilities
+- [ ] Testing utilities (Skipping for now)
   - Seed script to generate sample sessions for development.
   - Mock data generators for moves and outcomes.
 

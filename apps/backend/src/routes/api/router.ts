@@ -1,4 +1,4 @@
-import type { Hono } from 'hono'
+import type { Context, Hono } from 'hono'
 
 import type { Env, WorkerEnv } from '../../env'
 import type { AuthVariables } from '../../services/auth'
@@ -45,6 +45,77 @@ const winningLines: number[][] = [
 
 const MAX_REASONING_LENGTH = 1000
 const MAX_MOVES_PER_GAME = 9
+
+type ErrorCode =
+  | 'INVALID_JSON'
+  | 'VALIDATION_FAILED'
+  | 'INVALID_SESSION_PARAMS'
+  | 'SESSION_NOT_FOUND'
+  | 'ROUND_OUT_OF_BOUNDS'
+  | 'GAME_ALREADY_EXISTS'
+  | 'BOARD_MISMATCH'
+  | 'PERSISTENCE_ERROR'
+  | 'LEADERBOARD_UNAVAILABLE'
+  | 'INVALID_GAME_PARAMS'
+  | 'GAME_NOT_FOUND'
+  | 'MOVE_LIMIT_REACHED'
+  | 'MOVE_SEQUENCE_CONFLICT'
+  | 'MOVE_ACTOR_INVALID'
+  | 'MOVE_POSITION_TAKEN'
+  | 'MOVE_POSITION_MISSING'
+  | 'MOVE_ACTOR_MISMATCH'
+  | 'MOVE_EXCEEDS_BOARD'
+  | 'LEADERBOARD_UPDATE_FAILED'
+
+type ErrorOptions = {
+  details?: unknown
+  context?: Record<string, unknown>
+  logMessage?: string
+  level?: 'warn' | 'info'
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  if (typeof error === 'string') {
+    return error
+  }
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return 'Unknown error'
+  }
+}
+
+function respondWithError(
+  c: Context<{ Bindings: WorkerEnv; Variables: AppVariables }>,
+  status: number,
+  code: ErrorCode,
+  message: string,
+  options?: ErrorOptions
+) {
+  const logger = c.var.logger
+  const logMessage = options?.logMessage ?? message
+  const context = { ...(options?.context ?? {}), code, status }
+  if (status >= 500) {
+    logger?.error(logMessage, context)
+    emitEvent('error', { message: logMessage, context })
+  } else {
+    const level = options?.level ?? 'warn'
+    if (level === 'info') {
+      logger?.info(logMessage, context)
+    } else {
+      logger?.warn(logMessage, context)
+    }
+  }
+
+  const body: Record<string, unknown> = { message, code }
+  if (options?.details !== undefined) {
+    body.details = options.details
+  }
+  return c.json(body, status as never)
+}
 
 function toMatchStatusResource(record: MatchRecord, completedGames: number): MatchStatusResource {
   const safeCompletedGames = Math.max(0, Math.min(completedGames, record.totalRounds))
@@ -131,16 +202,24 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
   })
 
   app.get('/leaderboard', async (c) => {
-    const { logger, runtimeEnv } = c.var
-    const leaderboard = await getLeaderboard(runtimeEnv)
-
-    const validation = leaderboardResponseSchema.safeParse(leaderboard)
-    if (!validation.success) {
-      logger.error('Leaderboard response failed to validate', { issues: validation.error.issues })
-      return c.json({ message: 'Leaderboard unavailable' }, 500)
+    const { runtimeEnv } = c.var
+    try {
+      const leaderboard = await getLeaderboard(runtimeEnv)
+      const validation = leaderboardResponseSchema.safeParse(leaderboard)
+      if (!validation.success) {
+        return respondWithError(c, 500, 'LEADERBOARD_UNAVAILABLE', 'Leaderboard unavailable', {
+          logMessage: 'Leaderboard response failed to validate',
+          details: validation.error.issues,
+          context: { issues: validation.error.issues },
+        })
+      }
+      return c.json(leaderboard)
+    } catch (error) {
+      return respondWithError(c, 500, 'LEADERBOARD_UNAVAILABLE', 'Leaderboard unavailable', {
+        logMessage: 'Failed to load leaderboard',
+        context: { error: extractErrorMessage(error) },
+      })
     }
-
-    return c.json(leaderboard)
   })
 
   app.post('/sessions', async (c) => {
@@ -150,18 +229,35 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
     try {
       payload = await c.req.json()
     } catch (error) {
-      logger.warn('Failed to parse session creation payload as JSON', { error })
-      return c.json({ message: 'Invalid JSON body' }, 400)
+      return respondWithError(c, 400, 'INVALID_JSON', 'Invalid JSON body', {
+        logMessage: 'Failed to parse session creation payload as JSON',
+        context: { error: extractErrorMessage(error) },
+      })
     }
 
     const parsed = createMatchSchema.safeParse(payload)
 
     if (!parsed.success) {
-      logger.warn('Session creation validation failed', { issues: parsed.error.issues })
-      return c.json({ message: 'Invalid request payload', issues: parsed.error.issues }, 400)
+      return respondWithError(c, 400, 'VALIDATION_FAILED', 'Invalid request payload', {
+        logMessage: 'Session creation validation failed',
+        details: parsed.error.issues,
+        context: { issues: parsed.error.issues },
+      })
     }
 
-    const record = await createMatchRecord(runtimeEnv, parsed.data)
+    let record: MatchRecord
+    try {
+      record = await createMatchRecord(runtimeEnv, parsed.data)
+    } catch (error) {
+      return respondWithError(c, 500, 'PERSISTENCE_ERROR', 'Failed to create session', {
+        logMessage: 'Failed to persist session',
+        context: {
+          error: extractErrorMessage(error),
+          modelAId: parsed.data.modelAId,
+          modelBId: parsed.data.modelBId,
+        },
+      })
+    }
     const session = toMatchStatusResource(record, 0)
 
     emitEvent('match:start', {
@@ -172,26 +268,39 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
       difficulty: record.difficulty,
     })
 
-    logger.info('Session created', { sessionId: session.id })
+    logger?.info('Session created', { sessionId: session.id })
     return c.json({ session }, 201)
   })
 
   app.get('/sessions/:matchId', async (c) => {
-    const { logger, runtimeEnv } = c.var
+    const { runtimeEnv } = c.var
 
     const paramsResult = matchParamsSchema.safeParse(c.req.param())
     if (!paramsResult.success) {
-      logger.warn('Invalid session params received', { issues: paramsResult.error.issues })
-      return c.json({ message: 'Invalid session identifier', issues: paramsResult.error.issues }, 400)
+      return respondWithError(c, 400, 'INVALID_SESSION_PARAMS', 'Invalid session identifier', {
+        logMessage: 'Invalid session params received',
+        details: paramsResult.error.issues,
+        context: { issues: paramsResult.error.issues },
+      })
     }
 
     const match = await findMatchById(runtimeEnv, paramsResult.data.matchId)
     if (!match) {
-      logger.warn('Session not found', { sessionId: paramsResult.data.matchId })
-      return c.json({ message: 'Session not found' }, 404)
+      return respondWithError(c, 404, 'SESSION_NOT_FOUND', 'Session not found', {
+        logMessage: 'Session not found',
+        context: { sessionId: paramsResult.data.matchId },
+      })
     }
 
-    const completedGames = await countGamesForMatch(runtimeEnv, match.id)
+    let completedGames: number
+    try {
+      completedGames = await countGamesForMatch(runtimeEnv, match.id)
+    } catch (error) {
+      return respondWithError(c, 500, 'PERSISTENCE_ERROR', 'Failed to load session status', {
+        logMessage: 'Failed to count games for session',
+        context: { error: extractErrorMessage(error), sessionId: match.id },
+      })
+    }
     const session = toMatchStatusResource(match, completedGames)
 
     return c.json({ session })
@@ -202,62 +311,108 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
 
     const paramsResult = matchParamsSchema.safeParse(c.req.param())
     if (!paramsResult.success) {
-      logger.warn('Invalid session params received for game creation', { issues: paramsResult.error.issues })
-      return c.json({ message: 'Invalid session identifier', issues: paramsResult.error.issues }, 400)
+      return respondWithError(c, 400, 'INVALID_SESSION_PARAMS', 'Invalid session identifier', {
+        logMessage: 'Invalid session params received for game creation',
+        details: paramsResult.error.issues,
+        context: { issues: paramsResult.error.issues },
+      })
     }
 
     const match = await findMatchById(runtimeEnv, paramsResult.data.matchId)
     if (!match) {
-      logger.warn('Attempted to create game for missing session', { sessionId: paramsResult.data.matchId })
-      return c.json({ message: 'Session not found' }, 404)
+      return respondWithError(c, 404, 'SESSION_NOT_FOUND', 'Session not found', {
+        logMessage: 'Attempted to create game for missing session',
+        context: { sessionId: paramsResult.data.matchId },
+      })
     }
 
     let payload: unknown
     try {
       payload = await c.req.json()
     } catch (error) {
-      logger.warn('Failed to parse game creation payload as JSON', { error })
-      return c.json({ message: 'Invalid JSON body' }, 400)
+      return respondWithError(c, 400, 'INVALID_JSON', 'Invalid JSON body', {
+        logMessage: 'Failed to parse game creation payload as JSON',
+        context: { error: extractErrorMessage(error) },
+      })
     }
 
     const parsed = createGameSchema.safeParse(payload)
     if (!parsed.success) {
-      logger.warn('Game creation validation failed', { issues: parsed.error.issues })
-      return c.json({ message: 'Invalid request payload', issues: parsed.error.issues }, 400)
+      return respondWithError(c, 400, 'VALIDATION_FAILED', 'Invalid request payload', {
+        logMessage: 'Game creation validation failed',
+        details: parsed.error.issues,
+        context: { issues: parsed.error.issues, sessionId: match.id },
+      })
     }
 
     if (parsed.data.round < 1 || parsed.data.round > match.totalRounds) {
-      logger.warn('Game round is out of bounds for session', {
-        sessionId: match.id,
-        requestedRound: parsed.data.round,
-        totalRounds: match.totalRounds,
+      return respondWithError(c, 400, 'ROUND_OUT_OF_BOUNDS', 'Round exceeds configured session length', {
+        logMessage: 'Game round is out of bounds for session',
+        context: {
+          sessionId: match.id,
+          requestedRound: parsed.data.round,
+          totalRounds: match.totalRounds,
+        },
       })
-      return c.json({ message: 'Round exceeds configured session length' }, 400)
     }
 
     const existingGame = await findGameByMatchAndRound(runtimeEnv, match.id, parsed.data.round)
     if (existingGame) {
-      logger.warn('Game already exists for round', {
-        sessionId: match.id,
-        round: parsed.data.round,
+      return respondWithError(c, 409, 'GAME_ALREADY_EXISTS', 'Game already recorded for this round', {
+        logMessage: 'Game already exists for round',
+        context: { sessionId: match.id, round: parsed.data.round },
       })
-      return c.json({ message: 'Game already recorded for this round' }, 409)
     }
 
     if (!boardStateMatchesWinner(parsed.data.board, parsed.data.winner)) {
-      logger.warn('Board state does not align with declared winner', {
-        sessionId: match.id,
-        round: parsed.data.round,
-        winner: parsed.data.winner,
+      return respondWithError(c, 400, 'BOARD_MISMATCH', 'Board state does not match declared winner', {
+        logMessage: 'Board state does not align with declared winner',
+        context: {
+          sessionId: match.id,
+          round: parsed.data.round,
+          winner: parsed.data.winner,
+        },
       })
-      return c.json({ message: 'Board state does not match declared winner' }, 400)
     }
 
-    const gameRecord = await createGameRecord(runtimeEnv, match.id, parsed.data)
-    const affectedModelIds = await applyGameOutcomeToLeaderboard(runtimeEnv, match, parsed.data.winner)
+    let gameRecord: GameRecord
+    try {
+      gameRecord = await createGameRecord(runtimeEnv, match.id, parsed.data)
+    } catch (error) {
+      return respondWithError(c, 500, 'PERSISTENCE_ERROR', 'Failed to record game', {
+        logMessage: 'Failed to persist game for session',
+        context: {
+          error: extractErrorMessage(error),
+          sessionId: match.id,
+          round: parsed.data.round,
+        },
+      })
+    }
+
+    let affectedModelIds: number[]
+    try {
+      affectedModelIds = await applyGameOutcomeToLeaderboard(runtimeEnv, match, parsed.data.winner)
+    } catch (error) {
+      return respondWithError(c, 500, 'LEADERBOARD_UPDATE_FAILED', 'Failed to update leaderboard', {
+        logMessage: 'Failed to apply game outcome to leaderboard',
+        context: {
+          error: extractErrorMessage(error),
+          sessionId: match.id,
+          round: parsed.data.round,
+        },
+      })
+    }
 
     const game = toGameResource(gameRecord)
-    const completedGames = await countGamesForMatch(runtimeEnv, match.id)
+    let completedGames: number
+    try {
+      completedGames = await countGamesForMatch(runtimeEnv, match.id)
+    } catch (error) {
+      return respondWithError(c, 500, 'PERSISTENCE_ERROR', 'Failed to load session status', {
+        logMessage: 'Failed to recount games after recording game',
+        context: { error: extractErrorMessage(error), sessionId: match.id },
+      })
+    }
     const session = toMatchStatusResource(match, completedGames)
 
     emitEvent('game:recorded', {
@@ -285,7 +440,7 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
 
     emitEvent('leaderboard:update', { modelIds: affectedModelIds })
 
-    logger.info('Game recorded for session', { sessionId: session.id, gameId: game.id, round: game.round })
+    logger?.info('Game recorded for session', { sessionId: session.id, gameId: game.id, round: game.round })
     return c.json({ game, session }, 201)
   })
 
@@ -294,91 +449,120 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
 
     const paramsResult = gameParamsSchema.safeParse(c.req.param())
     if (!paramsResult.success) {
-      logger.warn('Invalid game params received for move creation', { issues: paramsResult.error.issues })
-      return c.json({ message: 'Invalid game identifier', issues: paramsResult.error.issues }, 400)
+      return respondWithError(c, 400, 'INVALID_GAME_PARAMS', 'Invalid game identifier', {
+        logMessage: 'Invalid game params received for move creation',
+        details: paramsResult.error.issues,
+        context: { issues: paramsResult.error.issues },
+      })
     }
 
     const game = await findGameById(runtimeEnv, paramsResult.data.gameId)
     if (!game) {
-      logger.warn('Move attempted for missing game', { gameId: paramsResult.data.gameId })
-      return c.json({ message: 'Game not found' }, 404)
+      return respondWithError(c, 404, 'GAME_NOT_FOUND', 'Game not found', {
+        logMessage: 'Move attempted for missing game',
+        context: { gameId: paramsResult.data.gameId },
+      })
     }
 
     let payload: unknown
     try {
       payload = await c.req.json()
     } catch (error) {
-      logger.warn('Failed to parse move creation payload as JSON', { error })
-      return c.json({ message: 'Invalid JSON body' }, 400)
+      return respondWithError(c, 400, 'INVALID_JSON', 'Invalid JSON body', {
+        logMessage: 'Failed to parse move creation payload as JSON',
+        context: { error: extractErrorMessage(error) },
+      })
     }
 
     const parsed = createMoveSchema.safeParse(payload)
     if (!parsed.success) {
-      logger.warn('Move creation validation failed', { issues: parsed.error.issues })
-      return c.json({ message: 'Invalid request payload', issues: parsed.error.issues }, 400)
+      return respondWithError(c, 400, 'VALIDATION_FAILED', 'Invalid request payload', {
+        logMessage: 'Move creation validation failed',
+        details: parsed.error.issues,
+        context: { issues: parsed.error.issues, gameId: game.id },
+      })
     }
 
-    const existingMoves = await listMovesForGame(runtimeEnv, game.id)
+    let existingMoves: MoveRecord[]
+    try {
+      existingMoves = await listMovesForGame(runtimeEnv, game.id)
+    } catch (error) {
+      return respondWithError(c, 500, 'PERSISTENCE_ERROR', 'Failed to load game moves', {
+        logMessage: 'Failed to list moves for game',
+        context: { error: extractErrorMessage(error), gameId: game.id },
+      })
+    }
     const expectedMoveIndex = existingMoves.length
 
     if (expectedMoveIndex >= MAX_MOVES_PER_GAME) {
-      logger.warn('Attempted to record move beyond board capacity', { gameId: game.id })
-      return c.json({ message: 'All moves already recorded for this game' }, 409)
+      return respondWithError(c, 409, 'MOVE_LIMIT_REACHED', 'All moves already recorded for this game', {
+        logMessage: 'Attempted to record move beyond board capacity',
+        context: { gameId: game.id },
+      })
     }
 
     if (parsed.data.moveIndex !== expectedMoveIndex) {
-      logger.warn('Move index out of sequence', {
-        gameId: game.id,
-        expectedMoveIndex,
-        receivedMoveIndex: parsed.data.moveIndex,
+      return respondWithError(c, 409, 'MOVE_SEQUENCE_CONFLICT', 'Moves must be logged sequentially', {
+        logMessage: 'Move index out of sequence',
+        context: {
+          gameId: game.id,
+          expectedMoveIndex,
+          receivedMoveIndex: parsed.data.moveIndex,
+        },
       })
-      return c.json({ message: 'Moves must be logged sequentially' }, 409)
     }
 
     const expectedActor = expectedMoveIndex % 2 === 0 ? 'modelA' : 'modelB'
     if (parsed.data.actor !== expectedActor) {
-      logger.warn('Move actor order invalid', {
-        gameId: game.id,
-        expectedActor,
-        receivedActor: parsed.data.actor,
+      return respondWithError(c, 409, 'MOVE_ACTOR_INVALID', 'Invalid actor for move order', {
+        logMessage: 'Move actor order invalid',
+        context: {
+          gameId: game.id,
+          expectedActor,
+          receivedActor: parsed.data.actor,
+        },
       })
-      return c.json({ message: 'Invalid actor for move order' }, 409)
     }
 
     const positionTaken = existingMoves.some((moveRecord) => moveRecord.position === parsed.data.position)
     if (positionTaken) {
-      logger.warn('Move position already used', { gameId: game.id, position: parsed.data.position })
-      return c.json({ message: 'Position already occupied' }, 409)
+      return respondWithError(c, 409, 'MOVE_POSITION_TAKEN', 'Position already occupied', {
+        logMessage: 'Move position already used',
+        context: { gameId: game.id, position: parsed.data.position },
+      })
     }
 
     const board = (game.boardState ?? []) as GameResource['board']
     const finalCellOwner = board[parsed.data.position]
     if (finalCellOwner === null) {
-      logger.warn('Move position is empty in final board state', {
-        gameId: game.id,
-        position: parsed.data.position,
+      return respondWithError(c, 409, 'MOVE_POSITION_MISSING', 'Final board state does not include this move', {
+        logMessage: 'Move position is empty in final board state',
+        context: { gameId: game.id, position: parsed.data.position },
       })
-      return c.json({ message: 'Final board state does not include this move' }, 409)
     }
 
     if (finalCellOwner !== parsed.data.actor) {
-      logger.warn('Move actor does not match final board cell owner', {
-        gameId: game.id,
-        position: parsed.data.position,
-        actor: parsed.data.actor,
-        cellOwner: finalCellOwner,
+      return respondWithError(c, 409, 'MOVE_ACTOR_MISMATCH', 'Move actor mismatch for recorded board state', {
+        logMessage: 'Move actor does not match final board cell owner',
+        context: {
+          gameId: game.id,
+          position: parsed.data.position,
+          actor: parsed.data.actor,
+          cellOwner: finalCellOwner,
+        },
       })
-      return c.json({ message: 'Move actor mismatch for recorded board state' }, 409)
     }
 
     const occupiedCells = board.filter((cell) => cell !== null).length
     if (expectedMoveIndex >= occupiedCells) {
-      logger.warn('Move count exceeds occupied board cells', {
-        gameId: game.id,
-        occupiedCells,
-        attemptedIndex: expectedMoveIndex,
+      return respondWithError(c, 409, 'MOVE_EXCEEDS_BOARD', 'Move exceeds final board state', {
+        logMessage: 'Move count exceeds occupied board cells',
+        context: {
+          gameId: game.id,
+          occupiedCells,
+          attemptedIndex: expectedMoveIndex,
+        },
       })
-      return c.json({ message: 'Move exceeds final board state' }, 409)
     }
 
     const trimmedReasoning = parsed.data.reasoning?.trim()
@@ -387,10 +571,18 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
         ? trimmedReasoning.slice(0, MAX_REASONING_LENGTH)
         : undefined
 
-    const moveRecord = await createMoveRecord(runtimeEnv, game.id, {
-      ...parsed.data,
-      reasoning: normalizedReasoning,
-    })
+    let moveRecord: MoveRecord
+    try {
+      moveRecord = await createMoveRecord(runtimeEnv, game.id, {
+        ...parsed.data,
+        reasoning: normalizedReasoning,
+      })
+    } catch (error) {
+      return respondWithError(c, 500, 'PERSISTENCE_ERROR', 'Failed to record move', {
+        logMessage: 'Failed to persist move for game',
+        context: { error: extractErrorMessage(error), gameId: game.id },
+      })
+    }
     const move = toMoveResource(moveRecord)
 
     emitEvent('move:recorded', {
@@ -401,7 +593,7 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
       actor: move.actor,
     })
 
-    logger.info('Move recorded for game', { gameId: game.id, moveId: move.id })
+    logger?.info('Move recorded for game', { gameId: game.id, moveId: move.id })
     return c.json({ move }, 201)
   })
 }
