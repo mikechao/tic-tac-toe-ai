@@ -76,9 +76,9 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Mock data generators for moves and outcomes.
 
 ## 4. Frontend Foundation
-- [ ] UI framework setup
+- [x] UI framework setup
   - Configure Vite + React + TypeScript with strict settings and absolute imports.
-- [ ] Component library integration
+- [x] Component library integration
   - Install Magic UI components, configure theming tokens (colors, spacing) in Tailwind.
 - [ ] Routing system
   - Set up TanStack Router with routes for `arena` and `leaderboard`.
