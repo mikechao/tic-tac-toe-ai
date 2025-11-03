@@ -7,6 +7,7 @@ export {
   matchStatusResourceSchema,
   gameResourceSchema,
   moveResourceSchema,
+  leaderboardResponseSchema,
 } from '@arena/schema'
 export type {
   CreateMatchRequest as CreateMatchPayload,
@@ -17,4 +18,6 @@ export type {
   MatchStatusResource,
   GameResource,
   MoveResource,
+  LeaderboardResponse,
+  LeaderboardEntry,
 } from '@arena/schema'

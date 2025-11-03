@@ -11,6 +11,7 @@ import {
   type GameRecord,
   type MoveRecord,
 } from '../../services/game-repository'
+import { applyGameOutcomeToLeaderboard, getLeaderboard } from '../../services/leaderboard-repository'
 import type { LoggerVariables } from '../../services/logger'
 import {
   countGamesForMatch,
@@ -24,6 +25,7 @@ import {
   createMatchSchema,
   createMoveSchema,
   gameParamsSchema,
+  leaderboardResponseSchema,
   matchParamsSchema,
 } from '../../services/schemas'
 
@@ -121,6 +123,19 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
   app.get('/version', (c) => {
     c.var.logger.info('version endpoint invoked')
     return c.json({ version: 'v0' })
+  })
+
+  app.get('/leaderboard', async (c) => {
+    const { logger, runtimeEnv } = c.var
+    const leaderboard = await getLeaderboard(runtimeEnv)
+
+    const validation = leaderboardResponseSchema.safeParse(leaderboard)
+    if (!validation.success) {
+      logger.error('Leaderboard response failed to validate', { issues: validation.error.issues })
+      return c.json({ message: 'Leaderboard unavailable' }, 500)
+    }
+
+    return c.json(leaderboard)
   })
 
   app.post('/sessions', async (c) => {
@@ -226,6 +241,7 @@ export function registerApiRoutes(app: Hono<{ Bindings: WorkerEnv; Variables: Ap
     }
 
     const gameRecord = await createGameRecord(runtimeEnv, match.id, parsed.data)
+    await applyGameOutcomeToLeaderboard(runtimeEnv, match, parsed.data.winner)
     const game = toGameResource(gameRecord)
     const completedGames = await countGamesForMatch(runtimeEnv, match.id)
     const session = toMatchStatusResource(match, completedGames)

@@ -59,7 +59,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Game execution and logging endpoints
   - POST `/sessions/:id/games` to record completed game result, winner, board state.
   - POST `/games/:id/moves` to append move detail (timestamp, reasoning, position).
-- [ ] Leaderboard aggregation
+- [x] Leaderboard aggregation
   - GET `/leaderboard` returning global win/loss/tie stats per model.
   - Background job or transaction should upsert leaderboard totals after each game completion.
 - [ ] Data validation and processing
