@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:18-alpine3.22
+    container_name: arena-postgres
+    restart: unless-stopped
+    
+    environment:
+      # Required: Set the password for the postgres superuser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      
+      # Optional: Create a custom database on initialization
+      POSTGRES_DB: arena
+      
+      # Optional: Create a custom user (in addition to 'postgres')
+      # POSTGRES_USER: myuser
+      
+      # Optional: Initialize database with scripts
+      # POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    
+    ports:
+      # Map container port 5432 to host port 5432
+      - "5432:5432"
+    
+    volumes:
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+      
+      # Optional: Mount initialization scripts
+      # Scripts in /docker-entrypoint-initdb.d/ run on first container start
+      # - ./init-scripts:/docker-entrypoint-initdb.d
+      
+      # Optional: Custom PostgreSQL configuration
+      # - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    
+    # Optional: Custom command to use your config file
+    # command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    networks:
+      - postgres_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  postgres_network:
+    driver: bridge

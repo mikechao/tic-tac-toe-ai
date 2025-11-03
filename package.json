@@ -12,6 +12,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "db:migrate": "turbo run db:migrate",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "commitlint": "commitlint --edit ${1:-.git/COMMIT_EDITMSG}"
   },
   "devDependencies": {
