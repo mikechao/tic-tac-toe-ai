@@ -1,15 +1,37 @@
 import { defineConfig } from 'drizzle-kit'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { config as loadEnv } from 'dotenv'
 
-const databaseUrl = process.env.DATABASE_URL ??
-  process.env.POSTGRES_URL ??
-  'postgres://username:password@localhost:5432/tic_tac_toe_ai'
+const baseDir = dirname(fileURLToPath(import.meta.url))
+
+// Pull in local defaults when running commands manually.
+// CI/staging/production should provide DATABASE_URL (or *_STAGING / *_PRODUCTION)
+// via the environment so this block is ignored there.
+if (!process.env.DATABASE_URL) {
+  loadEnv({ path: resolve(baseDir, './apps/backend/.dev.vars') })
+}
+
+function getDatabaseUrl(): string {
+  const environment = process.env.ENVIRONMENT ?? 'development'
+
+  if (environment === 'staging' && process.env.DATABASE_URL_STAGING) {
+    return process.env.DATABASE_URL_STAGING
+  }
+
+  if (environment === 'production' && process.env.DATABASE_URL_PRODUCTION) {
+    return process.env.DATABASE_URL_PRODUCTION
+  }
+
+  return process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/webmcp_dev'
+}
 
 export default defineConfig({
-  schema: './apps/backend/drizzle/schema.ts',
-  out: './apps/backend/drizzle/migrations',
+  schema: resolve(baseDir, './apps/backend/drizzle/schema.ts'),
+  out: resolve(baseDir, './apps/backend/drizzle/migrations'),
   dialect: 'postgresql',
   dbCredentials: {
-    url: databaseUrl,
+    url: getDatabaseUrl(),
   },
   strict: true,
 })

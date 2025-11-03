@@ -12,6 +12,7 @@ export const matches = pgTable('matches', {
   id: serial('id').primaryKey(),
   modelAId: integer('model_a_id').notNull().references(() => models.id),
   modelBId: integer('model_b_id').notNull().references(() => models.id),
+  difficulty: text('difficulty').notNull(),
   totalRounds: integer('total_rounds').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

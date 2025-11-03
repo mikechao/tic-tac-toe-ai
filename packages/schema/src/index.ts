@@ -7,6 +7,9 @@ export type ModelId = z.infer<typeof modelIdSchema>
 export const matchIdSchema = z.number().int().positive()
 export type MatchId = z.infer<typeof matchIdSchema>
 
+export const difficultySchema = z.enum(['easy', 'standard', 'hard'])
+export type Difficulty = z.infer<typeof difficultySchema>
+
 export const totalRoundsSchema = z.number().int().min(1).max(100)
 export type TotalRounds = z.infer<typeof totalRoundsSchema>
 
@@ -15,6 +18,7 @@ export const createMatchRequestSchema = z
   .object({
     modelAId: modelIdSchema,
     modelBId: modelIdSchema,
+    difficulty: difficultySchema,
     totalRounds: totalRoundsSchema,
   })
   .refine((payload) => payload.modelAId !== payload.modelBId, {
@@ -35,10 +39,18 @@ export const matchResourceSchema = z.object({
   id: matchIdSchema,
   modelAId: modelIdSchema,
   modelBId: modelIdSchema,
+  difficulty: difficultySchema,
   totalRounds: totalRoundsSchema,
   createdAt: z.string(),
 })
 export type MatchResource = z.infer<typeof matchResourceSchema>
+
+export const matchStatusResourceSchema = matchResourceSchema.extend({
+  completedGames: z.number().int().min(0),
+  currentGameIndex: z.number().int().min(1),
+  isComplete: z.boolean(),
+})
+export type MatchStatusResource = z.infer<typeof matchStatusResourceSchema>
 
 export const leaderboardEntrySchema = z.object({
   modelId: modelIdSchema,

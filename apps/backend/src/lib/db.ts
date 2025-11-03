@@ -11,7 +11,6 @@ export function createDb(env: Env): Database {
   }
 
   const client = postgres(env.DATABASE_URL, {
-    fetch: (input, init) => fetch(input, init),
     max: 1,
   })
 

@@ -53,7 +53,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Inject Hyperdrive database binding through `env` and pass into Drizzle client per request.
 
 ## 3. Feature-specific Backend
-- [ ] Match configuration endpoints
+- [x] Match configuration endpoints
   - POST `/sessions` to create session with LLM pair, difficulty, round count; validate 1–100 limit.
   - GET `/sessions/:id` for session status including current game index.
 - [ ] Game execution and logging endpoints

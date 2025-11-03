@@ -5,6 +5,6 @@
     "types": ["@cloudflare/workers-types"],
     "outDir": "./dist"
   },
-  "include": ["./src/**/*.ts"],
+  "include": ["./src/**/*.ts", "./drizzle/**/*.ts"],
   "exclude": ["./dist", "./node_modules"]
 }
