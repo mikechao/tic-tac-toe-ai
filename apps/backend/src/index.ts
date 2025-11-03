@@ -51,7 +51,9 @@ app.onError((err, c) => {
 
 export default Sentry.withSentry(
   (env: WorkerEnv) => {
-    const versionId = env.CF_VERSION_METADATA?.id
+    const cfVersionMetadata = env.CF_VERSION_METADATA
+    const versionId =
+      typeof cfVersionMetadata === 'string' ? cfVersionMetadata : cfVersionMetadata?.id
     return {
       dsn: env.SENTRY_DSN,
       environment: env.ENVIRONMENT ?? 'development',
