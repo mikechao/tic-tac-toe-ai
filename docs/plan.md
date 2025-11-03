@@ -90,9 +90,9 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Surface Sentry browser client configuration (e.g., `VITE_SENTRY_DSN`, sample rate env flags) and initialize within app entry.
 - [x] Accessibility utilities
   - Implement focus management hooks, live region helpers.
-- [ ] Authentication UI placeholder
+- [ ] Authentication UI placeholder (Skipping for now)
   - Provide hidden/disabled auth components for future role support; currently show no login.
-- [ ] Observability instrumentation
+- [x] Observability instrumentation
   - Install Sentry React SDK with Vite integration; configure DSN from environment and tie into reduced-motion analytics.
 - [ ] Gemini Nano integration
   - Install and configure `@built-in-ai/core` (or equivalent Gemini Nano SDK) for in-browser inference.
