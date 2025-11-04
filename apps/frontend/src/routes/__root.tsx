@@ -21,14 +21,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body className="min-h-screen bg-slate-950 text-white antialiased">
-        <div className="min-h-screen">{children}</div>
-        <Scripts />
-      </body>
-    </html>
+    <>
+      <HeadContent />
+      <div className="min-h-screen bg-slate-950 text-white antialiased">{children}</div>
+      <Scripts />
+    </>
   )
 }
