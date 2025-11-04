@@ -63,10 +63,7 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
     throw new GeminiUnavailableError('This browser does not expose the built-in AI Prompt API.')
   }
 
-  const model = builtInAI('text', {
-    language: 'en',
-  })
-  console.debug('[GeminiModel] builtInAI provider created with language=en')
+  const model = builtInAI()
 
   let availability: GeminiAvailability
   try {
