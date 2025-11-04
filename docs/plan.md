@@ -94,9 +94,13 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Provide hidden/disabled auth components for future role support; currently show no login.
 - [x] Observability instrumentation
   - Install Sentry React SDK with Vite integration; configure DSN from environment and tie into reduced-motion analytics.
-- [ ] Gemini Nano integration
+- [x] Gemini Nano integration
   - Install and configure `@built-in-ai/core` (or equivalent Gemini Nano SDK) for in-browser inference.
   - Implement runtime capability checks and fallback messaging if Gemini Nano unavailable.
+  - TODOs:
+    - [x] Wrap `@built-in-ai/core` with a lazy Gemini model initializer and guard rails.
+    - [x] Expose the Gemini move helper to arena match logic behind a stable interface.
+    - [x] Extend the Gemini support gate/provider to preload the model and surface errors or retry messaging.
 
 ## 5. Feature-specific Frontend
 - [ ] Match configuration UI
