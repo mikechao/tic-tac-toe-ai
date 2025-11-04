@@ -25,10 +25,6 @@ export interface GeminiModelInitOptions {
    * Callback that receives download progress in the range [0, 1].
    */
   onDownloadProgress?: (progress: number) => void
-  /**
-   * Optional abort signal so callers can cancel initialization work.
-   */
-  signal?: AbortSignal
 }
 
 type GeminiAvailability = 'unavailable' | 'available' | 'available-after-download' | 'downloadable' | 'downloading'
@@ -39,15 +35,6 @@ let pendingInitialization: Promise<BuiltInAIChatLanguageModel> | null = null
 export function resetGeminiModelCache(): void {
   cachedModel = null
   pendingInitialization = null
-}
-
-function createAbortError(message: string): Error {
-  if (typeof DOMException !== 'undefined') {
-    return new DOMException(message, 'AbortError')
-  }
-  const error = new Error(message)
-  error.name = 'AbortError'
-  return error
 }
 
 function ensureClientEnvironment(): void {
@@ -65,10 +52,6 @@ function isDownloadRequired(status: GeminiAvailability): boolean {
 async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltInAIChatLanguageModel> {
   ensureClientEnvironment()
 
-  if (options?.signal?.aborted) {
-    throw createAbortError('Initialization aborted')
-  }
-
   if (!isBuiltInAISupported()) {
     throw new GeminiUnavailableError('This browser does not expose the built-in AI Prompt API.')
   }
@@ -78,6 +61,7 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
   let availability: GeminiAvailability
   try {
     availability = (await model.availability()) as GeminiAvailability
+    console.debug('[GeminiModel] availability', availability)
   } catch (error) {
     throw new GeminiInitializationError('Failed to determine Gemini Nano availability.', {
       cause: error,
@@ -92,14 +76,19 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
 
   const needsDownload = isDownloadRequired(availability)
 
+  if (!needsDownload) {
+    console.debug('[GeminiModel] no download required')
+    return model
+  }
+
   if (needsDownload || !cachedModel) {
     try {
+      console.debug('[GeminiModel] starting download')
       await model.createSessionWithProgress(progress => {
+        console.log(`Download progress: ${Math.round(progress * 100)}%`)
         options?.onDownloadProgress?.(progress)
-        if (options?.signal?.aborted) {
-          throw createAbortError('Initialization aborted')
-        }
       })
+      console.debug('[GeminiModel] download complete')
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw error
@@ -109,6 +98,8 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
       })
     }
   }
+
+  console.debug('[GeminiModel] returning model after initialization')
 
   return model
 }

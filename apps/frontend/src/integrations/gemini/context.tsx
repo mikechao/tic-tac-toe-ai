@@ -29,8 +29,8 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    console.debug('[GeminiProvider] effect start', { attempt })
     let isMounted = true
-    const abortController = new AbortController()
 
     if (!isBuiltInAISupported()) {
       setStatus('unsupported')
@@ -38,7 +38,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       setProgress(null)
       setError(null)
       return () => {
-        abortController.abort()
+        console.debug('[GeminiProvider] effect cleanup unsupported', { attempt })
       }
     }
 
@@ -47,7 +47,6 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     setError(null)
 
     ensureGeminiChatModel({
-      signal: abortController.signal,
       onDownloadProgress: progressValue => {
         if (!isMounted) return
         setStatus('downloading')
@@ -56,16 +55,15 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     })
       .then(loadedModel => {
         if (!isMounted) return
+        console.debug('[GeminiProvider] model initialized')
         setModel(loadedModel)
         setStatus('ready')
         setProgress(1)
       })
       .catch(err => {
         if (!isMounted) return
-        if ((err as Error).name === 'AbortError') {
-          return
-        }
         if (err instanceof GeminiUnavailableError) {
+          console.warn('[GeminiProvider] unsupported environment', err)
           setStatus('unsupported')
           setModel(null)
           setProgress(null)
@@ -73,17 +71,19 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           return
         }
         if (err instanceof GeminiInitializationError) {
+          console.error('[GeminiProvider] initialization failed', err)
           setStatus('error')
           setError(err)
           return
         }
+        console.error('[GeminiProvider] unexpected error', err)
         setStatus('error')
         setError(err as Error)
       })
 
     return () => {
+      console.debug('[GeminiProvider] effect cleanup', { attempt })
       isMounted = false
-      abortController.abort()
     }
   }, [attempt])
 
