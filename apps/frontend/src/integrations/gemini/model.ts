@@ -20,6 +20,13 @@ export class GeminiInitializationError extends Error {
   }
 }
 
+export class GeminiPermissionError extends Error {
+  constructor(message = 'Gemini Nano download requires a user interaction.') {
+    super(message)
+    this.name = 'GeminiPermissionError'
+  }
+}
+
 export interface GeminiModelInitOptions {
   /**
    * Callback that receives download progress in the range [0, 1].
@@ -56,7 +63,10 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
     throw new GeminiUnavailableError('This browser does not expose the built-in AI Prompt API.')
   }
 
-  const model = builtInAI()
+  const model = builtInAI('text', {
+    language: 'en',
+  })
+  console.debug('[GeminiModel] builtInAI provider created with language=en')
 
   let availability: GeminiAvailability
   try {
@@ -90,6 +100,9 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
       })
       console.debug('[GeminiModel] download complete')
     } catch (error) {
+      if (error instanceof Error && error.name === 'NotAllowedError') {
+        throw new GeminiPermissionError('Gemini Nano download must be triggered via user gesture.')
+      }
       if (error instanceof Error && error.name === 'AbortError') {
         throw error
       }

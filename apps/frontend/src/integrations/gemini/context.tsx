@@ -5,11 +5,18 @@ import { isBuiltInAISupported } from './capabilities'
 import {
   ensureGeminiChatModel,
   GeminiInitializationError,
+  GeminiPermissionError,
   GeminiUnavailableError,
   resetGeminiModelCache,
 } from './model'
 
-type GeminiStatus = 'checking' | 'downloading' | 'ready' | 'unsupported' | 'error'
+type GeminiStatus =
+  | 'checking'
+  | 'downloadable'
+  | 'downloading'
+  | 'ready'
+  | 'unsupported'
+  | 'error'
 
 interface GeminiContextValue {
   status: GeminiStatus
@@ -17,6 +24,7 @@ interface GeminiContextValue {
   model: BuiltInAIChatLanguageModel | null
   error: Error | null
   retry: () => void
+  startDownload: () => Promise<void>
 }
 
 const GeminiContext = createContext<GeminiContextValue | undefined>(undefined)
@@ -62,6 +70,13 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(err => {
         if (!isMounted) return
+        if (err instanceof GeminiPermissionError) {
+          console.debug('[GeminiProvider] download requires user gesture')
+          setStatus('downloadable')
+          setProgress(null)
+          setError(null)
+          return
+        }
         if (err instanceof GeminiUnavailableError) {
           console.warn('[GeminiProvider] unsupported environment', err)
           setStatus('unsupported')
@@ -92,6 +107,56 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     setAttempt(value => value + 1)
   }, [])
 
+  const startDownload = useCallback(async () => {
+    if (status === 'downloading' || status === 'ready') {
+      return
+    }
+
+    console.debug('[GeminiProvider] manual download start')
+    setStatus('downloading')
+    setProgress(0)
+    setError(null)
+
+    resetGeminiModelCache()
+
+    try {
+      const loadedModel = await ensureGeminiChatModel({
+        onDownloadProgress: progressValue => {
+          setProgress(progressValue)
+        },
+      })
+      console.debug('[GeminiProvider] manual download complete')
+      setModel(loadedModel)
+      setStatus('ready')
+      setProgress(1)
+    } catch (err) {
+      if (err instanceof GeminiPermissionError) {
+        console.debug('[GeminiProvider] user gesture still required')
+        setStatus('downloadable')
+        setProgress(null)
+        setError(null)
+        return
+      }
+      if (err instanceof GeminiUnavailableError) {
+        console.warn('[GeminiProvider] unsupported during manual download', err)
+        setStatus('unsupported')
+        setModel(null)
+        setProgress(null)
+        setError(err)
+        return
+      }
+      if (err instanceof GeminiInitializationError) {
+        console.error('[GeminiProvider] download failed', err)
+        setStatus('error')
+        setError(err)
+        return
+      }
+      console.error('[GeminiProvider] unexpected download error', err)
+      setStatus('error')
+      setError(err as Error)
+    }
+  }, [status])
+
   const contextValue = useMemo<GeminiContextValue>(
     () => ({
       status,
@@ -99,8 +164,9 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       model,
       error,
       retry,
+      startDownload,
     }),
-    [status, progress, model, error, retry]
+    [status, progress, model, error, retry, startDownload]
   )
 
   return <GeminiContext.Provider value={contextValue}>{children}</GeminiContext.Provider>

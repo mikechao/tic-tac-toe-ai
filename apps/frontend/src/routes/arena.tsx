@@ -121,6 +121,14 @@ function GeminiStatusIndicator() {
     )
   }
 
+  if (status === 'downloadable') {
+    return (
+      <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">
+        Gemini Nano download required
+      </p>
+    )
+  }
+
   if (status === 'unsupported') {
     return (
       <p className="text-xs uppercase tracking-[0.3em] text-amber-300/80">
