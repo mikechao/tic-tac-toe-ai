@@ -103,7 +103,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
     - [x] Extend the Gemini support gate/provider to preload the model and surface errors or retry messaging.
 
 ## 5. Feature-specific Frontend
-- [ ] Match configuration UI
+- [x] Match configuration UI
   - Build `MatchControls` component using `bento-grid` for LLM selectors, difficulty presets, round count stepper.
   - Implement validation messaging for out-of-range input and confirm summary state.
 - [ ] Match arena board

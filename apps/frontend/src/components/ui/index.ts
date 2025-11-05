@@ -1,4 +1,5 @@
 export * from './bento-grid'
+export * from './blur-fade'
 export * from './dock'
 export * from './interactive-grid-pattern'
 export * from './magic-card'

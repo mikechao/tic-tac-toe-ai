@@ -7,11 +7,10 @@ import {
   BentoGrid,
   MagicCard,
   NumberTicker,
-  RainbowButton,
   WarpBackground,
 } from '@/components/ui'
 import { GeminiSupportGate } from '@/components/gemini/GeminiSupportGate'
-import { useGeminiContext } from '@/integrations/gemini/context'
+import { MatchControls } from '@/components/arena/MatchControls'
 
 export const Route = createFileRoute('/arena')({
   component: ArenaRoute,
@@ -65,30 +64,7 @@ function ArenaRoute() {
         </WarpBackground>
 
         <GeminiSupportGate>
-          <MagicCard>
-            <div className="flex flex-col gap-5 text-white">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-                  Match Controls
-                </p>
-                <h2 className="font-display text-2xl">
-                  Configure the showdown
-                </h2>
-                <p className="text-sm text-white/70">
-                  This is a placeholder for the upcoming match configuration
-                  panel (model selectors, difficulty, rounds).
-                </p>
-              </div>
-              <GeminiStatusIndicator />
-              <RainbowButton
-                type="button"
-                disabled
-                className="uppercase tracking-[0.25em]"
-              >
-                Start Match
-              </RainbowButton>
-            </div>
-          </MagicCard>
+          <MatchControls />
         </GeminiSupportGate>
       </section>
 
@@ -114,59 +90,5 @@ function ArenaRoute() {
         <Globe />
       </div>
     </main>
-  )
-}
-
-function GeminiStatusIndicator() {
-  const { status, progress, error } = useGeminiContext()
-
-  if (status === 'ready') {
-    return (
-      <p className="text-xs font-medium uppercase tracking-[0.3em] text-emerald-300/80">
-        Gemini Nano ready for local inference
-      </p>
-    )
-  }
-
-  if (status === 'downloading') {
-    const percent =
-      progress == null
-        ? null
-        : Math.min(100, Math.max(0, Math.round(progress * 100)))
-    return (
-      <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-        Downloading Gemini Nano{percent != null ? ` · ${percent}%` : ''}
-      </p>
-    )
-  }
-
-  if (status === 'downloadable') {
-    return (
-      <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">
-        Gemini Nano download required
-      </p>
-    )
-  }
-
-  if (status === 'unsupported') {
-    return (
-      <p className="text-xs uppercase tracking-[0.3em] text-amber-300/80">
-        Built-in AI unavailable
-      </p>
-    )
-  }
-
-  if (status === 'error') {
-    return (
-      <p className="text-xs uppercase tracking-[0.3em] text-rose-300/80">
-        {error instanceof Error ? error.message : 'Gemini init error'}
-      </p>
-    )
-  }
-
-  return (
-    <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-      Checking Gemini status…
-    </p>
   )
 }
