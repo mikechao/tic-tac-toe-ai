@@ -14,7 +14,7 @@
 
 ## Session & Round Management
 - [x] Initialize per-round `BoardState` instances on `start`, track cumulative score, and cache Gemini session handles for both models.
-- [ ] Implement round lifecycle helpers: reset board, determine starting player (alternate/randomized options), and transition to `running` phase.
+- [x] Implement round lifecycle helpers: reset board, determine starting player (alternate/randomized options), and transition to `running` phase.
 - [ ] After each move, evaluate outcomes via `checkWinner`/`isDraw`, aggregate telemetry, and queue transitions to `betweenRounds` or `completed`.
 - [ ] Provide a `nextRound` handler that safely advances state when invoked manually after pauses or errors.
 
@@ -94,3 +94,9 @@
 - First-round setup stays in `initializing` until optional model sessions load; once ready, `BEGIN_ROUND` promotes the phase to `running` and reuses the prebuilt board snapshot.
 - Optional `loadModelSession` dependency primes Gemini (or other) chat sessions for unique model IDs and caches the handles in the controller closure for reuse across matches.
 - Score tracking infrastructure remains (`state.score`) and will increment during the upcoming outcome evaluation task; noted as a follow-up when we wire `checkWinner`/`isDraw` processing.
+
+### 2025-11-05 Round Lifecycle Helpers
+- Added `ADVANCE_TO_BETWEEN_ROUNDS` reducer action and `betweenRounds` phase handling so the controller pauses between rounds with `activePlayer = null` before starting the next round.
+- `BEGIN_ROUND` now reuses/reset prebuilt `BoardState` instances, ensuring alternating starters (`determineStartingPlayer`) and cleared grids without reallocating arrays mid-match.
+- Controller options accept an `onPhaseChange` callback that fires alongside subscriber events, giving higher-level contexts a hook for enabling/disabling UI (e.g., match controls during `initializing`).
+- Further work noted: emit `round:complete` summaries and update scores once outcome evaluation is implemented in the next checklist item.

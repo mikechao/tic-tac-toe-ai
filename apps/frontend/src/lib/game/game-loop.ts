@@ -102,6 +102,7 @@ type GameLoopAction =
   | { type: 'PAUSE' }
   | { type: 'RESUME' }
   | { type: 'ABORT'; reason?: string }
+  | { type: 'ADVANCE_TO_BETWEEN_ROUNDS' }
   | { type: 'ERROR'; message: string }
 
 type TransitionResult = {
@@ -316,6 +317,15 @@ const transitionMap: Record<
         events: [{ type: 'board:update', board }],
       }
     },
+    ADVANCE_TO_BETWEEN_ROUNDS: (current) => ({
+      state: {
+        ...current,
+        phase: 'betweenRounds',
+        activePlayer: null,
+        isPaused: false,
+      },
+      events: [{ type: 'phase:change', phase: 'betweenRounds' }],
+    }),
   },
   betweenRounds: {
     BEGIN_ROUND: (current, action, context) => {
@@ -449,6 +459,7 @@ const validateConfig = (config: MatchConfig): void => {
 
 export interface GameLoopControllerOptions {
   loadModelSession?: (modelId: number) => Promise<unknown>
+  onPhaseChange?: (phase: GameLoopPhase) => void
 }
 
 export function createGameLoopController(
@@ -457,6 +468,7 @@ export function createGameLoopController(
   let state = createInitialState()
   let config: MatchConfig | null = null
   const { loadModelSession } = options
+  const phaseCallback = options.onPhaseChange
   const modelSessions = new Map<number, unknown>()
   const listeners = new Set<
     (next: GameLoopState, event?: GameLoopEvent) => void
@@ -464,6 +476,9 @@ export function createGameLoopController(
 
   const notify = (event?: GameLoopEvent): void => {
     const snapshot = state
+    if (event?.type === 'phase:change' && phaseCallback) {
+      phaseCallback(event.phase)
+    }
     for (const listener of listeners) {
       listener(snapshot, event)
     }
