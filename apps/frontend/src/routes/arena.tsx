@@ -28,10 +28,6 @@ function ArenaRoute() {
       </section>
 
       <section>
-        <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-          Upcoming
-        </p>
-        <h3 className="font-display text-xl text-white">Arena Overview</h3>
         <BentoGrid className="mt-4">
           <div className="col-span-12 md:col-span-4">
             <MatchTelemetry match={featuredMatch} />
@@ -39,9 +35,6 @@ function ArenaRoute() {
           <div className="col-span-12 md:col-span-4">
             <MatchMoveLog match={featuredMatch} />
           </div>
-          <BentoCard colSpanClassName="md:col-span-4">
-            <p className="text-sm text-white/70">AI reasoning placeholder</p>
-          </BentoCard>
         </BentoGrid>
       </section>
     </main>
