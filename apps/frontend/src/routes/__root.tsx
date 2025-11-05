@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import appCss from '../styles.css?url'
 import { AppHeader } from '@/components/layout/AppHeader'
+import { ToastProvider } from '@/components/ui'
 
 interface RouterContext {
   queryClient: QueryClient
@@ -24,10 +25,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <>
       <HeadContent />
-      <div className="min-h-screen bg-slate-950 text-white antialiased">
-        <AppHeader />
-        <div className="pb-16 pt-8">{children}</div>
-      </div>
+      <ToastProvider>
+        <div className="min-h-screen bg-slate-950 text-white antialiased">
+          <AppHeader />
+          <div className="pb-16 pt-8">{children}</div>
+        </div>
+      </ToastProvider>
       <Scripts />
     </>
   )

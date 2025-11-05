@@ -10,6 +10,7 @@ import {
   BlurFade,
   MagicCard,
   RainbowButton,
+  useToast,
 } from '@/components/ui'
 import {
   Select,
@@ -115,6 +116,7 @@ function ModelSelect({
 
 export function MatchControls() {
   const { status } = useGeminiContext()
+  const { showToast } = useToast()
 
   const availableModels = useMemo(
     () => demoModels.filter((model) => model.name === 'Gemini Nano'),
@@ -170,6 +172,27 @@ export function MatchControls() {
 
   const handleCustomRoundsChange = (value: number) => {
     setCustomRounds(clamp(Math.round(value || 1), 1, 100))
+  }
+
+  const handleStartMatch = () => {
+    if (!isConfigurationValid) {
+      showToast({
+        title: 'Adjust configuration',
+        description:
+          'Select distinct models and ensure rounds stay between 1 and 100 before starting the match.',
+        variant: 'warning',
+      })
+      return
+    }
+    showToast({
+      title: 'Match queued',
+      description: `${selectedModelA?.name ?? 'Model A'} vs ${
+        selectedModelB?.name ?? 'Model B'
+      } • ${totalRounds} ${
+        totalRounds === 1 ? 'round' : 'rounds'
+      }. Rematch ready when results persist.`,
+      variant: 'success',
+    })
   }
 
   return (
@@ -331,6 +354,7 @@ export function MatchControls() {
                 type="button"
                 disabled={!isConfigurationValid}
                 className="w-full uppercase tracking-[0.25em]"
+                onClick={handleStartMatch}
               >
                 Start Match
               </RainbowButton>

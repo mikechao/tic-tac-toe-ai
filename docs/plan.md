@@ -126,7 +126,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Error and empty states
   - Add inline alert components for configuration or API errors.
   - Provide empty state messaging when no leaderboard data exists.
-- [ ] Persistence feedback
+- [x] Persistence feedback
   - Show toast after session completion with rematch button; ensure toasts respect reduced motion.
 
 ## 6. Integration
