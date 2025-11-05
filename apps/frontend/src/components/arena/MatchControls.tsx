@@ -3,11 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ModelId } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
-import { cn } from '@/lib/utils'
 import {
   BentoCard,
   BentoGrid,
-  BlurFade,
   MagicCard,
   RainbowButton,
   useToast,
@@ -21,36 +19,7 @@ import {
 } from '@/components/ui/select'
 import { useGeminiContext } from '@/integrations/gemini/context'
 
-type RoundPreset = 'single' | 'bestOf3' | 'bestOf5' | 'custom'
-
 type ModelOption = (typeof demoModels)[number]
-
-const roundPresetOptions: Array<{
-  value: RoundPreset
-  label: string
-  helper: string
-  rounds: number | null
-}> = [
-  { value: 'single', label: 'Single', helper: 'Winner takes all', rounds: 1 },
-  {
-    value: 'bestOf3',
-    label: 'Best of 3',
-    helper: 'First to two wins',
-    rounds: 3,
-  },
-  {
-    value: 'bestOf5',
-    label: 'Best of 5',
-    helper: 'Series of five rounds',
-    rounds: 5,
-  },
-  {
-    value: 'custom',
-    label: 'Custom',
-    helper: 'Set a custom round count',
-    rounds: null,
-  },
-]
 
 const modelSelectTriggerClassName =
   'mt-3 !w-full justify-between rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base font-medium text-white/90 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-inset'
@@ -126,28 +95,15 @@ export function MatchControls() {
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
   const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
-  const [roundPreset, setRoundPreset] = useState<RoundPreset>('bestOf5')
-  const [customRounds, setCustomRounds] = useState<number>(7)
+  const [roundCount, setRoundCount] = useState<number>(5)
+  const totalRounds = clamp(Number.isFinite(roundCount) ? roundCount : 1, 1, 100)
   const [roundAnnouncement, setRoundAnnouncement] = useState<string>(
-    'Rounds set to Best of 5',
+    `Rounds set to ${totalRounds}`,
   )
 
-  const isCustomRoundsActive = roundPreset === 'custom'
-  const totalRounds = isCustomRoundsActive
-    ? clamp(Number.isFinite(customRounds) ? customRounds : 1, 1, 100)
-    : (roundPresetOptions.find((option) => option.value === roundPreset)
-        ?.rounds ?? 1)
-
   useEffect(() => {
-    const presetLabel =
-      roundPresetOptions.find((option) => option.value === roundPreset)
-        ?.label ?? 'Custom'
-    const message =
-      roundPreset === 'custom'
-        ? `Rounds set to Custom ${totalRounds}`
-        : `Rounds set to ${presetLabel}`
-    setRoundAnnouncement(message)
-  }, [roundPreset, totalRounds])
+    setRoundAnnouncement(`Rounds set to ${totalRounds}`)
+  }, [totalRounds])
 
   const selectedModelA = useMemo(
     () => demoModels.find((model) => model.id === modelAId),
@@ -170,8 +126,8 @@ export function MatchControls() {
       ? 'Gemini Nano ready for local inference'
       : 'Preparing Gemini models…'
 
-  const handleCustomRoundsChange = (value: number) => {
-    setCustomRounds(clamp(Math.round(value || 1), 1, 100))
+  const handleRoundCountChange = (value: number) => {
+    setRoundCount(clamp(Math.round(value || 1), 1, 100))
   }
 
   const handleStartMatch = () => {
@@ -257,82 +213,47 @@ export function MatchControls() {
               <legend className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
                 Round count
               </legend>
-              <div className="grid gap-3">
-                {roundPresetOptions.map((option) => {
-                  const isActive = option.value === roundPreset
-                  return (
-                    <label
-                      key={option.value}
-                      className={cn(
-                        'relative flex h-full cursor-pointer flex-col rounded-[1.5rem] border border-white/15 bg-white/5 px-5 py-4 transition focus-within:ring-2 focus-within:ring-[#f15bb5]/60 focus-within:ring-offset-2 focus-within:ring-offset-transparent',
-                        isActive
-                          ? 'border-[#f15bb5] bg-[#f15bb5]/12 shadow-[0_16px_44px_rgba(241,91,181,0.35)]'
-                          : 'hover:border-white/25',
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="roundPreset"
-                        value={option.value}
-                        checked={isActive}
-                        onChange={() => setRoundPreset(option.value)}
-                        className="sr-only"
-                      />
-                      <span className="text-sm font-semibold uppercase tracking-[0.15em]">
-                        {option.label}
-                      </span>
-                      <span className="mt-1 text-xs text-white/60">
-                        {option.helper}
-                      </span>
-                    </label>
-                  )
-                })}
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+                  Set number of rounds
+                </p>
+                <p className="mt-1 text-xs text-white/60">
+                  Choose between 1 and 100 rounds for this showdown.
+                </p>
+                <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
+                    onClick={() => handleRoundCountChange(totalRounds - 1)}
+                    aria-label="Decrease rounds"
+                  >
+                    –
+                  </button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={100}
+                    value={totalRounds}
+                    onChange={(event) =>
+                      handleRoundCountChange(Number(event.target.value))
+                    }
+                    className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none"
+                    aria-label="Round count"
+                  />
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
+                    onClick={() => handleRoundCountChange(totalRounds + 1)}
+                    aria-label="Increase rounds"
+                  >
+                    +
+                  </button>
+                  <span className="ml-auto text-xs uppercase tracking-[0.2em] text-white/40">
+                    1–100
+                  </span>
+                </div>
               </div>
-              {isCustomRoundsActive && (
-                <BlurFade duration={0.3} blur="4px">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-                      Custom rounds
-                    </p>
-                    <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
-                      <button
-                        type="button"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
-                        onClick={() => handleCustomRoundsChange(customRounds - 1)}
-                        disabled={!isCustomRoundsActive}
-                        aria-label="Decrease rounds"
-                      >
-                        –
-                      </button>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={100}
-                        value={customRounds}
-                        onChange={(event) =>
-                          handleCustomRoundsChange(Number(event.target.value))
-                        }
-                        className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none disabled:opacity-60"
-                        disabled={!isCustomRoundsActive}
-                        aria-label="Custom round count"
-                      />
-                      <button
-                        type="button"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
-                        onClick={() => handleCustomRoundsChange(customRounds + 1)}
-                        disabled={!isCustomRoundsActive}
-                        aria-label="Increase rounds"
-                      >
-                        +
-                      </button>
-                      <span className="ml-auto text-xs uppercase tracking-[0.2em] text-white/40">
-                        1–100
-                      </span>
-                    </div>
-                  </div>
-                </BlurFade>
-              )}
               <div aria-live="polite" className="sr-only">
                 {roundAnnouncement}
               </div>
