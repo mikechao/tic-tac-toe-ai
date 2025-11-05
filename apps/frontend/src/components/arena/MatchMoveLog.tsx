@@ -94,7 +94,6 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
     )
   }
   const [isPaused, setIsPaused] = useState(false)
-  const [expandedMoveId, setExpandedMoveId] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   const modelA = useMemo(
@@ -183,7 +182,6 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
           ) : (
             <AnimatedList className="flex flex-col gap-3" delay={600}>
               {resolvedMoves.map((move) => {
-              const isExpanded = expandedMoveId === move.id
               const isLatest = move.id === latestMoveId
               return (
                 <article
@@ -226,26 +224,8 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
                       {move.coordinate} · {move.durationSeconds.toFixed(1)}s
                     </span>
                   </div>
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3">
                     <p className="text-white/70">
-                      {isExpanded
-                        ? move.rationale
-                        : `${move.rationale.slice(0, 72)}${
-                            move.rationale.length > 72 ? '…' : ''
-                          }`}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedMoveId(isExpanded ? null : move.id)
-                      }
-                      className="text-xs font-semibold uppercase tracking-[0.3em] text-[#4ff2c2] transition hover:text-[#4ff2c2]/80"
-                      aria-expanded={isExpanded}
-                      aria-controls={`${move.id}-details`}
-                    >
-                      {isExpanded ? 'Hide rationale' : 'View rationale'}
-                    </button>
-                    <p id={`${move.id}-details`} className="sr-only">
                       {move.rationale}
                     </p>
                   </div>
