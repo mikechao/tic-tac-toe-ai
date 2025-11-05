@@ -81,53 +81,42 @@ const mockMoves: MoveEntry[] = [
 ]
 
 export function MatchMoveLog({ match }: { match?: MatchSummary }) {
-  if (!match) {
-    return (
-      <MagicCard
-        className="border-white/15 bg-white/[0.04] px-0 py-0"
-        spotlight={false}
-      >
-        <div className="flex h-full items-center justify-center rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-8">
-          <StateMessage
-            title="No move history yet"
-            description="As soon as a match begins, we’ll record every move with reasoning and timing details."
-          />
-        </div>
-      </MagicCard>
-    )
-  }
   const [isPaused, setIsPaused] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const modelA = useMemo(
-    () => demoModels.find((model) => model.id === match.modelAId),
-    [match.modelAId],
-  )
-  const modelB = useMemo(
-    () => demoModels.find((model) => model.id === match.modelBId),
-    [match.modelBId],
-  )
+  const modelAId = match?.modelAId
+  const modelBId = match?.modelBId
+  const hasMatch = Boolean(match)
 
-  const resolvedMoves = useMemo(
-    () =>
-      mockMoves.map((move) => ({
-        ...move,
-        model:
-          move.modelKey === 'modelA'
-            ? (modelA ?? demoModels[0])
-            : (modelB ?? demoModels[1]),
-      })),
-    [modelA, modelB],
-  )
+  const modelA = useMemo(() => {
+    if (modelAId == null) return undefined
+    return demoModels.find((model) => model.id === modelAId)
+  }, [modelAId])
+
+  const modelB = useMemo(() => {
+    if (modelBId == null) return undefined
+    return demoModels.find((model) => model.id === modelBId)
+  }, [modelBId])
+
+  const resolvedMoves = useMemo(() => {
+    if (!match) return []
+    return mockMoves.map((move) => ({
+      ...move,
+      model:
+        move.modelKey === 'modelA'
+          ? (modelA ?? demoModels[0])
+          : (modelB ?? demoModels[1]),
+    }))
+  }, [match, modelA, modelB])
 
   useEffect(() => {
-    if (isPaused || !listRef.current) return
+    if (isPaused || !listRef.current || resolvedMoves.length === 0) return
     const element = listRef.current
     element.scrollTo({
       top: element.scrollHeight,
       behavior: 'smooth',
     })
-  }, [resolvedMoves, isPaused])
+  }, [isPaused, resolvedMoves.length])
 
   const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
   const showEmptyState = resolvedMoves.length === 0
@@ -177,7 +166,15 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
           role="log"
           aria-live={isPaused ? 'off' : 'polite'}
         >
-          {showEmptyState ? (
+          {!hasMatch ? (
+            <div className="px-2 py-6">
+              <StateMessage
+                title="No move history yet"
+                description="As soon as a match begins, we’ll record every move with reasoning and timing details."
+                className="w-full"
+              />
+            </div>
+          ) : showEmptyState ? (
             <div className="px-2 py-6">
               <StateMessage
                 title="Waiting for the first move"

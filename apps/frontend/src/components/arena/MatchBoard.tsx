@@ -87,6 +87,19 @@ function PlayerBadge({
 }
 
 export function MatchBoard({ match }: { match?: MatchSummary }) {
+  const modelAId = match?.modelAId
+  const modelBId = match?.modelBId
+
+  const modelA = useMemo(() => {
+    if (modelAId == null) return undefined
+    return demoModels.find((model) => model.id === modelAId)
+  }, [modelAId])
+
+  const modelB = useMemo(() => {
+    if (modelBId == null) return undefined
+    return demoModels.find((model) => model.id === modelBId)
+  }, [modelBId])
+
   if (!match) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -102,15 +115,6 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
       </div>
     )
   }
-
-  const modelA = useMemo(
-    () => demoModels.find((model) => model.id === match.modelAId),
-    [match.modelAId],
-  )
-  const modelB = useMemo(
-    () => demoModels.find((model) => model.id === match.modelBId),
-    [match.modelBId],
-  )
 
   const boardStatus = `Round ${demoScore.currentRound} of ${match.totalRounds}`
   const turnsRemaining =
@@ -200,43 +204,51 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
             </div>
           </div>
 
-          <div
-            role="grid"
+          <table
             aria-label="Tic tac toe match board"
-            className="grid grid-cols-3 gap-3 sm:gap-4"
+            className="w-full border-separate border-spacing-3 sm:border-spacing-4"
           >
-            {demoBoardState.map((cell) => (
-              <div
-                key={cell.id}
-                role="gridcell"
-                tabIndex={0}
-                aria-label={`${cell.position} ${
-                  cell.mark ? `contains ${cell.mark}` : 'is empty'
-                }`}
-                className={cn(
-                  'relative flex h-24 items-center justify-center rounded-[1.25rem] border border-white/12 bg-white/5 text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
-                  cell.isWinning
-                    ? 'border-[#4ff2c2] bg-[#4ff2c2]/15 shadow-[0_0_32px_rgba(79,242,194,0.35)]'
-                    : 'hover:border-white/25 hover:bg-white/10',
-                )}
-              >
-                <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
-                  {cell.label}
-                </span>
-                <span
-                  className={cn(
-                    'transition-transform duration-300',
-                    cell.mark
-                      ? 'scale-100 text-white'
-                      : 'scale-90 text-white/30',
-                  )}
+            <tbody>
+              {[0, 1, 2].map((rowIndex) => (
+                <tr
+                  key={demoBoardState[rowIndex * 3]?.id ?? `row-${rowIndex}`}
+                  className="align-middle"
                 >
-                  {cell.mark ?? '·'}
-                </span>
-              </div>
-            ))}
-          </div>
+                  {demoBoardState
+                    .slice(rowIndex * 3, rowIndex * 3 + 3)
+                    .map((cell) => (
+                      <td
+                        key={cell.id}
+                        aria-label={`${cell.position} ${
+                          cell.mark ? `contains ${cell.mark}` : 'is empty'
+                        }`}
+                        className={cn(
+                          'relative h-24 min-w-[6rem] rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
+                        cell.isWinning
+                          ? 'border-[#4ff2c2] bg-[#4ff2c2]/15 shadow-[0_0_32px_rgba(79,242,194,0.35)]'
+                          : 'hover:border-white/25 hover:bg-white/10',
+                      )}
+                    >
+                      <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
+                        {cell.label}
+                      </span>
+                      <span
+                        className={cn(
+                          'transition-transform duration-300',
+                          cell.mark
+                            ? 'scale-100 text-white'
+                            : 'scale-90 text-white/30',
+                        )}
+                      >
+                        {cell.mark ?? '·'}
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
             <span className="font-semibold uppercase tracking-[0.2em] text-white/60">

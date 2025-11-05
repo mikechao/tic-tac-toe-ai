@@ -21,6 +21,16 @@ const mockTelemetry = {
 }
 
 export function MatchTelemetry({ match }: { match?: MatchSummary }) {
+  const modelA = useMemo(() => {
+    if (!match) return undefined
+    return demoModels.find((model) => model.id === match.modelAId)
+  }, [match])
+
+  const modelB = useMemo(() => {
+    if (!match) return undefined
+    return demoModels.find((model) => model.id === match.modelBId)
+  }, [match])
+
   if (!match) {
     return (
       <MagicCard
@@ -36,14 +46,6 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
       </MagicCard>
     )
   }
-  const modelA = useMemo(
-    () => demoModels.find((model) => model.id === match.modelAId),
-    [match.modelAId],
-  )
-  const modelB = useMemo(
-    () => demoModels.find((model) => model.id === match.modelBId),
-    [match.modelBId],
-  )
 
   const activeModel =
     mockTelemetry.activeModel === 'modelA' ? modelA : (modelB ?? modelA)
