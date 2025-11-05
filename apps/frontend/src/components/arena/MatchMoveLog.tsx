@@ -1,0 +1,231 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+import type { MatchListResponse } from '@arena/schema'
+
+import { demoModels } from '@/data/demo.models'
+import { cn } from '@/lib/utils'
+import { AnimatedList, MagicCard } from '@/components/ui'
+
+type MatchSummary = MatchListResponse['matches'][number]
+
+type MoveEntry = {
+  id: string
+  modelKey: 'modelA' | 'modelB'
+  coordinate: string
+  mark: 'X' | 'O'
+  round: number
+  turn: number
+  durationSeconds: number
+  timestamp: string
+  rationale: string
+}
+
+const mockMoves: MoveEntry[] = [
+  {
+    id: 'move-1',
+    modelKey: 'modelA',
+    coordinate: 'A1',
+    mark: 'X',
+    round: 1,
+    turn: 1,
+    durationSeconds: 1.8,
+    timestamp: '2025-10-01T15:32:12.000Z',
+    rationale: 'Opened on the corner to create dual-win threats rapidly.',
+  },
+  {
+    id: 'move-2',
+    modelKey: 'modelB',
+    coordinate: 'B2',
+    mark: 'O',
+    round: 1,
+    turn: 2,
+    durationSeconds: 2.6,
+    timestamp: '2025-10-01T15:32:14.300Z',
+    rationale: 'Countered with center control to block future forks.',
+  },
+  {
+    id: 'move-3',
+    modelKey: 'modelA',
+    coordinate: 'C3',
+    mark: 'X',
+    round: 1,
+    turn: 3,
+    durationSeconds: 2.1,
+    timestamp: '2025-10-01T15:32:16.700Z',
+    rationale: 'Established diagonal dominance, setting up closing edge.',
+  },
+  {
+    id: 'move-4',
+    modelKey: 'modelB',
+    coordinate: 'A2',
+    mark: 'O',
+    round: 1,
+    turn: 4,
+    durationSeconds: 3.3,
+    timestamp: '2025-10-01T15:32:20.200Z',
+    rationale: 'Blocked diagonal threat while opening vertical counter.',
+  },
+  {
+    id: 'move-5',
+    modelKey: 'modelA',
+    coordinate: 'B3',
+    mark: 'X',
+    round: 1,
+    turn: 5,
+    durationSeconds: 1.9,
+    timestamp: '2025-10-01T15:32:22.000Z',
+    rationale: 'Forced opponent to defend bottom row, maintaining tempo.',
+  },
+]
+
+export function MatchMoveLog({ match }: { match: MatchSummary }) {
+  const [isPaused, setIsPaused] = useState(false)
+  const [expandedMoveId, setExpandedMoveId] = useState<string | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  const modelA = useMemo(
+    () => demoModels.find((model) => model.id === match.modelAId),
+    [match.modelAId],
+  )
+  const modelB = useMemo(
+    () => demoModels.find((model) => model.id === match.modelBId),
+    [match.modelBId],
+  )
+
+  const resolvedMoves = useMemo(
+    () =>
+      mockMoves.map((move) => ({
+        ...move,
+        model:
+          move.modelKey === 'modelA'
+            ? modelA ?? demoModels[0]
+            : modelB ?? demoModels[1],
+      })),
+    [modelA, modelB],
+  )
+
+  useEffect(() => {
+    if (isPaused || !listRef.current) return
+    const element = listRef.current
+    element.scrollTo({
+      top: element.scrollHeight,
+      behavior: 'smooth',
+    })
+  }, [resolvedMoves, isPaused])
+
+  const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
+
+  return (
+    <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
+      <div className="flex h-full flex-col gap-4 rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-6 text-white backdrop-blur">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+              Move Log
+            </p>
+            <h3 className="font-display text-xl">
+              Reviewing round {resolvedMoves[0]?.round ?? 1}
+            </h3>
+            <p className="text-sm text-white/70">
+              Auto-scroll keeps you at the latest move; pause anytime to inspect
+              a turn.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsPaused((previous) => !previous)}
+            className={cn(
+              'inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
+              isPaused
+                ? 'bg-white/10 text-white hover:bg-white/15'
+                : 'bg-[#4ff2c2]/20 text-white hover:bg-[#4ff2c2]/30',
+            )}
+            aria-pressed={isPaused}
+          >
+            {isPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
+          </button>
+        </header>
+
+        <div
+          ref={listRef}
+          className="relative max-h-80 overflow-y-auto pr-1"
+          role="log"
+          aria-live={isPaused ? 'off' : 'polite'}
+        >
+          <AnimatedList className="flex flex-col gap-3" delay={600}>
+            {resolvedMoves.map((move) => {
+              const isExpanded = expandedMoveId === move.id
+              const isLatest = move.id === latestMoveId
+              return (
+                <article
+                  key={move.id}
+                  className={cn(
+                    'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
+                    isLatest
+                      ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
+                      : 'hover:border-white/25 hover:bg-white/10',
+                  )}
+                >
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span
+                      className={cn(
+                        'flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
+                        move.mark === 'X'
+                          ? 'text-[#4ff2c2]'
+                          : 'text-[#f15bb5]',
+                      )}
+                      aria-hidden="true"
+                    >
+                      {move.mark}
+                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                      <p className="font-semibold text-white">
+                        {move.model.name}{' '}
+                        <span className="text-white/60">
+                          · round {move.round}, turn {move.turn}
+                        </span>
+                      </p>
+                      <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+                        {new Date(move.timestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
+                      {move.coordinate} · {move.durationSeconds.toFixed(1)}s
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <p className="text-white/70">
+                      {isExpanded
+                        ? move.rationale
+                        : `${move.rationale.slice(0, 72)}${
+                            move.rationale.length > 72 ? '…' : ''
+                          }`}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedMoveId(isExpanded ? null : move.id)
+                      }
+                      className="text-xs font-semibold uppercase tracking-[0.3em] text-[#4ff2c2] transition hover:text-[#4ff2c2]/80"
+                      aria-expanded={isExpanded}
+                      aria-controls={`${move.id}-details`}
+                    >
+                      {isExpanded ? 'Hide rationale' : 'View rationale'}
+                    </button>
+                    <p id={`${move.id}-details`} className="sr-only">
+                      {move.rationale}
+                    </p>
+                  </div>
+                </article>
+              )
+            })}
+          </AnimatedList>
+        </div>
+      </div>
+    </MagicCard>
+  )
+}

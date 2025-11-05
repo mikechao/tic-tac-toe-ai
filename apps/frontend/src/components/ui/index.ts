@@ -1,6 +1,7 @@
 export * from './bento-grid'
 export * from './blur-fade'
 export * from './dock'
+export * from './animated-list'
 export * from './interactive-grid-pattern'
 export * from './magic-card'
 export * from './marquee'
