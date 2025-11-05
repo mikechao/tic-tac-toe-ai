@@ -20,12 +20,14 @@ if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
     environment: import.meta.env.VITE_SENTRY_ENV ?? 'development',
-    tracesSampleRate: Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
+    tracesSampleRate: Number(
+      import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1,
+    ),
     replaysSessionSampleRate: Number(
-      import.meta.env.VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE ?? 0.1
+      import.meta.env.VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE ?? 0.1,
     ),
     replaysOnErrorSampleRate: Number(
-      import.meta.env.VITE_SENTRY_REPLAYS_ERROR_SAMPLE_RATE ?? 1.0
+      import.meta.env.VITE_SENTRY_REPLAYS_ERROR_SAMPLE_RATE ?? 1.0,
     ),
     integrations: [
       tanstackRouterBrowserTracingIntegration({
@@ -57,5 +59,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     >
       <RouterProvider router={router} />
     </Sentry.ErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

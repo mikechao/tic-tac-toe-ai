@@ -21,7 +21,7 @@ export function Marquee({
 }: MarqueeProps) {
   const loops = useMemo(
     () => Array.from({ length: repeat }, (_, index) => `loop-${index}`),
-    [repeat]
+    [repeat],
   )
 
   return (
@@ -29,7 +29,7 @@ export function Marquee({
       className={cn(
         'group overflow-hidden',
         vertical ? 'flex flex-col' : 'flex flex-row',
-        className
+        className,
       )}
       {...props}
     >
@@ -38,9 +38,11 @@ export function Marquee({
           key={loopKey}
           className={cn(
             'flex shrink-0 gap-6 px-4 py-2',
-            vertical ? 'animate-marquee-vertical flex-col' : 'animate-marquee flex-row',
+            vertical
+              ? 'animate-marquee-vertical flex-col'
+              : 'animate-marquee flex-row',
             reverse && '[animation-direction:reverse]',
-            pauseOnHover && 'group-hover:[animation-play-state:paused]'
+            pauseOnHover && 'group-hover:[animation-play-state:paused]',
           )}
           style={{
             animationDuration: 'var(--marquee-duration, 30s)',

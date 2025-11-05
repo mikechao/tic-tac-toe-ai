@@ -5,7 +5,9 @@ export type AuthVariables = {
   userId?: string
 }
 
-export function createAuthMiddleware(): MiddlewareHandler<{ Variables: AuthVariables }> {
+export function createAuthMiddleware(): MiddlewareHandler<{
+  Variables: AuthVariables
+}> {
   return async (c, next) => {
     const authorization = c.req.header('authorization')
 

@@ -18,10 +18,10 @@ const modelFamilies = [
 ] as const
 
 interface LeaderboardFiltersProps {
-  selectedRange: typeof timeRanges[number]['value']
-  onSelectRange: (value: typeof timeRanges[number]['value']) => void
-  selectedFamily: typeof modelFamilies[number]['value']
-  onSelectFamily: (value: typeof modelFamilies[number]['value']) => void
+  selectedRange: (typeof timeRanges)[number]['value']
+  onSelectRange: (value: (typeof timeRanges)[number]['value']) => void
+  selectedFamily: (typeof modelFamilies)[number]['value']
+  onSelectFamily: (value: (typeof modelFamilies)[number]['value']) => void
 }
 
 export function LeaderboardFilters({
@@ -35,7 +35,10 @@ export function LeaderboardFilters({
 
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-      <MagicCard className="h-full border-white/15 bg-white/[0.04]" spotlight={false}>
+      <MagicCard
+        className="h-full border-white/15 bg-white/[0.04]"
+        spotlight={false}
+      >
         <fieldset className="space-y-4">
           <legend className="text-xs uppercase tracking-[0.3em] text-white/60">
             Time range
@@ -54,7 +57,10 @@ export function LeaderboardFilters({
           </div>
         </fieldset>
       </MagicCard>
-      <MagicCard className="h-full border-white/15 bg-white/[0.04]" spotlight={false}>
+      <MagicCard
+        className="h-full border-white/15 bg-white/[0.04]"
+        spotlight={false}
+      >
         <fieldset className="space-y-4">
           <legend className="text-xs uppercase tracking-[0.3em] text-white/60">
             Model family

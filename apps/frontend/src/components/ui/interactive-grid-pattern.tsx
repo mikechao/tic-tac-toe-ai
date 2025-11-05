@@ -34,7 +34,7 @@ export function InteractiveGridPattern({
         aria-hidden="true"
         className={cn(
           'absolute inset-0 -z-10 bg-transparent',
-          mask && 'grid-mask'
+          mask && 'grid-mask',
         )}
         style={{
           backgroundImage: `

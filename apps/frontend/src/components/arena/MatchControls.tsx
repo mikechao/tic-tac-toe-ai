@@ -55,7 +55,9 @@ function ModelSelect({
       </span>
       <Select
         value={String(value)}
-        onValueChange={(nextValue) => onValueChange(Number(nextValue) as ModelId)}
+        onValueChange={(nextValue) =>
+          onValueChange(Number(nextValue) as ModelId)
+        }
       >
         <SelectTrigger
           aria-labelledby={labelId}
@@ -96,7 +98,11 @@ export function MatchControls() {
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
   const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
   const [roundCount, setRoundCount] = useState<number>(5)
-  const totalRounds = clamp(Number.isFinite(roundCount) ? roundCount : 1, 1, 100)
+  const totalRounds = clamp(
+    Number.isFinite(roundCount) ? roundCount : 1,
+    1,
+    100,
+  )
   const [roundAnnouncement, setRoundAnnouncement] = useState<string>(
     `Rounds set to ${totalRounds}`,
   )

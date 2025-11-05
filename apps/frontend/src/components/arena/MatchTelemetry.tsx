@@ -23,7 +23,10 @@ const mockTelemetry = {
 export function MatchTelemetry({ match }: { match?: MatchSummary }) {
   if (!match) {
     return (
-      <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
+      <MagicCard
+        className="border-white/15 bg-white/[0.04] px-0 py-0"
+        spotlight={false}
+      >
         <div className="flex h-full items-center justify-center rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-8">
           <StateMessage
             title="Telemetry unavailable"
@@ -43,7 +46,7 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
   )
 
   const activeModel =
-    mockTelemetry.activeModel === 'modelA' ? modelA : modelB ?? modelA
+    mockTelemetry.activeModel === 'modelA' ? modelA : (modelB ?? modelA)
   const activeAccent =
     mockTelemetry.activeModel === 'modelA'
       ? 'from-[#4ff2c2]/40 via-[#4ff2c2]/20'

@@ -11,7 +11,7 @@ export function BentoGrid({
     <div
       className={cn(
         'grid gap-4 md:auto-rows-[minmax(160px,1fr)] md:grid-cols-12',
-        className
+        className,
       )}
       {...props}
     >
@@ -40,7 +40,7 @@ export function BentoCard({
         'col-span-12',
         colSpanClassName,
         'rounded-[1.75rem] border border-white/10 bg-[var(--surface)]/80 p-6 backdrop-blur',
-        className
+        className,
       )}
       {...props}
     >

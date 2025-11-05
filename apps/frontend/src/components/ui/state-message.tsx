@@ -3,8 +3,7 @@ import { cn } from '@/lib/utils'
 type StateVariant = 'empty' | 'error'
 
 const variantStyles: Record<StateVariant, string> = {
-  empty:
-    'border-white/15 bg-white/[0.04] text-white/70 [&>svg]:text-[#4ff2c2]',
+  empty: 'border-white/15 bg-white/[0.04] text-white/70 [&>svg]:text-[#4ff2c2]',
   error:
     'border-[#f15bb5]/40 bg-[#f15bb5]/10 text-white [&>svg]:text-[#f15bb5]',
 }

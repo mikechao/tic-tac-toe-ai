@@ -15,7 +15,7 @@ type PreferencesContextValue = {
 }
 
 const PreferencesContext = createContext<PreferencesContextValue | undefined>(
-  undefined
+  undefined,
 )
 
 const STORAGE_KEY = 'ai-arena:reduced-motion'
@@ -28,12 +28,14 @@ function getInitialReducedMotion(): boolean {
   if (stored === 'true' || stored === 'false') {
     return stored === 'true'
   }
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  return (
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  )
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [reducedMotion, setReducedMotionState] = useState<boolean>(() =>
-    getInitialReducedMotion()
+    getInitialReducedMotion(),
   )
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ reducedMotion, setReducedMotion, toggleReducedMotion }),
-    [reducedMotion, setReducedMotion, toggleReducedMotion]
+    [reducedMotion, setReducedMotion, toggleReducedMotion],
   )
 
   return (

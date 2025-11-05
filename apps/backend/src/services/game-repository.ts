@@ -9,7 +9,11 @@ import { games, moves } from '../../drizzle/schema'
 export type GameRecord = typeof games.$inferSelect
 export type MoveRecord = typeof moves.$inferSelect
 
-export async function createGameRecord(env: Env, matchId: number, input: CreateGamePayload): Promise<GameRecord> {
+export async function createGameRecord(
+  env: Env,
+  matchId: number,
+  input: CreateGamePayload,
+): Promise<GameRecord> {
   const db = createDb(env)
   const [record] = await db
     .insert(games)
@@ -24,16 +28,23 @@ export async function createGameRecord(env: Env, matchId: number, input: CreateG
   return record
 }
 
-export async function findGameById(env: Env, gameId: number): Promise<GameRecord | null> {
+export async function findGameById(
+  env: Env,
+  gameId: number,
+): Promise<GameRecord | null> {
   const db = createDb(env)
-  const [record] = await db.select().from(games).where(eq(games.id, gameId)).limit(1)
+  const [record] = await db
+    .select()
+    .from(games)
+    .where(eq(games.id, gameId))
+    .limit(1)
   return record ?? null
 }
 
 export async function findGameByMatchAndRound(
   env: Env,
   matchId: number,
-  round: number
+  round: number,
 ): Promise<GameRecord | null> {
   const db = createDb(env)
   const [record] = await db
@@ -44,15 +55,22 @@ export async function findGameByMatchAndRound(
   return record ?? null
 }
 
-export async function listMovesForGame(env: Env, gameId: number): Promise<MoveRecord[]> {
+export async function listMovesForGame(
+  env: Env,
+  gameId: number,
+): Promise<MoveRecord[]> {
   const db = createDb(env)
-  return db.select().from(moves).where(eq(moves.gameId, gameId)).orderBy(asc(moves.moveIndex))
+  return db
+    .select()
+    .from(moves)
+    .where(eq(moves.gameId, gameId))
+    .orderBy(asc(moves.moveIndex))
 }
 
 export async function createMoveRecord(
   env: Env,
   gameId: number,
-  input: CreateMovePayload
+  input: CreateMovePayload,
 ): Promise<MoveRecord> {
   const db = createDb(env)
   const [record] = await db

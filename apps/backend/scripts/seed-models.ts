@@ -16,7 +16,8 @@ async function main() {
   const presetModels = [
     {
       name: 'Gemini Nano Tactical',
-      description: 'Default aggressive tic-tac-toe strategy tuned for short games',
+      description:
+        'Default aggressive tic-tac-toe strategy tuned for short games',
       provider: 'Google Gemini',
     },
     {

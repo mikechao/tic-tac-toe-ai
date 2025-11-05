@@ -17,19 +17,26 @@ type LiveRegionContextValue = {
 }
 
 const LiveRegionContext = createContext<LiveRegionContextValue | undefined>(
-  undefined
+  undefined,
 )
 
-export function LiveRegionProvider({ children }: { children: React.ReactNode }) {
+export function LiveRegionProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const [messages, setMessages] = useState<
     Array<{ id: number; text: string; politeness: PolitenessSetting }>
   >([])
 
   const announce = useCallback(
     (message: string, politeness: PolitenessSetting = 'polite') => {
-      setMessages((prev) => [...prev, { id: Date.now(), text: message, politeness }])
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: message, politeness },
+      ])
     },
-    []
+    [],
   )
 
   useEffect(() => {
@@ -130,10 +137,11 @@ export function useInitialFocus<TElement extends HTMLElement>() {
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(
     container.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
   ).filter(
     (element) =>
-      !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true'
+      !element.hasAttribute('disabled') &&
+      element.getAttribute('aria-hidden') !== 'true',
   )
 }

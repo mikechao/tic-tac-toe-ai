@@ -34,7 +34,12 @@ export interface GeminiModelInitOptions {
   onDownloadProgress?: (progress: number) => void
 }
 
-type GeminiAvailability = 'unavailable' | 'available' | 'available-after-download' | 'downloadable' | 'downloading'
+type GeminiAvailability =
+  | 'unavailable'
+  | 'available'
+  | 'available-after-download'
+  | 'downloadable'
+  | 'downloading'
 
 let cachedModel: BuiltInAIChatLanguageModel | null = null
 let pendingInitialization: Promise<BuiltInAIChatLanguageModel> | null = null
@@ -47,7 +52,7 @@ export function resetGeminiModelCache(): void {
 function ensureClientEnvironment(): void {
   if (typeof window === 'undefined') {
     throw new GeminiUnavailableError(
-      'Gemini Nano runs only in supported browsers. Detected non-browser runtime.'
+      'Gemini Nano runs only in supported browsers. Detected non-browser runtime.',
     )
   }
 }
@@ -56,11 +61,15 @@ function isDownloadRequired(status: GeminiAvailability): boolean {
   return status !== 'available' && status !== 'unavailable'
 }
 
-async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltInAIChatLanguageModel> {
+async function initializeModel(
+  options?: GeminiModelInitOptions,
+): Promise<BuiltInAIChatLanguageModel> {
   ensureClientEnvironment()
 
   if (!isBuiltInAISupported()) {
-    throw new GeminiUnavailableError('This browser does not expose the built-in AI Prompt API.')
+    throw new GeminiUnavailableError(
+      'This browser does not expose the built-in AI Prompt API.',
+    )
   }
 
   const model = builtInAI()
@@ -70,14 +79,17 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
     availability = (await model.availability()) as GeminiAvailability
     console.debug('[GeminiModel] availability', availability)
   } catch (error) {
-    throw new GeminiInitializationError('Failed to determine Gemini Nano availability.', {
-      cause: error,
-    })
+    throw new GeminiInitializationError(
+      'Failed to determine Gemini Nano availability.',
+      {
+        cause: error,
+      },
+    )
   }
 
   if (availability === 'unavailable') {
     throw new GeminiUnavailableError(
-      'Gemini Nano is unavailable. Ensure the Prompt API flag is enabled and the model is downloaded.'
+      'Gemini Nano is unavailable. Ensure the Prompt API flag is enabled and the model is downloaded.',
     )
   }
 
@@ -91,21 +103,26 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
   if (needsDownload || !cachedModel) {
     try {
       console.debug('[GeminiModel] starting download')
-      await model.createSessionWithProgress(progress => {
+      await model.createSessionWithProgress((progress) => {
         console.log(`Download progress: ${Math.round(progress * 100)}%`)
         options?.onDownloadProgress?.(progress)
       })
       console.debug('[GeminiModel] download complete')
     } catch (error) {
       if (error instanceof Error && error.name === 'NotAllowedError') {
-        throw new GeminiPermissionError('Gemini Nano download must be triggered via user gesture.')
+        throw new GeminiPermissionError(
+          'Gemini Nano download must be triggered via user gesture.',
+        )
       }
       if (error instanceof Error && error.name === 'AbortError') {
         throw error
       }
-      throw new GeminiInitializationError('Gemini Nano session bootstrap failed.', {
-        cause: error,
-      })
+      throw new GeminiInitializationError(
+        'Gemini Nano session bootstrap failed.',
+        {
+          cause: error,
+        },
+      )
     }
   }
 
@@ -115,7 +132,7 @@ async function initializeModel(options?: GeminiModelInitOptions): Promise<BuiltI
 }
 
 export async function ensureGeminiChatModel(
-  options?: GeminiModelInitOptions
+  options?: GeminiModelInitOptions,
 ): Promise<BuiltInAIChatLanguageModel> {
   if (cachedModel) {
     return cachedModel
@@ -123,7 +140,7 @@ export async function ensureGeminiChatModel(
 
   if (!pendingInitialization) {
     pendingInitialization = initializeModel(options)
-      .then(model => {
+      .then((model) => {
         cachedModel = model
         return model
       })

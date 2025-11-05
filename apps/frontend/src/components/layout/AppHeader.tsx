@@ -33,7 +33,7 @@ export function AppHeader() {
     if (typeof window === 'undefined') return
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const handleChange = (event: MediaQueryListEvent) => {
-      setIsReducedMotion((current) => {
+      setIsReducedMotion((_current) => {
         const stored = window.localStorage.getItem(storageKey)
         if (stored !== null) return stored === 'true'
         return event.matches
@@ -54,7 +54,10 @@ export function AppHeader() {
   const gameProgressLabel = `${currentGame}/${featuredMatch.totalRounds}`
 
   const highlights = useMemo(
-    () => (isReducedMotion ? demoLeaderboardHighlights.slice(0, 2) : demoLeaderboardHighlights),
+    () =>
+      isReducedMotion
+        ? demoLeaderboardHighlights.slice(0, 2)
+        : demoLeaderboardHighlights,
     [isReducedMotion],
   )
 
@@ -72,12 +75,18 @@ export function AppHeader() {
                   LLM Match Lab
                 </span>
               </Link>
-              <span className="hidden h-5 w-px bg-white/20 lg:block" aria-hidden="true" />
+              <span
+                className="hidden h-5 w-px bg-white/20 lg:block"
+                aria-hidden="true"
+              />
               <div className="hidden items-center gap-3 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/60 lg:flex">
                 <span>Series</span>
                 <NumberTicker value={currentGame} className="text-white" />
                 <span className="text-white/40">of</span>
-                <NumberTicker value={featuredMatch.totalRounds} className="text-white" />
+                <NumberTicker
+                  value={featuredMatch.totalRounds}
+                  className="text-white"
+                />
               </div>
             </div>
             <nav aria-label="Primary" className="flex items-center gap-3">
@@ -112,13 +121,13 @@ export function AppHeader() {
                 )}
                 aria-pressed={isReducedMotion}
               >
-                <span className="h-2 w-2 rounded-full bg-white" aria-hidden="true" />
+                <span
+                  className="h-2 w-2 rounded-full bg-white"
+                  aria-hidden="true"
+                />
                 {isReducedMotion ? 'Reduced motion' : 'Full motion'}
               </button>
-              <RainbowButton
-                asChild
-                className="uppercase tracking-[0.3em]"
-              >
+              <RainbowButton asChild className="uppercase tracking-[0.3em]">
                 <Link to="/arena">Start New Match</Link>
               </RainbowButton>
             </div>
@@ -126,9 +135,7 @@ export function AppHeader() {
 
           <div className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60 lg:hidden">
             <span>Series</span>
-            <span className="text-white">
-              {gameProgressLabel}
-            </span>
+            <span className="text-white">{gameProgressLabel}</span>
             <button
               type="button"
               onClick={() => setIsReducedMotion((state) => !state)}

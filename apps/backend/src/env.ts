@@ -6,8 +6,8 @@ const cfVersionMetadataSchema = z
     z.object({
       id: z.string(),
       tag: z.string().optional(),
-      timestamp: z.string().optional()
-    })
+      timestamp: z.string().optional(),
+    }),
   ])
   .optional()
 
@@ -16,19 +16,21 @@ const envSchema = z.object({
   ENVIRONMENT: z.enum(['development', 'staging', 'production']).optional(),
   SENTRY_DSN: z.string().url().optional(),
   FRONTEND_ORIGIN: z.string().url().optional(),
-  CF_VERSION_METADATA: cfVersionMetadataSchema
+  CF_VERSION_METADATA: cfVersionMetadataSchema,
 })
 
 export type Env = z.infer<typeof envSchema>
 
 // WorkerEnv includes all bindings that Cloudflare Workers provides
 export type WorkerEnv = {
-  DATABASE?: D1Database  // D1 database binding from wrangler.toml
+  DATABASE?: D1Database // D1 database binding from wrangler.toml
   DATABASE_URL?: string
   ENVIRONMENT?: 'development' | 'staging' | 'production'
   SENTRY_DSN?: string
   FRONTEND_ORIGIN?: string
-  CF_VERSION_METADATA?: { id: string; tag?: string; timestamp?: string } | string
+  CF_VERSION_METADATA?:
+    | { id: string; tag?: string; timestamp?: string }
+    | string
 }
 
 // D1Database type

@@ -83,7 +83,10 @@ const mockMoves: MoveEntry[] = [
 export function MatchMoveLog({ match }: { match?: MatchSummary }) {
   if (!match) {
     return (
-      <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
+      <MagicCard
+        className="border-white/15 bg-white/[0.04] px-0 py-0"
+        spotlight={false}
+      >
         <div className="flex h-full items-center justify-center rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-8">
           <StateMessage
             title="No move history yet"
@@ -111,8 +114,8 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
         ...move,
         model:
           move.modelKey === 'modelA'
-            ? modelA ?? demoModels[0]
-            : modelB ?? demoModels[1],
+            ? (modelA ?? demoModels[0])
+            : (modelB ?? demoModels[1]),
       })),
     [modelA, modelB],
   )
@@ -130,7 +133,10 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
   const showEmptyState = resolvedMoves.length === 0
 
   return (
-    <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
+    <MagicCard
+      className="border-white/15 bg-white/[0.04] px-0 py-0"
+      spotlight={false}
+    >
       <div className="flex h-full flex-col gap-4 rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-6 text-white backdrop-blur">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -182,56 +188,54 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
           ) : (
             <AnimatedList className="flex flex-col gap-3" delay={600}>
               {resolvedMoves.map((move) => {
-              const isLatest = move.id === latestMoveId
-              return (
-                <article
-                  key={move.id}
-                  className={cn(
-                    'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
-                    isLatest
-                      ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
-                      : 'hover:border-white/25 hover:bg-white/10',
-                  )}
-                >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span
-                      className={cn(
-                        'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
-                        move.mark === 'X'
-                          ? 'text-[#4ff2c2]'
-                          : 'text-[#f15bb5]',
-                      )}
-                      aria-hidden="true"
-                    >
-                      {move.mark}
-                    </span>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
-                      <p className="font-semibold text-white">
-                        {move.model.name}{' '}
-                        <span className="text-white/60">
-                          · round {move.round}, turn {move.turn}
+                const isLatest = move.id === latestMoveId
+                return (
+                  <article
+                    key={move.id}
+                    className={cn(
+                      'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
+                      isLatest
+                        ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
+                        : 'hover:border-white/25 hover:bg-white/10',
+                    )}
+                  >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span
+                        className={cn(
+                          'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
+                          move.mark === 'X'
+                            ? 'text-[#4ff2c2]'
+                            : 'text-[#f15bb5]',
+                        )}
+                        aria-hidden="true"
+                      >
+                        {move.mark}
+                      </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                        <p className="font-semibold text-white">
+                          {move.model.name}{' '}
+                          <span className="text-white/60">
+                            · round {move.round}, turn {move.turn}
+                          </span>
+                        </p>
+                        <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+                          {new Date(move.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                          })}
                         </span>
-                      </p>
-                      <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-                        {new Date(move.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit',
-                        })}
+                      </div>
+                      <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
+                        {move.coordinate} · {move.durationSeconds.toFixed(1)}s
                       </span>
                     </div>
-                    <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
-                      {move.coordinate} · {move.durationSeconds.toFixed(1)}s
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <p className="text-white/70">
-                      {move.rationale}
-                    </p>
-                  </div>
-                </article>
-              )
-            })}
+                    <div className="mt-3">
+                      <p className="text-white/70">{move.rationale}</p>
+                    </div>
+                  </article>
+                )
+              })}
             </AnimatedList>
           )}
         </div>

@@ -11,7 +11,7 @@ export function Dock({
     <div
       className={cn(
         'fixed inset-x-4 bottom-4 z-50 flex items-center gap-3 rounded-[2rem] border border-white/10 bg-[var(--muted-surface)]/90 p-3 shadow-[0_20px_60px_rgba(5,7,16,0.8)] backdrop-blur-lg md:hidden',
-        className
+        className,
       )}
       {...props}
     >
@@ -40,7 +40,7 @@ export function DockItem({
         active
           ? 'bg-white/10 text-white shadow-[inset_0_0_20px_rgba(79,242,194,0.3)]'
           : 'text-white/70 hover:bg-white/5',
-        className
+        className,
       )}
       {...props}
     >

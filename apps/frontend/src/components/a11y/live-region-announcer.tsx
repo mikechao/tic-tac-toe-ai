@@ -9,7 +9,10 @@ interface LiveRegionAnnouncerProps {
   politeness?: 'polite' | 'assertive'
 }
 
-export function LiveRegionAnnouncer({ message, politeness = 'polite' }: LiveRegionAnnouncerProps) {
+export function LiveRegionAnnouncer({
+  message,
+  politeness = 'polite',
+}: LiveRegionAnnouncerProps) {
   const { announce } = useLiveRegion()
 
   useEffect(() => {

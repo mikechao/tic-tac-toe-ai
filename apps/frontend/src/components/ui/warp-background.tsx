@@ -25,14 +25,14 @@ export function WarpBackground({
         id: `beam-${index}`,
         offset: index,
       })),
-    [beams]
+    [beams],
   )
 
   return (
     <div
       className={cn(
         'relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(79,242,194,0.15),_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(241,91,181,0.15),_transparent_60%)]',
-        className
+        className,
       )}
       {...props}
     >

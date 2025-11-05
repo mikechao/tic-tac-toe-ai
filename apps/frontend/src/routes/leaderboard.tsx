@@ -50,13 +50,10 @@ function LeaderboardRoute() {
   }, [filteredEntries, totalMatches])
 
   const lastSync = useMemo(() => {
-    const mostRecent = filteredEntries.reduce<number>(
-      (latest, entry) => {
-        const timestamp = new Date(entry.lastMatchup.playedAt).getTime()
-        return Math.max(latest, timestamp)
-      },
-      0,
-    )
+    const mostRecent = filteredEntries.reduce<number>((latest, entry) => {
+      const timestamp = new Date(entry.lastMatchup.playedAt).getTime()
+      return Math.max(latest, timestamp)
+    }, 0)
     return mostRecent
       ? new Date(mostRecent).toLocaleString(undefined, {
           month: 'short',

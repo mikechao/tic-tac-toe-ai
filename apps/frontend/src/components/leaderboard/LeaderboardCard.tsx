@@ -11,11 +11,12 @@ const resultColor: Record<RecentResult, string> = {
   T: 'bg-[#ffb547]/20 text-[#ffb547]',
 }
 
-const streakLabel: Record<DemoLeaderboardViewEntry['streak']['type'], string> = {
-  win: 'Win streak',
-  loss: 'Loss streak',
-  tie: 'Tie streak',
-}
+const streakLabel: Record<DemoLeaderboardViewEntry['streak']['type'], string> =
+  {
+    win: 'Win streak',
+    loss: 'Loss streak',
+    tie: 'Tie streak',
+  }
 
 export function LeaderboardCard({
   entry,

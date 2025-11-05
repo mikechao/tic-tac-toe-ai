@@ -32,7 +32,7 @@ export class ApiError extends Error {
 async function request<TResponse, TBody = unknown>(
   method: HttpMethod,
   path: string,
-  options: RequestOptions<TBody> = {}
+  options: RequestOptions<TBody> = {},
 ): Promise<TResponse> {
   const { body, headers, parseJson = true, ...rest } = options
   const url = new URL(path, API_BASE_URL)

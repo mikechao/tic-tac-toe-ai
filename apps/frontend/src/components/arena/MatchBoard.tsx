@@ -17,7 +17,13 @@ type BoardCell = {
 }
 
 const demoBoardState: BoardCell[] = [
-  { id: 'cell-0', label: 'A1', position: 'Top left', mark: 'X', isWinning: true },
+  {
+    id: 'cell-0',
+    label: 'A1',
+    position: 'Top left',
+    mark: 'X',
+    isWinning: true,
+  },
   { id: 'cell-1', label: 'A2', position: 'Top center', mark: 'O' },
   { id: 'cell-2', label: 'A3', position: 'Top right', mark: 'X' },
   { id: 'cell-3', label: 'B1', position: 'Middle left', mark: 'O' },
@@ -25,7 +31,13 @@ const demoBoardState: BoardCell[] = [
   { id: 'cell-5', label: 'B3', position: 'Middle right', mark: null },
   { id: 'cell-6', label: 'C1', position: 'Bottom left', mark: null },
   { id: 'cell-7', label: 'C2', position: 'Bottom center', mark: 'O' },
-  { id: 'cell-8', label: 'C3', position: 'Bottom right', mark: 'X', isWinning: true },
+  {
+    id: 'cell-8',
+    label: 'C3',
+    position: 'Bottom right',
+    mark: 'X',
+    isWinning: true,
+  },
 ]
 
 const demoScore = {
@@ -54,13 +66,13 @@ function PlayerBadge({
         'flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition',
         isActive
           ? 'border-[#4ff2c2]/50 shadow-[0_0_36px_rgba(79,242,194,0.35)]'
-          : 'border-white/10'
+          : 'border-white/10',
       )}
     >
       <span
         className={cn(
           'flex size-12 items-center justify-center rounded-xl text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.55)]',
-          accentClass
+          accentClass,
         )}
         aria-hidden="true"
       >
@@ -81,7 +93,11 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
         <StateMessage
           title="No active match"
           description="Queue a new showdown to populate the arena board. Once a match is running, the grid will animate with live moves."
-          action={<span className="text-xs uppercase tracking-[0.3em] text-white/50">Start a match from the controls</span>}
+          action={
+            <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+              Start a match from the controls
+            </span>
+          }
         />
       </div>
     )
@@ -89,11 +105,11 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
 
   const modelA = useMemo(
     () => demoModels.find((model) => model.id === match.modelAId),
-    [match.modelAId]
+    [match.modelAId],
   )
   const modelB = useMemo(
     () => demoModels.find((model) => model.id === match.modelBId),
-    [match.modelBId]
+    [match.modelBId],
   )
 
   const boardStatus = `Round ${demoScore.currentRound} of ${match.totalRounds}`
@@ -176,8 +192,8 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                     100,
                     Math.max(
                       0,
-                      (demoScore.currentRound / match.totalRounds) * 100
-                    )
+                      (demoScore.currentRound / match.totalRounds) * 100,
+                    ),
                   )}%`,
                 }}
               />
@@ -202,7 +218,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
                   cell.isWinning
                     ? 'border-[#4ff2c2] bg-[#4ff2c2]/15 shadow-[0_0_32px_rgba(79,242,194,0.35)]'
-                    : 'hover:border-white/25 hover:bg-white/10'
+                    : 'hover:border-white/25 hover:bg-white/10',
                 )}
               >
                 <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
@@ -211,7 +227,9 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                 <span
                   className={cn(
                     'transition-transform duration-300',
-                    cell.mark ? 'scale-100 text-white' : 'scale-90 text-white/30'
+                    cell.mark
+                      ? 'scale-100 text-white'
+                      : 'scale-90 text-white/30',
                   )}
                 >
                   {cell.mark ?? '·'}

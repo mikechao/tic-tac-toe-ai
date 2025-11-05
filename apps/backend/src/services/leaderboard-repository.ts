@@ -14,7 +14,11 @@ type LeaderboardDelta = {
   ties: number
 }
 
-async function applyDelta(env: Env, modelId: number, delta: LeaderboardDelta): Promise<void> {
+async function applyDelta(
+  env: Env,
+  modelId: number,
+  delta: LeaderboardDelta,
+): Promise<void> {
   const db = createDb(env)
   await db
     .insert(leaderboardStats)
@@ -38,7 +42,7 @@ async function applyDelta(env: Env, modelId: number, delta: LeaderboardDelta): P
 export async function applyGameOutcomeToLeaderboard(
   env: Env,
   match: MatchRecord,
-  winner: GameWinner
+  winner: GameWinner,
 ): Promise<number[]> {
   if (winner === 'modelA') {
     await Promise.all([
@@ -60,7 +64,9 @@ export async function applyGameOutcomeToLeaderboard(
   return [match.modelAId, match.modelBId]
 }
 
-function toLeaderboardEntry(record: typeof leaderboardStats.$inferSelect): LeaderboardEntry {
+function toLeaderboardEntry(
+  record: typeof leaderboardStats.$inferSelect,
+): LeaderboardEntry {
   const updatedAt =
     record.updatedAt instanceof Date
       ? record.updatedAt.toISOString()

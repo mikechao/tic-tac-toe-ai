@@ -35,7 +35,10 @@ export async function findMatchById(env: Env, matchId: number) {
   return record ?? null
 }
 
-export async function countGamesForMatch(env: Env, matchId: number): Promise<number> {
+export async function countGamesForMatch(
+  env: Env,
+  matchId: number,
+): Promise<number> {
   const db = createDb(env)
   const [result] = await db
     .select({ value: count() })

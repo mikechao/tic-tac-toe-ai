@@ -28,7 +28,7 @@ export function MagicCard({
       const y = ((event.clientY - bounds.top) / bounds.height) * 100
       setSpotlightPosition({ x, y })
     },
-    [spotlight]
+    [spotlight],
   )
 
   return (
@@ -39,7 +39,7 @@ export function MagicCard({
       className={cn(
         'group relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-[var(--surface)] p-[1px]',
         'transition-shadow duration-300 hover:shadow-[0_20px_120px_rgba(241,91,181,0.2)]',
-        className
+        className,
       )}
       {...props}
     >

@@ -41,7 +41,7 @@ export function NumberTicker({
     duration,
   })
   const [displayValue, setDisplayValue] = useState(
-    format(value, decimalPlaces, formatOptions)
+    format(value, decimalPlaces, formatOptions),
   )
 
   useEffect(() => {
@@ -49,20 +49,24 @@ export function NumberTicker({
   }, [value, baseValue])
 
   const transformed = useTransform(springValue, (latest) =>
-    format(latest, decimalPlaces, formatOptions)
+    format(latest, decimalPlaces, formatOptions),
   )
 
   useMotionValueEvent(transformed, 'change', (latest) => {
     setDisplayValue(latest)
   })
 
-  return <span className={cn('tabular-nums tracking-tight', className)}>{displayValue}</span>
+  return (
+    <span className={cn('tabular-nums tracking-tight', className)}>
+      {displayValue}
+    </span>
+  )
 }
 
 function format(
   value: number,
   decimalPlaces: number,
-  formatOptions?: Intl.NumberFormatOptions
+  formatOptions?: Intl.NumberFormatOptions,
 ) {
   const formatter = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: decimalPlaces,

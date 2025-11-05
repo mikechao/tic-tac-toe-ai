@@ -16,7 +16,11 @@ export type GameId = z.infer<typeof gameIdSchema>
 export const moveIndexSchema = z.number().int().min(0).max(8)
 export type MoveIndex = z.infer<typeof moveIndexSchema>
 
-export const boardCellSchema = z.union([z.literal('modelA'), z.literal('modelB'), z.null()])
+export const boardCellSchema = z.union([
+  z.literal('modelA'),
+  z.literal('modelB'),
+  z.null(),
+])
 export type BoardCell = z.infer<typeof boardCellSchema>
 
 export const boardStateSchema = z.array(boardCellSchema).length(9)

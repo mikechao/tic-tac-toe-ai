@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import type { BuiltInAIChatLanguageModel } from '@built-in-ai/core'
 
 import { isBuiltInAISupported } from './capabilities'
@@ -46,7 +53,9 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       setProgress(null)
       setError(null)
       return () => {
-        console.debug('[GeminiProvider] effect cleanup unsupported', { attempt })
+        console.debug('[GeminiProvider] effect cleanup unsupported', {
+          attempt,
+        })
       }
     }
 
@@ -55,20 +64,20 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     setError(null)
 
     ensureGeminiChatModel({
-      onDownloadProgress: progressValue => {
+      onDownloadProgress: (progressValue) => {
         if (!isMounted) return
         setStatus('downloading')
         setProgress(progressValue)
       },
     })
-      .then(loadedModel => {
+      .then((loadedModel) => {
         if (!isMounted) return
         console.debug('[GeminiProvider] model initialized')
         setModel(loadedModel)
         setStatus('ready')
         setProgress(1)
       })
-      .catch(err => {
+      .catch((err) => {
         if (!isMounted) return
         if (err instanceof GeminiPermissionError) {
           console.debug('[GeminiProvider] download requires user gesture')
@@ -104,7 +113,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
 
   const retry = useCallback(() => {
     resetGeminiModelCache()
-    setAttempt(value => value + 1)
+    setAttempt((value) => value + 1)
   }, [])
 
   const startDownload = useCallback(async () => {
@@ -121,7 +130,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const loadedModel = await ensureGeminiChatModel({
-        onDownloadProgress: progressValue => {
+        onDownloadProgress: (progressValue) => {
           setProgress(progressValue)
         },
       })
@@ -166,10 +175,14 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       retry,
       startDownload,
     }),
-    [status, progress, model, error, retry, startDownload]
+    [status, progress, model, error, retry, startDownload],
   )
 
-  return <GeminiContext.Provider value={contextValue}>{children}</GeminiContext.Provider>
+  return (
+    <GeminiContext.Provider value={contextValue}>
+      {children}
+    </GeminiContext.Provider>
+  )
 }
 
 export function useGeminiContext(): GeminiContextValue {

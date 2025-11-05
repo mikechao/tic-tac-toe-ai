@@ -42,26 +42,28 @@ app.notFound((c) => {
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
-    c.var.logger?.warn('Handled HTTP exception', { status: err.status, message: err.message })
+    c.var.logger?.warn('Handled HTTP exception', {
+      status: err.status,
+      message: err.message,
+    })
     return err.getResponse()
   }
   c.var.logger?.error('Unhandled error', err)
   return c.json({ message: 'Internal Server Error' }, 500)
 })
 
-export default Sentry.withSentry(
-  (env: WorkerEnv) => {
-    const cfVersionMetadata = env.CF_VERSION_METADATA
-    const versionId =
-      typeof cfVersionMetadata === 'string' ? cfVersionMetadata : cfVersionMetadata?.id
-    return {
-      dsn: env.SENTRY_DSN,
-      environment: env.ENVIRONMENT ?? 'development',
-      release: versionId ? `backend@${versionId}` : undefined,
-      tracesSampleRate: 1.0, // Set to 1.0 for development, adjust for production
-      enableLogs: true,
-      sendDefaultPii: true,
-    }
-  },
-  app
-)
+export default Sentry.withSentry((env: WorkerEnv) => {
+  const cfVersionMetadata = env.CF_VERSION_METADATA
+  const versionId =
+    typeof cfVersionMetadata === 'string'
+      ? cfVersionMetadata
+      : cfVersionMetadata?.id
+  return {
+    dsn: env.SENTRY_DSN,
+    environment: env.ENVIRONMENT ?? 'development',
+    release: versionId ? `backend@${versionId}` : undefined,
+    tracesSampleRate: 1.0, // Set to 1.0 for development, adjust for production
+    enableLogs: true,
+    sendDefaultPii: true,
+  }
+}, app)

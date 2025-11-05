@@ -44,14 +44,15 @@ export type BackendEvents = {
   error: { message: string; context?: Record<string, unknown> }
 }
 
-type EventPayload<EventName extends keyof BackendEvents> = BackendEvents[EventName]
+type EventPayload<EventName extends keyof BackendEvents> =
+  BackendEvents[EventName]
 
 type AnyListener = (payload: BackendEvents[keyof BackendEvents]) => void
 const listeners = new Map<keyof BackendEvents, Set<AnyListener>>()
 
 export function emitEvent<EventName extends keyof BackendEvents>(
   eventName: EventName,
-  payload: EventPayload<EventName>
+  payload: EventPayload<EventName>,
 ): void {
   const eventListeners = listeners.get(eventName)
   if (!eventListeners) {
@@ -69,7 +70,7 @@ export function emitEvent<EventName extends keyof BackendEvents>(
 
 export function onEvent<EventName extends keyof BackendEvents>(
   eventName: EventName,
-  listener: (payload: BackendEvents[EventName]) => void
+  listener: (payload: BackendEvents[EventName]) => void,
 ): () => void {
   let eventListeners = listeners.get(eventName)
   if (!eventListeners) {
