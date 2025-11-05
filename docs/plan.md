@@ -114,7 +114,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
   - Connect to live session state (game index, timer).
 - [x] Move log
   - Implement `MoveLog` using `animated-list`, auto-scroll, pause/resume control, reasoning text toggle.
-- [ ] Leaderboard view
+- [x] Leaderboard view
   - Build responsive `LeaderboardGrid` and `LeaderboardCard` components showing stats, rank, highlights.
   - Add trend highlight marquee with placeholder data until backend integration.
 - [ ] Header and navigation
