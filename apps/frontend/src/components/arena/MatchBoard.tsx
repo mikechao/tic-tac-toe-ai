@@ -4,7 +4,7 @@ import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
-import { MagicCard, NumberTicker } from '@/components/ui'
+import { MagicCard, NumberTicker, StateMessage } from '@/components/ui'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
@@ -74,7 +74,19 @@ function PlayerBadge({
   )
 }
 
-export function MatchBoard({ match }: { match: MatchSummary }) {
+export function MatchBoard({ match }: { match?: MatchSummary }) {
+  if (!match) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <StateMessage
+          title="No active match"
+          description="Queue a new showdown to populate the arena board. Once a match is running, the grid will animate with live moves."
+          action={<span className="text-xs uppercase tracking-[0.3em] text-white/50">Start a match from the controls</span>}
+        />
+      </div>
+    )
+  }
+
   const modelA = useMemo(
     () => demoModels.find((model) => model.id === match.modelAId),
     [match.modelAId]

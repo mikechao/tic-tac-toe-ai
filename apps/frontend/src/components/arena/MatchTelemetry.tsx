@@ -4,7 +4,7 @@ import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
-import { MagicCard, NumberTicker } from '@/components/ui'
+import { MagicCard, NumberTicker, StateMessage } from '@/components/ui'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
@@ -20,7 +20,19 @@ const mockTelemetry = {
   },
 }
 
-export function MatchTelemetry({ match }: { match: MatchSummary }) {
+export function MatchTelemetry({ match }: { match?: MatchSummary }) {
+  if (!match) {
+    return (
+      <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
+        <div className="flex h-full items-center justify-center rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-8">
+          <StateMessage
+            title="Telemetry unavailable"
+            description="We couldn’t load live stats for this session yet. Start a match or retry after the next sync."
+          />
+        </div>
+      </MagicCard>
+    )
+  }
   const modelA = useMemo(
     () => demoModels.find((model) => model.id === match.modelAId),
     [match.modelAId],

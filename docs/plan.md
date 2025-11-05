@@ -120,10 +120,10 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Header and navigation
   - Compose header with `warp-background`, logo (`aurora-text`), view switcher, CTA button, reduced-motion toggle.
   - Reflect match progress (e.g., badge “Game 4/10”).
-- [ ] Mobile adaptations
+- [ ] Mobile adaptations (skipping for now)
   - Implement `dock` bottom sheet for match controls on mobile, ensure gestures and accessibility.
   - Create carousel version of leaderboard for small screens.
-- [ ] Error and empty states
+- [x] Error and empty states
   - Add inline alert components for configuration or API errors.
   - Provide empty state messaging when no leaderboard data exists.
 - [ ] Persistence feedback

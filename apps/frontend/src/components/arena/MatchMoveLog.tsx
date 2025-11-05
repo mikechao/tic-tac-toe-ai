@@ -4,7 +4,7 @@ import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
-import { AnimatedList, MagicCard } from '@/components/ui'
+import { AnimatedList, MagicCard, StateMessage } from '@/components/ui'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
@@ -78,7 +78,19 @@ const mockMoves: MoveEntry[] = [
   },
 ]
 
-export function MatchMoveLog({ match }: { match: MatchSummary }) {
+export function MatchMoveLog({ match }: { match?: MatchSummary }) {
+  if (!match) {
+    return (
+      <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
+        <div className="flex h-full items-center justify-center rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-8">
+          <StateMessage
+            title="No move history yet"
+            description="As soon as a match begins, we’ll record every move with reasoning and timing details."
+          />
+        </div>
+      </MagicCard>
+    )
+  }
   const [isPaused, setIsPaused] = useState(false)
   const [expandedMoveId, setExpandedMoveId] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -114,6 +126,7 @@ export function MatchMoveLog({ match }: { match: MatchSummary }) {
   }, [resolvedMoves, isPaused])
 
   const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
+  const showEmptyState = resolvedMoves.length === 0
 
   return (
     <MagicCard className="border-white/15 bg-white/[0.04] px-0 py-0" spotlight={false}>
@@ -152,8 +165,17 @@ export function MatchMoveLog({ match }: { match: MatchSummary }) {
           role="log"
           aria-live={isPaused ? 'off' : 'polite'}
         >
-          <AnimatedList className="flex flex-col gap-3" delay={600}>
-            {resolvedMoves.map((move) => {
+          {showEmptyState ? (
+            <div className="px-2 py-6">
+              <StateMessage
+                title="Waiting for the first move"
+                description="Once the contenders make their opening plays, we’ll populate this log with timestamps and rationale."
+                className="w-full"
+              />
+            </div>
+          ) : (
+            <AnimatedList className="flex flex-col gap-3" delay={600}>
+              {resolvedMoves.map((move) => {
               const isExpanded = expandedMoveId === move.id
               const isLatest = move.id === latestMoveId
               return (
@@ -223,7 +245,8 @@ export function MatchMoveLog({ match }: { match: MatchSummary }) {
                 </article>
               )
             })}
-          </AnimatedList>
+            </AnimatedList>
+          )}
         </div>
       </div>
     </MagicCard>
