@@ -46,6 +46,7 @@ export interface GameLoopState {
   totalRounds: number
   activePlayer: 'modelA' | 'modelB' | null
   board: BoardState
+  roundBoards: BoardState[]
   score: { modelA: number; modelB: number; ties: number }
   moveHistory: MoveLogEntry[]
   roundSummaries: RoundSummary[]
@@ -87,6 +88,7 @@ const createInitialState = (): GameLoopState => ({
   totalRounds: 0,
   activePlayer: null,
   board: new BoardState(),
+  roundBoards: [],
   score: { ...defaultScore },
   moveHistory: [],
   roundSummaries: [],
@@ -126,10 +128,13 @@ const determineStartingPlayer = (
 const toPlayerMark = (player: 'modelA' | 'modelB'): PlayerMark =>
   player === 'modelA' ? 'X' : 'O'
 
-const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type'], TransitionHandler>>> = {
+const transitionMap: Record<
+  GameLoopPhase,
+  Partial<Record<GameLoopAction['type'], TransitionHandler>>
+> = {
   idle: {
     CONFIGURE: (current, action) => {
-      const { config } = action
+      const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
         state: {
@@ -137,6 +142,7 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
           phase: 'idle',
           totalRounds: config.totalRounds,
           board,
+          roundBoards: [],
           score: { ...defaultScore },
           moveHistory: [],
           roundSummaries: [],
@@ -150,20 +156,35 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
+      const totalRounds = context.config.totalRounds
+      const roundBoards = Array.from({ length: totalRounds }, (_, index) => {
+        const roundNumber = index + 1
+        const startingPlayer = determineStartingPlayer(context.config!, roundNumber)
+        return new BoardState(
+          context.config!.boardSize,
+          toPlayerMark(startingPlayer),
+        )
+      })
+      const firstBoard = roundBoards[0] ?? new BoardState(context.config.boardSize)
       return {
         state: {
           ...current,
           phase: 'initializing',
           currentRound: 0,
-          totalRounds: context.config.totalRounds,
+          totalRounds,
           activePlayer: null,
+          board: firstBoard,
+          roundBoards,
           score: { ...defaultScore },
           moveHistory: [],
           roundSummaries: [],
           lastError: undefined,
           isPaused: false,
         },
-        events: [{ type: 'phase:change', phase: 'initializing' }],
+        events: [
+          { type: 'phase:change', phase: 'initializing' },
+          { type: 'board:update', board: firstBoard },
+        ],
       }
     },
   },
@@ -172,7 +193,8 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
-      if (action.round > context.config.totalRounds) {
+      const { round } = action as Extract<GameLoopAction, { type: 'BEGIN_ROUND' }>
+      if (round > context.config.totalRounds) {
         return {
           state: {
             ...current,
@@ -184,19 +206,26 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
           events: [{ type: 'phase:change', phase: 'completed' }],
         }
       }
-      const startingPlayer = determineStartingPlayer(context.config, action.round)
-      const board = new BoardState(
-        context.config.boardSize,
-        toPlayerMark(startingPlayer),
-      )
+      const startingPlayer = determineStartingPlayer(context.config, round)
+      const startingMark = toPlayerMark(startingPlayer)
+      const nextRoundBoards = [...current.roundBoards]
+      const roundIndex = Math.max(0, round - 1)
+      let board = nextRoundBoards[roundIndex]
+      if (!board) {
+        board = new BoardState(context.config.boardSize, startingMark)
+        nextRoundBoards[roundIndex] = board
+      } else {
+        board.reset(startingMark)
+      }
       return {
         state: {
           ...current,
           phase: 'running',
-          currentRound: action.round,
+          currentRound: round,
           totalRounds: context.config.totalRounds,
           activePlayer: startingPlayer,
           board,
+          roundBoards: nextRoundBoards,
           isPaused: false,
         },
         events: [
@@ -205,18 +234,21 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
         ],
       }
     },
-    ERROR: (current, action) => ({
-      state: {
-        ...current,
-        phase: 'error',
-        lastError: action.message,
-        isPaused: false,
-      },
-      events: [
-        { type: 'phase:change', phase: 'error' },
-        { type: 'error', message: action.message },
-      ],
-    }),
+    ERROR: (current, action) => {
+      const { message } = action as Extract<GameLoopAction, { type: 'ERROR' }>
+      return {
+        state: {
+          ...current,
+          phase: 'error',
+          lastError: message,
+          isPaused: false,
+        },
+        events: [
+          { type: 'phase:change', phase: 'error' },
+          { type: 'error', message },
+        ],
+      }
+    },
   },
   running: {
     PAUSE: (current) => ({
@@ -225,26 +257,31 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
     RESUME: (current) => ({
       state: { ...current, isPaused: false },
     }),
-    ABORT: (current, action) => ({
-      state: {
-        ...current,
-        phase: 'error',
-        lastError: action.reason ?? 'Match aborted',
-        isPaused: false,
-      },
-      events: [
-        { type: 'phase:change', phase: 'error' },
-        {
-          type: 'error',
-          message: action.reason ?? 'Match aborted',
+    ABORT: (current, action) => {
+      const { reason } = action as Extract<GameLoopAction, { type: 'ABORT' }>
+      const message = reason ?? 'Match aborted'
+      return {
+        state: {
+          ...current,
+          phase: 'error',
+          lastError: message,
+          isPaused: false,
         },
-      ],
-    }),
+        events: [
+          { type: 'phase:change', phase: 'error' },
+          {
+            type: 'error',
+            message,
+          },
+        ],
+      }
+    },
     BEGIN_ROUND: (current, action, context) => {
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
-      if (action.round > context.config.totalRounds) {
+      const { round } = action as Extract<GameLoopAction, { type: 'BEGIN_ROUND' }>
+      if (round > context.config.totalRounds) {
         return {
           state: {
             ...current,
@@ -255,18 +292,25 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
           events: [{ type: 'phase:change', phase: 'completed' }],
         }
       }
-      const startingPlayer = determineStartingPlayer(context.config, action.round)
-      const board = new BoardState(
-        context.config.boardSize,
-        toPlayerMark(startingPlayer),
-      )
+      const startingPlayer = determineStartingPlayer(context.config, round)
+      const startingMark = toPlayerMark(startingPlayer)
+      const nextRoundBoards = [...current.roundBoards]
+      const roundIndex = Math.max(0, round - 1)
+      let board = nextRoundBoards[roundIndex]
+      if (!board) {
+        board = new BoardState(context.config.boardSize, startingMark)
+        nextRoundBoards[roundIndex] = board
+      } else {
+        board.reset(startingMark)
+      }
       return {
         state: {
           ...current,
           phase: 'running',
-          currentRound: action.round,
+          currentRound: round,
           activePlayer: startingPlayer,
           board,
+          roundBoards: nextRoundBoards,
           isPaused: false,
         },
         events: [{ type: 'board:update', board }],
@@ -278,7 +322,8 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
-      if (action.round > context.config.totalRounds) {
+      const { round } = action as Extract<GameLoopAction, { type: 'BEGIN_ROUND' }>
+      if (round > context.config.totalRounds) {
         return {
           state: {
             ...current,
@@ -289,18 +334,25 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
           events: [{ type: 'phase:change', phase: 'completed' }],
         }
       }
-      const startingPlayer = determineStartingPlayer(context.config, action.round)
-      const board = new BoardState(
-        context.config.boardSize,
-        toPlayerMark(startingPlayer),
-      )
+      const startingPlayer = determineStartingPlayer(context.config, round)
+      const startingMark = toPlayerMark(startingPlayer)
+      const nextRoundBoards = [...current.roundBoards]
+      const roundIndex = Math.max(0, round - 1)
+      let board = nextRoundBoards[roundIndex]
+      if (!board) {
+        board = new BoardState(context.config.boardSize, startingMark)
+        nextRoundBoards[roundIndex] = board
+      } else {
+        board.reset(startingMark)
+      }
       return {
         state: {
           ...current,
           phase: 'running',
-          currentRound: action.round,
+          currentRound: round,
           activePlayer: startingPlayer,
           board,
+          roundBoards: nextRoundBoards,
           isPaused: false,
         },
         events: [
@@ -309,25 +361,29 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
         ],
       }
     },
-    ABORT: (current, action) => ({
-      state: {
-        ...current,
-        phase: 'error',
-        lastError: action.reason ?? 'Match aborted',
-        isPaused: false,
-      },
-      events: [
-        { type: 'phase:change', phase: 'error' },
-        {
-          type: 'error',
-          message: action.reason ?? 'Match aborted',
+    ABORT: (current, action) => {
+      const { reason } = action as Extract<GameLoopAction, { type: 'ABORT' }>
+      const message = reason ?? 'Match aborted'
+      return {
+        state: {
+          ...current,
+          phase: 'error',
+          lastError: message,
+          isPaused: false,
         },
-      ],
-    }),
+        events: [
+          { type: 'phase:change', phase: 'error' },
+          {
+            type: 'error',
+            message,
+          },
+        ],
+      }
+    },
   },
   completed: {
     CONFIGURE: (current, action) => {
-      const { config } = action
+      const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
         state: {
@@ -337,6 +393,7 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
           totalRounds: config.totalRounds,
           activePlayer: null,
           board,
+          roundBoards: [],
           score: { ...defaultScore },
           moveHistory: [],
           roundSummaries: [],
@@ -352,7 +409,7 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
   },
   error: {
     CONFIGURE: (current, action) => {
-      const { config } = action
+      const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
         state: {
@@ -362,6 +419,7 @@ const transitionMap: Record<GameLoopPhase, Partial<Record<GameLoopAction['type']
           totalRounds: config.totalRounds,
           activePlayer: null,
           board,
+          roundBoards: [],
           score: { ...defaultScore },
           moveHistory: [],
           roundSummaries: [],
@@ -389,9 +447,17 @@ const validateConfig = (config: MatchConfig): void => {
   }
 }
 
-export function createGameLoopController(): GameLoopController {
+export interface GameLoopControllerOptions {
+  loadModelSession?: (modelId: number) => Promise<unknown>
+}
+
+export function createGameLoopController(
+  options: GameLoopControllerOptions = {},
+): GameLoopController {
   let state = createInitialState()
   let config: MatchConfig | null = null
+  const { loadModelSession } = options
+  const modelSessions = new Map<number, unknown>()
   const listeners = new Set<
     (next: GameLoopState, event?: GameLoopEvent) => void
   >()
@@ -435,6 +501,27 @@ export function createGameLoopController(): GameLoopController {
     publish(result)
   }
 
+  const primeModelSessions = async (
+    matchConfig: MatchConfig,
+  ): Promise<void> => {
+    if (!loadModelSession) {
+      return
+    }
+    const uniqueModelIds = new Set<number>([
+      matchConfig.modelAId,
+      matchConfig.modelBId,
+    ])
+    await Promise.all(
+      Array.from(uniqueModelIds).map(async (modelId) => {
+        if (modelSessions.has(modelId)) {
+          return
+        }
+        const session = await loadModelSession(modelId)
+        modelSessions.set(modelId, session)
+      }),
+    )
+  }
+
   const getState = (): GameLoopState => state
 
   const subscribe = (
@@ -455,7 +542,18 @@ export function createGameLoopController(): GameLoopController {
 
   const start = async (): Promise<void> => {
     dispatch({ type: 'START' })
-    dispatch({ type: 'BEGIN_ROUND', round: 1 })
+    if (!config) {
+      throw new Error('Match configuration missing. Call configure() first.')
+    }
+    try {
+      await primeModelSessions(config)
+      dispatch({ type: 'BEGIN_ROUND', round: 1 })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to initialize match'
+      dispatch({ type: 'ERROR', message })
+      throw error
+    }
   }
 
   const pause = (): void => {
@@ -482,6 +580,7 @@ export function createGameLoopController(): GameLoopController {
     listeners.clear()
     state = createInitialState()
     config = null
+    notify()
     notify({ type: 'phase:change', phase: state.phase })
   }
 

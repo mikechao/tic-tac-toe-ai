@@ -13,7 +13,7 @@
 - [x] Add guardrails so `configure` rejects invalid payloads (missing models, rounds ≤ 0, unsupported board sizes) and routes errors to the toast system.
 
 ## Session & Round Management
-- [ ] Initialize per-round `BoardState` instances on `start`, track cumulative score, and cache Gemini session handles for both models.
+- [x] Initialize per-round `BoardState` instances on `start`, track cumulative score, and cache Gemini session handles for both models.
 - [ ] Implement round lifecycle helpers: reset board, determine starting player (alternate/randomized options), and transition to `running` phase.
 - [ ] After each move, evaluate outcomes via `checkWinner`/`isDraw`, aggregate telemetry, and queue transitions to `betweenRounds` or `completed`.
 - [ ] Provide a `nextRound` handler that safely advances state when invoked manually after pauses or errors.
@@ -88,3 +88,9 @@
 ### 2025-11-05 Configure Guardrails
 - `configure` now validates the incoming payload: total rounds must be >0, board size locked to 3–5, and models must differ; invalid configs throw before mutating controller state.
 - These checks will surface through UI toast handling once `MatchControls` bridges into the controller, preventing matches from starting with unsupported settings.
+
+### 2025-11-05 Round Initialization & Sessions
+- `start` now prebuilds per-round `BoardState` instances (respecting alternating starters) and keeps them in `state.roundBoards`, resetting the proper board whenever a round begins.
+- First-round setup stays in `initializing` until optional model sessions load; once ready, `BEGIN_ROUND` promotes the phase to `running` and reuses the prebuilt board snapshot.
+- Optional `loadModelSession` dependency primes Gemini (or other) chat sessions for unique model IDs and caches the handles in the controller closure for reuse across matches.
+- Score tracking infrastructure remains (`state.score`) and will increment during the upcoming outcome evaluation task; noted as a follow-up when we wire `checkWinner`/`isDraw` processing.
