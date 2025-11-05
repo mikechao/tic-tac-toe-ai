@@ -117,7 +117,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Leaderboard view
   - Build responsive `LeaderboardGrid` and `LeaderboardCard` components showing stats, rank, highlights.
   - Add trend highlight marquee with placeholder data until backend integration.
-- [ ] Header and navigation
+- [x] Header and navigation
   - Compose header with `warp-background`, logo (`aurora-text`), view switcher, CTA button, reduced-motion toggle.
   - Reflect match progress (e.g., badge “Game 4/10”).
 - [ ] Mobile adaptations
