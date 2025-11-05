@@ -29,10 +29,10 @@ function ArenaRoute() {
 
       <section>
         <BentoGrid className="mt-4">
-          <div className="col-span-12 md:col-span-4">
+          <div className="col-span-12 md:col-span-6">
             <MatchTelemetry match={featuredMatch} />
           </div>
-          <div className="col-span-12 md:col-span-4">
+          <div className="col-span-12 md:col-span-6">
             <MatchMoveLog match={featuredMatch} />
           </div>
         </BentoGrid>
