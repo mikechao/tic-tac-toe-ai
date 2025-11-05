@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { demoMatches } from '@/data/demo.matches'
-import { Globe } from '@/components/ui/globe'
 import { BentoCard, BentoGrid, WarpBackground } from '@/components/ui'
 import { GeminiSupportGate } from '@/components/gemini/GeminiSupportGate'
 import { MatchControls } from '@/components/arena/MatchControls'
@@ -45,10 +44,6 @@ function ArenaRoute() {
           </BentoCard>
         </BentoGrid>
       </section>
-
-      <div className="relative hidden h-32 overflow-hidden rounded-3xl border border-white/10 md:block">
-        <Globe />
-      </div>
     </main>
   )
 }
