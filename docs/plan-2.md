@@ -8,9 +8,9 @@
 
 ## Controller Skeleton
 - [x] Create `src/lib/game/game-loop.ts` exporting `createGameLoopController(config)` with typed interfaces for `GameLoopPhase`, `MatchConfig`, `MoveLogEntry`, `RoundSummary`, `GameLoopState`, and `GameLoopEvent`.
-- [ ] Implement internal storage for controller state, subscriber management, and lifecycle methods (`getState`, `subscribe`, `configure`, `start`, `pause`, `resume`, `abort`, `nextRound`, `dispose`).
-- [ ] Ensure `subscribe` returns an unsubscribe callback and immediately replays the current state to new listeners for UI hydration.
-- [ ] Add guardrails so `configure` rejects invalid payloads (missing models, rounds ≤ 0, unsupported board sizes) and routes errors to the toast system.
+- [x] Implement internal storage for controller state, subscriber management, and lifecycle methods (`getState`, `subscribe`, `configure`, `start`, `pause`, `resume`, `abort`, `nextRound`, `dispose`).
+- [x] Ensure `subscribe` returns an unsubscribe callback and immediately replays the current state to new listeners for UI hydration.
+- [x] Add guardrails so `configure` rejects invalid payloads (missing models, rounds ≤ 0, unsupported board sizes) and routes errors to the toast system.
 
 ## Session & Round Management
 - [ ] Initialize per-round `BoardState` instances on `start`, track cumulative score, and cache Gemini session handles for both models.
@@ -74,3 +74,17 @@
 - Added `apps/frontend/src/lib/game/game-loop.ts` with the initial controller scaffold, including exported types (`GameLoopPhase`, `MatchConfig`, `MoveLogEntry`, `RoundSummary`, `GameLoopState`, `GameLoopEvent`).
 - `createGameLoopController` currently wires up state storage, subscription management, and stubbed lifecycle methods that throw until implemented; `dispose` resets to the default state and notifies listeners.
 - The initial state seeds a fresh `BoardState` and empty histories, giving us a concrete target for reducer integration and event emission in upcoming tasks.
+
+### 2025-11-05 Controller State Management
+- Replaced lifecycle stubs with a reducer-style dispatch system and transition map that persists match config, phases, and listeners in closure scope.
+- `configure` now seeds a fresh `BoardState`, resets score/history, and broadcasts a `board:update` snapshot; `start` transitions through `initializing` into the first `running` round via `BEGIN_ROUND` actions.
+- Added support for `pause`/`resume` (`isPaused` flag), `abort` (moves to `error` and emits notifications), `nextRound` (advances via `BEGIN_ROUND` while respecting total rounds), and `dispose` (clears listeners and config before resetting to `idle`).
+- Subscriber notifications always replay the latest state first, then emit any transition-specific events (`phase:change`, `board:update`, `error`) to keep downstream observers in sync.
+
+### 2025-11-05 Subscription Hydration
+- Verified `subscribe` hydrates listeners immediately by invoking the listener with the current state upon registration before returning the unsubscribe closure.
+- Unsubscribe simply removes the listener from the internal `Set`, ensuring no further notifications after disposal while the controller retains other observers.
+
+### 2025-11-05 Configure Guardrails
+- `configure` now validates the incoming payload: total rounds must be >0, board size locked to 3–5, and models must differ; invalid configs throw before mutating controller state.
+- These checks will surface through UI toast handling once `MatchControls` bridges into the controller, preventing matches from starting with unsupported settings.
