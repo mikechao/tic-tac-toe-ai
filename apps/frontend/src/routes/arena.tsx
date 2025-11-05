@@ -6,6 +6,7 @@ import { BentoCard, BentoGrid, WarpBackground } from '@/components/ui'
 import { GeminiSupportGate } from '@/components/gemini/GeminiSupportGate'
 import { MatchControls } from '@/components/arena/MatchControls'
 import { MatchBoard } from '@/components/arena/MatchBoard'
+import { MatchTelemetry } from '@/components/arena/MatchTelemetry'
 
 export const Route = createFileRoute('/arena')({
   component: ArenaRoute,
@@ -32,9 +33,9 @@ function ArenaRoute() {
         </p>
         <h3 className="font-display text-xl text-white">Arena Overview</h3>
         <BentoGrid className="mt-4">
-          <BentoCard colSpanClassName="md:col-span-4">
-            <p className="text-sm text-white/70">Match telemetry placeholder</p>
-          </BentoCard>
+          <div className="col-span-12 md:col-span-4">
+            <MatchTelemetry match={featuredMatch} />
+          </div>
           <BentoCard colSpanClassName="md:col-span-4">
             <p className="text-sm text-white/70">Move log placeholder</p>
           </BentoCard>

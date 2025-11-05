@@ -109,7 +109,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Match arena board
   - Develop `TicTacToeBoard` using `magic-card`, track active cell states, keyboard navigation.
   - Integrate visual feedback for active player, winning lines (particles/meteors, with reduced motion fallback).
-- [ ] Telemetry panel
+- [x] Telemetry panel
   - Create `MatchTelemetry` component with `neon-gradient-card`, `number-ticker` countdown, streak badges.
   - Connect to live session state (game index, timer).
 - [ ] Move log
