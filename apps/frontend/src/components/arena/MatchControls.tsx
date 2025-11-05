@@ -213,10 +213,10 @@ export function MatchControls() {
         </p>
 
         <BentoGrid className="gap-5 md:auto-rows-auto">
-          <BentoCard colSpanClassName="md:col-span-6">
+          <BentoCard colSpanClassName="md:col-span-12">
             <fieldset className="space-y-3">
               <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                Player 1
+                Player 1 Model Selection
               </legend>
               <ModelSelect
                 id="modelA"
@@ -231,10 +231,10 @@ export function MatchControls() {
             </fieldset>
           </BentoCard>
 
-          <BentoCard colSpanClassName="md:col-span-6">
+          <BentoCard colSpanClassName="md:col-span-12">
             <fieldset className="space-y-3">
               <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                Player 2
+                Player 2 Model Selection
               </legend>
               <ModelSelect
                 id="modelB"
