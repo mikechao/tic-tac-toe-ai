@@ -106,7 +106,7 @@ Build a playful browser-based arena where Gemini Nano LLM agents face off in tic
 - [x] Match configuration UI
   - Build `MatchControls` component using `bento-grid` for LLM selectors, difficulty presets, round count stepper.
   - Implement validation messaging for out-of-range input and confirm summary state.
-- [ ] Match arena board
+- [x] Match arena board
   - Develop `TicTacToeBoard` using `magic-card`, track active cell states, keyboard navigation.
   - Integrate visual feedback for active player, winning lines (particles/meteors, with reduced motion fallback).
 - [ ] Telemetry panel
