@@ -7,7 +7,7 @@
 - [x] Decide whether to implement the state machine manually or scaffold an abstraction (e.g., enum-driven reducer) that can later be replaced by `xstate`.
 
 ## Controller Skeleton
-- [ ] Create `src/lib/game/game-loop.ts` exporting `createGameLoopController(config)` with typed interfaces for `GameLoopPhase`, `MatchConfig`, `MoveLogEntry`, `RoundSummary`, `GameLoopState`, and `GameLoopEvent`.
+- [x] Create `src/lib/game/game-loop.ts` exporting `createGameLoopController(config)` with typed interfaces for `GameLoopPhase`, `MatchConfig`, `MoveLogEntry`, `RoundSummary`, `GameLoopState`, and `GameLoopEvent`.
 - [ ] Implement internal storage for controller state, subscriber management, and lifecycle methods (`getState`, `subscribe`, `configure`, `start`, `pause`, `resume`, `abort`, `nextRound`, `dispose`).
 - [ ] Ensure `subscribe` returns an unsubscribe callback and immediately replays the current state to new listeners for UI hydration.
 - [ ] Add guardrails so `configure` rejects invalid payloads (missing models, rounds ≤ 0, unsupported board sizes) and routes errors to the toast system.
@@ -69,3 +69,8 @@
 - Rationale: the controller only needs six phases and a handful of transitions, so a manual reducer avoids the bundle hit and learning curve of bringing in `xstate` immediately, yet keeps transition declarations centralized for future swaps.
 - Migration guardrails: model reducer transitions as pure functions returning next `GameLoopState` + outgoing events; align event names/invariants with the `game-loop.md` spec so the map can be ported to `xstate` without rewriting arena consumers.
 - Action item: encapsulate the reducer in `createGameLoopController`, expose helper methods (`transition('START')`, etc.), and document the correspondence to potential `xstate` states in `docs/game-loop.md` to ease future migration.
+
+### 2025-11-05 Game Loop Skeleton
+- Added `apps/frontend/src/lib/game/game-loop.ts` with the initial controller scaffold, including exported types (`GameLoopPhase`, `MatchConfig`, `MoveLogEntry`, `RoundSummary`, `GameLoopState`, `GameLoopEvent`).
+- `createGameLoopController` currently wires up state storage, subscription management, and stubbed lifecycle methods that throw until implemented; `dispose` resets to the default state and notifies listeners.
+- The initial state seeds a fresh `BoardState` and empty histories, giving us a concrete target for reducer integration and event emission in upcoming tasks.
