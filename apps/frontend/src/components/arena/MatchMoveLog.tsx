@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { CirclePause, CirclePlay } from 'lucide-react'
+
 import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
@@ -148,14 +150,19 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
             type="button"
             onClick={() => setIsPaused((previous) => !previous)}
             className={cn(
-              'inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
+              'inline-flex items-center justify-center rounded-full border border-white/20 p-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
               isPaused
-                ? 'bg-white/10 text-white hover:bg-white/15'
-                : 'bg-[#4ff2c2]/20 text-white hover:bg-[#4ff2c2]/30',
+                ? 'bg-white/10 text-white hover:bg-white/15 hover:cursor-pointer'
+                : 'bg-[#4ff2c2]/20 text-white hover:bg-[#4ff2c2]/30 hover:cursor-pointer',
             )}
             aria-pressed={isPaused}
+            aria-label={isPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
           >
-            {isPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
+            {isPaused ? (
+              <CirclePlay className="h-10 w-10" />
+            ) : (
+              <CirclePause className="h-10 w-10" />
+            )}
           </button>
         </header>
 
@@ -191,7 +198,7 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
                   <div className="flex flex-wrap items-center gap-3">
                     <span
                       className={cn(
-                        'flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
+                        'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
                         move.mark === 'X'
                           ? 'text-[#4ff2c2]'
                           : 'text-[#f15bb5]',
