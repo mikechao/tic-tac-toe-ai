@@ -48,6 +48,12 @@
   --space-4: 1rem;
   --space-5: 1.5rem;
   --space-6: 2rem;
+  --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
+  --color-color-5: var(--color-5);
+  --color-color-4: var(--color-4);
+  --color-color-3: var(--color-3);
+  --color-color-2: var(--color-2);
+  --color-color-1: var(--color-1);
 }
 
 :root {
@@ -85,6 +91,11 @@
   --sidebar-accent-foreground: var(--secondary-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+  --color-1: oklch(66.2% 0.225 25.9);
+  --color-2: oklch(60.4% 0.26 302);
+  --color-3: oklch(69.6% 0.165 251);
+  --color-4: oklch(80.2% 0.134 225);
+  --color-5: oklch(90.7% 0.231 133);
 }
 
 .dark {
@@ -121,6 +132,11 @@
   --sidebar-accent-foreground: var(--secondary-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+  --color-1: oklch(66.2% 0.225 25.9);
+  --color-2: oklch(60.4% 0.26 302);
+  --color-3: oklch(69.6% 0.165 251);
+  --color-4: oklch(80.2% 0.134 225);
+  --color-5: oklch(90.7% 0.231 133);
 }
 
 body {
@@ -174,15 +190,6 @@ h3,
     }
   }
 
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(200%);
-    }
-  }
-
   .animate-marquee {
     animation: marquee var(--marquee-duration, 30s) linear infinite;
   }
@@ -191,23 +198,17 @@ h3,
     animation: marquee-vertical var(--marquee-duration, 30s) linear infinite;
   }
 
-  .shimmer {
-    position: relative;
-    overflow: hidden;
+  .animate-rainbow {
+    animation: var(--animate-rainbow);
   }
 
-  .shimmer::after {
-    content: '';
-    position: absolute;
-    inset: -150% 0;
-    background: linear-gradient(
-      120deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.4) 20%,
-      transparent 40%
-    );
-    transform: translateX(-100%);
-    animation: shimmer 3s ease-in-out infinite;
+  @keyframes rainbow {
+    0% {
+      background-position: 0%;
+    }
+    100% {
+      background-position: 200%;
+    }
   }
 
   .grid-mask {

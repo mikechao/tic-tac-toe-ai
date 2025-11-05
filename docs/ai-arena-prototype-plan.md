@@ -21,7 +21,7 @@ Prototype coverage for two critical flows: **Match Start (multi-round configurat
 3. **Model B Selection** – second card expanded.
 4. **Round Count Adjustment** – segmented control toggled to “Best of 5”; custom input variant accessible via modal.
 5. **Pre-Launch Summary** – telemetry card updates next-match preview.
-6. **Activation Transition** – shimmer button press → board scale-in + glow.
+6. **Activation Transition** – rainbow button press → board scale-in + glow.
 7. **Match In Progress** – controls locked, countdown running.
 
 ### Interaction Specs

@@ -21,7 +21,7 @@ High-level wireframe annotations aligned with `docs/ai-tic-tac-toe-design.md`. E
 ```
 
 ### Component Map
-- **[A] Header**: `warp-background` container with `aurora-text` logo left, view switcher center, quick stats marquee (`marquee`), `shimmer-button` for “Start New Match”.
+- **[A] Header**: `warp-background` container with `aurora-text` logo left, view switcher center, quick stats marquee (`marquee`), `rainbow-button` for “Start New Match”.
 - **[B] Match Controls**: `bento-grid` with cards for LLM A selector, LLM B selector, difficulty presets, and round count stepper (best-of configuration using segmented control). Include tooltip icons for explanations.
 - **[C] Board Card**: `magic-card` providing spotlight effect, housing 3×3 responsive grid; cells use tokens for spacing and show active outline. Winning state triggers `particles`.
 - **[D] Live Match Telemetry**: `neon-gradient-card` displaying active turn, countdown `number-ticker`, and streak badge.

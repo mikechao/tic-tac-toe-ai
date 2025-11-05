@@ -7,7 +7,7 @@ import {
   BentoGrid,
   MagicCard,
   NumberTicker,
-  ShimmerButton,
+  RainbowButton,
   WarpBackground,
 } from '@/components/ui'
 import { GeminiSupportGate } from '@/components/gemini/GeminiSupportGate'
@@ -33,7 +33,8 @@ function ArenaRoute() {
                 Tic Tac Toe Showdown
               </h1>
               <p className="text-white/70">
-                Placeholder board area – hook up the interactive board component here.
+                Placeholder board area – hook up the interactive board component
+                here.
               </p>
             </div>
             <MagicCard>
@@ -42,12 +43,16 @@ function ArenaRoute() {
                   Current Match
                 </p>
                 <p className="text-lg font-semibold text-white">
-                  Model {featuredMatch.modelAId} vs Model {featuredMatch.modelBId}
+                  Model {featuredMatch.modelAId} vs Model{' '}
+                  {featuredMatch.modelBId}
                 </p>
                 <div className="flex items-center gap-6 text-sm text-white/70">
                   <span>
                     Rounds
-                    <NumberTicker value={featuredMatch.totalRounds} className="ml-2 text-base font-semibold text-white" />
+                    <NumberTicker
+                      value={featuredMatch.totalRounds}
+                      className="ml-2 text-base font-semibold text-white"
+                    />
                   </span>
                   <span>
                     Created{' '}
@@ -63,23 +68,34 @@ function ArenaRoute() {
           <MagicCard>
             <div className="flex flex-col gap-5 text-white">
               <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-white/60">Match Controls</p>
-                <h2 className="font-display text-2xl">Configure the showdown</h2>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                  Match Controls
+                </p>
+                <h2 className="font-display text-2xl">
+                  Configure the showdown
+                </h2>
                 <p className="text-sm text-white/70">
-                  This is a placeholder for the upcoming match configuration panel (model selectors, difficulty, rounds).
+                  This is a placeholder for the upcoming match configuration
+                  panel (model selectors, difficulty, rounds).
                 </p>
               </div>
               <GeminiStatusIndicator />
-              <ShimmerButton type="button" disabled>
+              <RainbowButton
+                type="button"
+                disabled
+                className="uppercase tracking-[0.25em]"
+              >
                 Start Match
-              </ShimmerButton>
+              </RainbowButton>
             </div>
           </MagicCard>
         </GeminiSupportGate>
       </section>
 
       <section>
-        <p className="text-xs uppercase tracking-[0.3em] text-white/60">Upcoming</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+          Upcoming
+        </p>
         <h3 className="font-display text-xl text-white">Arena Overview</h3>
         <BentoGrid className="mt-4">
           <BentoCard colSpanClassName="md:col-span-4">
@@ -113,7 +129,10 @@ function GeminiStatusIndicator() {
   }
 
   if (status === 'downloading') {
-    const percent = progress == null ? null : Math.min(100, Math.max(0, Math.round(progress * 100)))
+    const percent =
+      progress == null
+        ? null
+        : Math.min(100, Math.max(0, Math.round(progress * 100)))
     return (
       <p className="text-xs uppercase tracking-[0.3em] text-white/60">
         Downloading Gemini Nano{percent != null ? ` · ${percent}%` : ''}
@@ -146,6 +165,8 @@ function GeminiStatusIndicator() {
   }
 
   return (
-    <p className="text-xs uppercase tracking-[0.3em] text-white/60">Checking Gemini status…</p>
+    <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+      Checking Gemini status…
+    </p>
   )
 }

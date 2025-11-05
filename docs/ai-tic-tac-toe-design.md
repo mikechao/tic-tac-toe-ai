@@ -23,7 +23,7 @@
 - **Leaderboard view**: sortable model table, trend highlights, historical insights.
 
 ## Layout & Component Map (Magic UI)
-- **Header bar**: `aurora-text` for logo wordmark, `marquee` cycling experiment highlights, `shimmer-button` for “Start New Match”.
+- **Header bar**: `aurora-text` for logo wordmark, `marquee` cycling experiment highlights, `rainbow-button` for “Start New Match”.
 - **Match Arena shell**: `warp-background` hero container; board inside `magic-card` spotlight; `interactive-grid-pattern` as playful background.
 - **Board cells**: 3×3 CSS grid using spacing tokens; winning lines trigger `particles` overlay.
 - **Match controls panel**: `bento-grid` to group selectors (LLM A, LLM B, difficulty, round count) and status; provide stepper or segmented control for configuring best-of series; `animated-list` for move log.
@@ -32,7 +32,7 @@
 - **Mobile drawer**: `dock` component to surface primary actions below 768 px viewport width.
 
 ## Core Interactions
-- **Start match**: choose two models, optional presets, set round count, confirm; shimmer button signals state change; board scales in from idle.
+- **Start match**: choose two models, optional presets, set round count, confirm; rainbow button signals state change; board scales in from idle.
 - **Turn broadcast**: current model avatar glows; move appended to animated list; subtle audio cues (muted by default).
 - **Match complete**: winning line pulses with gradient, one-time `meteors` burst, counters tick upward, toast offers quick rematch.
 - **Leaderboard sorting**: interactive column headers with focus-visible styles; animated resort; persistent filters (time range, model type).

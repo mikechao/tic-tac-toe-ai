@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { MagicCard, ShimmerButton } from '@/components/ui'
+import { MagicCard, RainbowButton } from '@/components/ui'
 import { GeminiProvider, useGeminiContext } from '@/integrations/gemini/context'
 
 interface GeminiSupportGateProps {
@@ -32,7 +32,9 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
       <MagicCard className="border border-white/20 bg-white/5 text-white">
         <div className="flex flex-col gap-2">
           <h2 className="font-display text-lg">Preparing Gemini Nano</h2>
-          <p className="text-sm text-white/80">Checking for built-in AI support…</p>
+          <p className="text-sm text-white/80">
+            Checking for built-in AI support…
+          </p>
         </div>
       </MagicCard>
     )
@@ -68,12 +70,17 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
           <div>
             <h2 className="font-display text-lg">Download Gemini Nano</h2>
             <p className="text-sm text-sky-100/80">
-              Chrome needs to fetch the on-device Gemini Nano model. Click below to start the download.
+              Chrome needs to fetch the on-device Gemini Nano model. Click below
+              to start the download.
             </p>
           </div>
-          <ShimmerButton type="button" onClick={() => void startDownload()}>
+          <RainbowButton
+            type="button"
+            className="uppercase tracking-[0.2em]"
+            onClick={() => void startDownload()}
+          >
             Download Gemini Nano
-          </ShimmerButton>
+          </RainbowButton>
         </div>
       </MagicCard>
     )
@@ -85,11 +92,17 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
         <div className="space-y-2">
           <h2 className="font-display text-lg">Built-in AI not supported</h2>
           <p className="text-sm text-amber-100/80">
-            This browser doesn&apos;t expose Gemini Nano (built-in AI). Please switch to a compatible Chrome build or use the upcoming server-side option.
+            This browser doesn&apos;t expose Gemini Nano (built-in AI). Please
+            switch to a compatible Chrome build or use the upcoming server-side
+            option.
           </p>
-          <ShimmerButton type="button" onClick={retry}>
+          <RainbowButton
+            type="button"
+            className="uppercase tracking-[0.2em]"
+            onClick={retry}
+          >
             Recheck support
-          </ShimmerButton>
+          </RainbowButton>
         </div>
       </MagicCard>
     )
@@ -99,16 +112,22 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
     <MagicCard className="border border-rose-400/50 bg-rose-500/10 text-rose-100">
       <div className="space-y-3">
         <div>
-          <h2 className="font-display text-lg">Gemini Nano initialization failed</h2>
+          <h2 className="font-display text-lg">
+            Gemini Nano initialization failed
+          </h2>
           <p className="text-sm text-rose-100/80">
             {error instanceof Error
               ? error.message
               : 'An unknown error occurred while preparing Gemini Nano.'}
           </p>
         </div>
-        <ShimmerButton type="button" onClick={retry}>
+        <RainbowButton
+          type="button"
+          className="uppercase tracking-[0.2em]"
+          onClick={retry}
+        >
           Try again
-        </ShimmerButton>
+        </RainbowButton>
       </div>
     </MagicCard>
   )
