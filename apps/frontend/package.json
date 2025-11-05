@@ -16,6 +16,7 @@
   "dependencies": {
     "@arena/schema": "workspace:*",
     "@built-in-ai/core": "^2.0.1",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/react": "10.22.0",
     "@tailwindcss/vite": "^4.1.16",
@@ -24,6 +25,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
+    "lucide-react": "^0.552.0",
     "motion": "^12.23.24",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

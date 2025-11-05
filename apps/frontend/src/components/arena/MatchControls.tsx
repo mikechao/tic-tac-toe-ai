@@ -11,9 +11,18 @@ import {
   MagicCard,
   RainbowButton,
 } from '@/components/ui'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useGeminiContext } from '@/integrations/gemini/context'
 
 type RoundPreset = 'single' | 'bestOf3' | 'bestOf5' | 'custom'
+
+type ModelOption = (typeof demoModels)[number]
 
 const roundPresetOptions: Array<{
   value: RoundPreset
@@ -42,8 +51,66 @@ const roundPresetOptions: Array<{
   },
 ]
 
+const modelSelectTriggerClassName =
+  'mt-3 !w-full justify-between rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base font-medium text-white/90 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-inset'
+const modelSelectContentClassName =
+  'border-white/15 bg-[#0b1026]/95 text-white/80 backdrop-blur-xl max-w-[calc(100vw-3rem)]'
+const modelSelectItemClassName =
+  'text-white/80 data-[state=checked]:text-white data-[highlighted]:bg-white/10 data-[state=checked]:bg-[#4ff2c2]/10'
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
+}
+
+type ModelSelectProps = {
+  id: string
+  srLabel: string
+  value: ModelId
+  onValueChange: (value: ModelId) => void
+  options: Array<ModelOption>
+}
+
+function ModelSelect({
+  id,
+  srLabel,
+  value,
+  onValueChange,
+  options,
+}: ModelSelectProps) {
+  const labelId = `${id}-label`
+  return (
+    <div>
+      <span id={labelId} className="sr-only">
+        {srLabel}
+      </span>
+      <Select
+        value={String(value)}
+        onValueChange={(nextValue) => onValueChange(Number(nextValue) as ModelId)}
+      >
+        <SelectTrigger
+          aria-labelledby={labelId}
+          className={modelSelectTriggerClassName}
+        >
+          <SelectValue placeholder="Choose a model" />
+        </SelectTrigger>
+        <SelectContent
+          className={modelSelectContentClassName}
+          position="popper"
+          sideOffset={4}
+        >
+          {options.map((option) => (
+            <SelectItem
+              key={option.id}
+              value={String(option.id)}
+              className={modelSelectItemClassName}
+            >
+              {option.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
 }
 
 export function MatchControls() {
@@ -101,9 +168,6 @@ export function MatchControls() {
       ? 'Gemini Nano ready for local inference'
       : 'Preparing Gemini models…'
 
-  const selectClassName =
-    'mt-3 w-full appearance-none rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base font-medium text-white/90 shadow-[0_12px_36px_rgba(11,16,38,0.55)] transition focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 focus:ring-offset-2 focus:ring-offset-[var(--muted-surface)]'
-
   const handleCustomRoundsChange = (value: number) => {
     setCustomRounds(clamp(Math.round(value || 1), 1, 100))
   }
@@ -131,25 +195,13 @@ export function MatchControls() {
               <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
                 Player 1
               </legend>
-              <div>
-                <label className="sr-only" htmlFor="modelA">
-                  Select model A
-                </label>
-                <select
-                  id="modelA"
-                  value={modelAId}
-                  onChange={(event) =>
-                    setModelAId(Number(event.target.value) as ModelId)
-                  }
-                  className={selectClassName}
-                >
-                  {availableModels.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <ModelSelect
+                id="modelA"
+                srLabel="Select model A"
+                value={modelAId}
+                onValueChange={setModelAId}
+                options={availableModels}
+              />
               {selectedModelA ? (
                 <p className="sr-only">{selectedModelA.variant}</p>
               ) : null}
@@ -161,25 +213,13 @@ export function MatchControls() {
               <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
                 Player 2
               </legend>
-              <div>
-                <label className="sr-only" htmlFor="modelB">
-                  Select model B
-                </label>
-                <select
-                  id="modelB"
-                  value={modelBId}
-                  onChange={(event) =>
-                    setModelBId(Number(event.target.value) as ModelId)
-                  }
-                  className={selectClassName}
-                >
-                  {availableModels.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <ModelSelect
+                id="modelB"
+                srLabel="Select model B"
+                value={modelBId}
+                onValueChange={setModelBId}
+                options={availableModels}
+              />
               {selectedModelB ? (
                 <p className="sr-only">{selectedModelB.variant}</p>
               ) : null}
@@ -231,43 +271,43 @@ export function MatchControls() {
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
                       Custom rounds
                     </p>
-                <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
-                  <button
-                    type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
-                    onClick={() => handleCustomRoundsChange(customRounds - 1)}
-                    disabled={!isCustomRoundsActive}
-                    aria-label="Decrease rounds"
-                  >
-                    –
-                  </button>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={100}
-                    value={customRounds}
-                    onChange={(event) =>
-                      handleCustomRoundsChange(Number(event.target.value))
-                    }
-                    className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none disabled:opacity-60"
-                    disabled={!isCustomRoundsActive}
-                    aria-label="Custom round count"
-                  />
-                  <button
-                    type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
-                    onClick={() => handleCustomRoundsChange(customRounds + 1)}
-                    disabled={!isCustomRoundsActive}
-                    aria-label="Increase rounds"
-                  >
-                    +
-                  </button>
-                  <span className="ml-auto text-xs uppercase tracking-[0.2em] text-white/40">
-                    1–100
-                  </span>
-                </div>
-              </div>
+                    <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
+                      <button
+                        type="button"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
+                        onClick={() => handleCustomRoundsChange(customRounds - 1)}
+                        disabled={!isCustomRoundsActive}
+                        aria-label="Decrease rounds"
+                      >
+                        –
+                      </button>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={100}
+                        value={customRounds}
+                        onChange={(event) =>
+                          handleCustomRoundsChange(Number(event.target.value))
+                        }
+                        className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none disabled:opacity-60"
+                        disabled={!isCustomRoundsActive}
+                        aria-label="Custom round count"
+                      />
+                      <button
+                        type="button"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
+                        onClick={() => handleCustomRoundsChange(customRounds + 1)}
+                        disabled={!isCustomRoundsActive}
+                        aria-label="Increase rounds"
+                      >
+                        +
+                      </button>
+                      <span className="ml-auto text-xs uppercase tracking-[0.2em] text-white/40">
+                        1–100
+                      </span>
+                    </div>
+                  </div>
                 </BlurFade>
               )}
               <div aria-live="polite" className="sr-only">
