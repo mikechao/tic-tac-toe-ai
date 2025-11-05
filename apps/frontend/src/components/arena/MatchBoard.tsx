@@ -111,16 +111,11 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
         <h2 className="font-display text-3xl font-semibold">
           {modelA?.name ?? 'Model A'} vs {modelB?.name ?? 'Model B'}
         </h2>
-        <p className="text-sm text-white/70">
-          {modelA?.specialty ?? 'Aggressive playstyle'} facing off against{' '}
-          {modelB?.specialty ?? 'calculated responses'} in a best-of-
-          {match.totalRounds} showdown.
-        </p>
       </header>
 
       <MagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <PlayerBadge
                 name={modelA?.name ?? 'Model A'}
