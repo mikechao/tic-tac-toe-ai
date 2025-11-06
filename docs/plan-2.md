@@ -16,7 +16,7 @@
 - [x] Initialize per-round `BoardState` instances on `start`, track cumulative score, and cache Gemini session handles for both models.
 - [x] Implement round lifecycle helpers: reset board, determine starting player (alternate/randomized options), and transition to `running` phase.
 - [x] After each move, evaluate outcomes via `checkWinner`/`isDraw`, aggregate telemetry, and queue transitions to `betweenRounds` or `completed`.
-- [ ] Provide a `nextRound` handler that safely advances state when invoked manually after pauses or errors.
+- [x] Provide a `nextRound` handler that safely advances state when invoked manually after pauses or errors.
 
 ## Turn Engine & AI Integration
 - [ ] Serialize the board with `toAscii()` and assemble the AI prompt contract (intro text, schema reminder, contextual metadata) for each turn.
@@ -106,3 +106,7 @@
 - Reducer now handles a `RECORD_MOVE` action that appends move history, emits `board:update`/`move:recorded`, and when a win/draw occurs, updates cumulative scores, stores a `RoundSummary`, and transitions to `betweenRounds` or `completed` with matching events.
 - Round completion emits `round:complete` telemetry, and the final round also raises `match:complete` with the aggregated summaries/score for downstream persistence.
 - Draw detection leverages `BoardState.checkWinner()`/`isDraw()`, ensuring ties increment the scoreboard and produce summaries with ASCII board snapshots for telemetry.
+
+### 2025-11-05 Next Round Control
+- `nextRound` now enforces that callers wait for the controller to enter `betweenRounds` before advancing and then dispatches `BEGIN_ROUND` with the next round index.
+- This guard prevents accidental skips while the `running` phase is still resolving telemetry and ensures round queues stay in sync with the prebuilt `roundBoards` array.

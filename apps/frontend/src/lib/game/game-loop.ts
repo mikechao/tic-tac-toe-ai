@@ -673,6 +673,10 @@ export function createGameLoopController(
     if (!config) {
       throw new Error('Match configuration missing. Call configure() first.')
     }
+    if (state.phase !== 'betweenRounds') {
+      throw new Error('nextRound can only be called from the betweenRounds phase')
+    }
+
     const targetRound = state.currentRound + 1
     dispatch({ type: 'BEGIN_ROUND', round: targetRound })
   }
