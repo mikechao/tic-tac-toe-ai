@@ -11,7 +11,6 @@ import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
-const ROW_LABELS = ['A', 'B', 'C', 'D', 'E']
 const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
   modelA: 'X',
   modelB: 'O',
@@ -32,11 +31,9 @@ type ResolvedMove = {
 
 function toCoordinate(moveNumber: number, boardSize: number): string {
   if (boardSize <= 0 || moveNumber <= 0) return '—'
-  const index = moveNumber - 1
-  const row = Math.floor(index / boardSize)
-  const column = index % boardSize
-  const rowLabel = ROW_LABELS[row] ?? `R${row + 1}`
-  return `${rowLabel}${column + 1}`
+  const maxCells = boardSize * boardSize
+  if (moveNumber > maxCells) return '—'
+  return String(moveNumber)
 }
 
 export function MatchMoveLog({ match }: { match?: MatchSummary }) {
