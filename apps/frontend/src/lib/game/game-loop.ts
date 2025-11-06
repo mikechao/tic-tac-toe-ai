@@ -1,4 +1,4 @@
-import type { PlayerMark } from './board-state'
+import type { Move, PlayerMark } from './board-state'
 import { BoardState } from './board-state'
 
 export type GameLoopPhase =
@@ -77,6 +77,7 @@ export interface GameLoopController {
   resume(): void
   abort(reason?: string): void
   nextRound(): void
+  recordMove(input: RecordMoveInput): void
   dispose(): void
 }
 
@@ -103,7 +104,17 @@ type GameLoopAction =
   | { type: 'RESUME' }
   | { type: 'ABORT'; reason?: string }
   | { type: 'ADVANCE_TO_BETWEEN_ROUNDS' }
+  | { type: 'RECORD_MOVE'; payload: RecordMoveActionPayload }
   | { type: 'ERROR'; message: string }
+
+type RecordMoveActionPayload = {
+  entry: MoveLogEntry
+  board: BoardState
+  roundCompleted: boolean
+  winner: 'modelA' | 'modelB' | 'tie' | null
+  roundSummary?: RoundSummary
+  nextActivePlayer: 'modelA' | 'modelB' | null
+}
 
 type TransitionResult = {
   state: GameLoopState
@@ -128,6 +139,21 @@ const determineStartingPlayer = (
 
 const toPlayerMark = (player: 'modelA' | 'modelB'): PlayerMark =>
   player === 'modelA' ? 'X' : 'O'
+
+const markToActor = (mark: PlayerMark): 'modelA' | 'modelB' =>
+  mark === 'X' ? 'modelA' : 'modelB'
+
+export type RecordMoveInput = {
+  actor: 'modelA' | 'modelB'
+  move: Move
+  rationale: string
+  durationMs: number
+  rawResponse?: unknown
+  wasValid?: boolean
+  timeout?: boolean
+  timestamp?: number
+  roundDurationMs?: number
+}
 
 const transitionMap: Record<
   GameLoopPhase,
@@ -326,6 +352,66 @@ const transitionMap: Record<
       },
       events: [{ type: 'phase:change', phase: 'betweenRounds' }],
     }),
+    RECORD_MOVE: (current, action) => {
+      const { payload } = action as Extract<
+        GameLoopAction,
+        { type: 'RECORD_MOVE' }
+      >
+      const events: GameLoopEvent[] = [
+        { type: 'board:update', board: payload.board },
+        { type: 'move:recorded', entry: payload.entry },
+      ]
+
+      let nextScore = current.score
+      let nextSummaries = current.roundSummaries
+      let nextPhase: GameLoopPhase = current.phase
+      let nextActivePlayer = payload.nextActivePlayer
+
+      if (payload.roundCompleted) {
+        const scoreUpdate = { ...current.score }
+        if (payload.winner === 'modelA') {
+          scoreUpdate.modelA += 1
+        } else if (payload.winner === 'modelB') {
+          scoreUpdate.modelB += 1
+        } else if (payload.winner === 'tie') {
+          scoreUpdate.ties += 1
+        }
+        nextScore = scoreUpdate
+
+        if (payload.roundSummary) {
+          const summaries = [...current.roundSummaries, payload.roundSummary]
+          nextSummaries = summaries
+          events.push({ type: 'round:complete', summary: payload.roundSummary })
+        }
+
+        const isFinalRound = current.currentRound === current.totalRounds
+
+        if (isFinalRound) {
+          nextPhase = 'completed'
+          nextActivePlayer = null
+          events.push({ type: 'phase:change', phase: 'completed' })
+          events.push({ type: 'match:complete', summaries: nextSummaries, score: nextScore })
+        } else {
+          nextPhase = 'betweenRounds'
+          nextActivePlayer = null
+          events.push({ type: 'phase:change', phase: 'betweenRounds' })
+        }
+      }
+
+      return {
+        state: {
+          ...current,
+          phase: nextPhase,
+          board: payload.board,
+          moveHistory: [...current.moveHistory, payload.entry],
+          score: nextScore,
+          roundSummaries: nextSummaries,
+          activePlayer: nextActivePlayer,
+          isPaused: false,
+        },
+        events,
+      }
+    },
   },
   betweenRounds: {
     BEGIN_ROUND: (current, action, context) => {
@@ -591,6 +677,82 @@ export function createGameLoopController(
     dispatch({ type: 'BEGIN_ROUND', round: targetRound })
   }
 
+  const recordMove = (input: RecordMoveInput): void => {
+    if (state.phase !== 'running') {
+      throw new Error('Cannot record a move when the match is not running')
+    }
+    if (!config) {
+      throw new Error('Match configuration missing. Call configure() first.')
+    }
+
+    const board = state.board
+    const actorMark = toPlayerMark(input.actor)
+    const move = input.move
+
+    if (!board.isValidMove(move)) {
+      throw new Error('Attempted to apply an invalid move')
+    }
+
+    board.applyMove(move, actorMark)
+
+    const turn =
+      state.moveHistory.filter((entry) => entry.round === state.currentRound)
+        .length + 1
+
+    const timestamp = input.timestamp ?? Date.now()
+    const wasValid = input.wasValid ?? true
+
+    const moveEntry: MoveLogEntry = {
+      round: state.currentRound,
+      turn,
+      actor: input.actor,
+      moveNumber: move.index + 1,
+      rationale: input.rationale,
+      wasValid,
+      durationMs: input.durationMs,
+      rawResponse: input.rawResponse,
+      timestamp,
+      timeout: input.timeout,
+    }
+
+    const winnerMark = board.checkWinner()
+    let winner: 'modelA' | 'modelB' | 'tie' | null = null
+
+    if (winnerMark) {
+      winner = markToActor(winnerMark)
+    } else if (board.isDraw()) {
+      winner = 'tie'
+    }
+
+    const roundCompleted = winner !== null
+
+    const roundSummary: RoundSummary | undefined = roundCompleted
+      ? {
+          round: state.currentRound,
+          winner,
+          totalMoves: turn,
+          durationMs: input.roundDurationMs ?? input.durationMs,
+          boardSnapshot: board.toAscii(),
+        }
+      : undefined
+
+    const nextActivePlayer = roundCompleted
+      ? null
+      : markToActor(board.currentPlayer)
+
+    dispatch({
+      type: 'RECORD_MOVE',
+      payload: {
+        entry: moveEntry,
+        board,
+        roundCompleted,
+        winner,
+        roundSummary,
+        nextActivePlayer,
+      },
+    })
+  }
+
   const dispose = (): void => {
     listeners.clear()
     state = createInitialState()
@@ -608,6 +770,7 @@ export function createGameLoopController(
     resume,
     abort,
     nextRound,
+    recordMove,
     dispose,
   }
 }

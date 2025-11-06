@@ -15,7 +15,7 @@
 ## Session & Round Management
 - [x] Initialize per-round `BoardState` instances on `start`, track cumulative score, and cache Gemini session handles for both models.
 - [x] Implement round lifecycle helpers: reset board, determine starting player (alternate/randomized options), and transition to `running` phase.
-- [ ] After each move, evaluate outcomes via `checkWinner`/`isDraw`, aggregate telemetry, and queue transitions to `betweenRounds` or `completed`.
+- [x] After each move, evaluate outcomes via `checkWinner`/`isDraw`, aggregate telemetry, and queue transitions to `betweenRounds` or `completed`.
 - [ ] Provide a `nextRound` handler that safely advances state when invoked manually after pauses or errors.
 
 ## Turn Engine & AI Integration
@@ -100,3 +100,9 @@
 - `BEGIN_ROUND` now reuses/reset prebuilt `BoardState` instances, ensuring alternating starters (`determineStartingPlayer`) and cleared grids without reallocating arrays mid-match.
 - Controller options accept an `onPhaseChange` callback that fires alongside subscriber events, giving higher-level contexts a hook for enabling/disabling UI (e.g., match controls during `initializing`).
 - Further work noted: emit `round:complete` summaries and update scores once outcome evaluation is implemented in the next checklist item.
+
+### 2025-11-05 Move Evaluation & Summaries
+- Introduced `recordMove` on the controller, applying moves via `BoardState`, logging `MoveLogEntry`s, and updating `activePlayer` for the next turn when the round continues.
+- Reducer now handles a `RECORD_MOVE` action that appends move history, emits `board:update`/`move:recorded`, and when a win/draw occurs, updates cumulative scores, stores a `RoundSummary`, and transitions to `betweenRounds` or `completed` with matching events.
+- Round completion emits `round:complete` telemetry, and the final round also raises `match:complete` with the aggregated summaries/score for downstream persistence.
+- Draw detection leverages `BoardState.checkWinner()`/`isDraw()`, ensuring ties increment the scoreboard and produce summaries with ASCII board snapshots for telemetry.
