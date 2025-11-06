@@ -19,6 +19,7 @@ export type GeminiMoveRequest = {
   temperature?: number
   abortSignal?: AbortSignal
   maxRetries?: number
+  timeoutMs?: number
 }
 
 export type GeminiMoveSuccess = {
@@ -43,6 +44,73 @@ export type GeminiMoveFailure = {
 }
 
 export type GeminiMoveResult = GeminiMoveSuccess | GeminiMoveFailure
+
+const DEFAULT_TIMEOUT_MS = 30_000
+
+type MergeController = {
+  signal: AbortSignal
+  dispose: () => void
+  didTimeout: () => boolean
+  wasExternallyAborted: () => boolean
+}
+
+const mergeAbortSignals = (
+  externalSignal: AbortSignal | undefined,
+  timeoutMs: number,
+): MergeController => {
+  if (!externalSignal && typeof AbortController === 'undefined') {
+    return {
+      signal: new AbortController().signal,
+      dispose: () => {},
+    }
+  }
+
+  const controller = new AbortController()
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  let timedOut = false
+  let externalAbort = false
+
+  const abortHandler = () => {
+    externalAbort = true
+    controller.abort()
+  }
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort()
+    } else {
+      externalSignal.addEventListener('abort', abortHandler)
+    }
+  }
+
+  if (typeof timeoutMs === 'number' && timeoutMs > 0) {
+    timeoutId = setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, timeoutMs)
+  }
+
+  return {
+    signal: controller.signal,
+    dispose: () => {
+      if (externalSignal) {
+        externalSignal.removeEventListener('abort', abortHandler)
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    },
+    didTimeout: () => timedOut,
+    wasExternallyAborted: () => externalAbort,
+  }
+}
+
+const isAbortError = (error: unknown): boolean => {
+  return (
+    (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  )
+}
 
 const buildPrompt = (request: GeminiMoveRequest, asciiBoard: string): string => {
   const availableCells = request.board
@@ -92,17 +160,23 @@ export async function requestGeminiMove(
   let lastError: GeminiMoveFailure | null = null
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const startedAt = typeof performance !== 'undefined'
+      ? performance.now()
+      : Date.now()
+    const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    const controller = mergeAbortSignals(request.abortSignal, timeoutMs)
+
     try {
-      const startedAt = typeof performance !== 'undefined'
-        ? performance.now()
-        : Date.now()
       const result = await generateObject({
         model,
         schema: moveResponseSchema,
         prompt: currentPrompt,
         temperature: request.temperature ?? 0.1,
-        abortSignal: request.abortSignal,
+        abortSignal: controller.signal,
       })
+        .finally(() => {
+          controller.dispose()
+        })
       const { object } = result
       const finishedAt = typeof performance !== 'undefined'
         ? performance.now()
@@ -136,10 +210,25 @@ export async function requestGeminiMove(
         finishedAt,
       }
     } catch (error) {
+      controller.dispose()
       const finishedAt = typeof performance !== 'undefined'
         ? performance.now()
         : Date.now()
-      const durationMs = 0
+      const durationMs = finishedAt - startedAt
+      if (isAbortError(error)) {
+        const message = controller?.didTimeout()
+          ? 'Gemini move inference timed out.'
+          : 'Gemini move inference aborted.'
+        lastError = {
+          ok: false,
+          reason: 'unavailable',
+          message,
+          finishedAt,
+          durationMs,
+          startedAt,
+        }
+        break
+      }
       lastError = {
         ok: false,
         reason: 'unavailable',
@@ -147,6 +236,7 @@ export async function requestGeminiMove(
           error instanceof Error ? error.message : 'Failed to call Gemini model',
         finishedAt,
         durationMs,
+        startedAt,
       }
       break
     }

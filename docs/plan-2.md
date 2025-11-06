@@ -22,7 +22,7 @@
 - [x] Serialize the board with `toAscii()` and assemble the AI prompt contract (intro text, schema reminder, contextual metadata) for each turn.
 - [x] Call Gemini via `ensureGeminiChatModel`, validating JSON responses against empty-cell indexes, and retry with corrective instructions when needed.
 - [x] Capture timing metrics using `performance.now()`, storing `durationMs`, `wasValid`, and raw responses on each `MoveLogEntry`.
-- [ ] Enforce per-move timeout logic (default 30s), cancelling late inferences, marking the active model’s turn as a forfeit, and surfacing toast notifications.
+- [x] Enforce per-move timeout logic (default 30s), cancelling late inferences, marking the active model’s turn as a forfeit, and surfacing toast notifications.
 
 ## UI & Telemetry Broadcast
 - [ ] Emit controller events (`phase:change`, `board:update`, `move:recorded`, `round:complete`, `match:complete`, `error`) and ensure observers receive immutable snapshots.
@@ -123,3 +123,8 @@
 ### 2025-11-05 Move Timing Capture
 - `requestGeminiMove` now records inference timing via `performance.now()`, returning `durationMs`, `startedAt`, and `finishedAt` on success (and surfacing timing data on invalid retries when available).
 - These metrics will feed directly into `MoveLogEntry` duration tracking once we wire controller integration, satisfying the plan’s timing requirement before introducing timeout logic.
+
+### 2025-11-05 Move Timeout Handling
+- Added a default 30 s timeout (configurable per call) to Gemini move requests via an internal abort signal merger that honors external cancellations.
+- Timeout aborts yield a typed failure with duration metadata, so the controller can mark forfeits and emit user-facing notifications per plan requirements.
+- Retained retry flow: if Gemini responds with an occupied cell, we still prompt once more unless the timeout aborts first.
