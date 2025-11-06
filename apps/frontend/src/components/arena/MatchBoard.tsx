@@ -84,7 +84,7 @@ function PlayerBadge({
             : 'border-white/10',
         )}
       >
-        <CardHeader className="border-b border-white/10 px-5 py-4">
+        <CardHeader className="border-b border-white/10 px-5 pt-3 !pb-2">
           <CardTitle className="text-xs uppercase tracking-[0.3em] text-white/60">
             {title}
           </CardTitle>
@@ -106,7 +106,7 @@ function PlayerBadge({
             </div>
           </div>
         </CardContent>
-        <CardFooter className="border-t border-white/10 px-5 py-4 text-[11px] uppercase tracking-[0.2em] text-white/45">
+        <CardFooter className="border-t border-white/10 px-5 pt-0 pb-3 text-[11px] uppercase tracking-[0.2em] text-white/45">
           <div className="flex flex-wrap gap-4">
             <span>Wins: {wins}</span>
             <span>Losses: {losses}</span>
