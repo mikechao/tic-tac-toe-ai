@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
+import type { BoardState, PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { MagicCard } from '@/components/ui/magic-card'
@@ -20,6 +21,62 @@ type MatchSummary = MatchListResponse['matches'][number]
 const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
   modelA: 'X',
   modelB: 'O',
+}
+
+type WinningLine = {
+  mark: PlayerMark
+  indices: number[]
+}
+
+function findWinningLine(board: BoardState): WinningLine | null {
+  const size = board.size
+  const cells = board.getCells()
+
+  const evaluate = (indices: number[]): WinningLine | null => {
+    const first = cells[indices[0]]
+    if (first == null) {
+      return null
+    }
+    for (let idx = 1; idx < indices.length; idx += 1) {
+      if (cells[indices[idx]] !== first) {
+        return null
+      }
+    }
+    return { mark: first, indices }
+  }
+
+  for (let row = 0; row < size; row += 1) {
+    const indices = Array.from(
+      { length: size },
+      (_, column) => row * size + column,
+    )
+    const result = evaluate(indices)
+    if (result) {
+      return result
+    }
+  }
+
+  for (let column = 0; column < size; column += 1) {
+    const indices = Array.from(
+      { length: size },
+      (_, row) => row * size + column,
+    )
+    const result = evaluate(indices)
+    if (result) {
+      return result
+    }
+  }
+
+  const primaryDiagonal = Array.from(
+    { length: size },
+    (_, index) => index * size + index,
+  )
+  const secondaryDiagonal = Array.from(
+    { length: size },
+    (_, index) => index * size + (size - 1 - index),
+  )
+
+  return evaluate(primaryDiagonal) ?? evaluate(secondaryDiagonal)
 }
 
 function formatCellLabel(row: number, column: number, boardSize: number): string {
@@ -176,10 +233,24 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
           id: `cell-${index}`,
           label: formatCellLabel(rowIndex, columnIndex, boardSize),
           mark: boardCells[index],
+          index,
         }
       }),
     )
   }, [board, boardSize])
+
+  const winningLine = useMemo(() => findWinningLine(board), [board, boardSize])
+  const winningCellSet = useMemo(() => {
+    if (!winningLine) {
+      return null
+    }
+    return new Set(winningLine.indices)
+  }, [winningLine])
+  const winningCellTheme = winningLine
+    ? winningLine.mark === 'X'
+      ? 'border-[#4ff2c2]/70 bg-[#4ff2c2]/15 shadow-[0_0_28px_rgba(79,242,194,0.45)]'
+      : 'border-[#f15bb5]/70 bg-[#f15bb5]/12 shadow-[0_0_28px_rgba(241,91,181,0.45)]'
+    : ''
 
   const scoreboard = state.score
   const progressPercent =
@@ -278,7 +349,9 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                       className={cn(
                         'relative h-24 min-w-[6rem] rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
-                        'hover:border-white/25 hover:bg-white/10',
+                        winningCellSet?.has(cell.index)
+                          ? winningCellTheme
+                          : 'hover:border-white/25 hover:bg-white/10',
                       )}
                     >
                   <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
