@@ -68,6 +68,7 @@ export type GameLoopEvent =
 
 export interface GameLoopController {
   getState(): GameLoopState
+  getBoardAscii(includeMeta?: boolean): string
   subscribe(
     listener: (state: GameLoopState, event?: GameLoopEvent) => void,
   ): () => void
@@ -625,6 +626,9 @@ export function createGameLoopController(
 
   const getState = (): GameLoopState => state
 
+  const getBoardAscii = (includeMeta = true): string =>
+    state.board.toAscii(includeMeta)
+
   const subscribe = (
     listener: (next: GameLoopState, event?: GameLoopEvent) => void,
   ): (() => void) => {
@@ -767,6 +771,7 @@ export function createGameLoopController(
 
   return {
     getState,
+    getBoardAscii,
     subscribe,
     configure,
     start,

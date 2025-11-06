@@ -19,7 +19,7 @@
 - [x] Provide a `nextRound` handler that safely advances state when invoked manually after pauses or errors.
 
 ## Turn Engine & AI Integration
-- [ ] Serialize the board with `toAscii()` and assemble the AI prompt contract (intro text, schema reminder, contextual metadata) for each turn.
+- [x] Serialize the board with `toAscii()` and assemble the AI prompt contract (intro text, schema reminder, contextual metadata) for each turn.
 - [ ] Call Gemini via `ensureGeminiChatModel`, validating JSON responses against empty-cell indexes, and retry with corrective instructions when needed.
 - [ ] Capture timing metrics using `performance.now()`, storing `durationMs`, `wasValid`, and raw responses on each `MoveLogEntry`.
 - [ ] Enforce per-move timeout logic (default 30s), cancelling late inferences, marking the active model’s turn as a forfeit, and surfacing toast notifications.
@@ -110,3 +110,7 @@
 ### 2025-11-05 Next Round Control
 - `nextRound` now enforces that callers wait for the controller to enter `betweenRounds` before advancing and then dispatches `BEGIN_ROUND` with the next round index.
 - This guard prevents accidental skips while the `running` phase is still resolving telemetry and ensures round queues stay in sync with the prebuilt `roundBoards` array.
+
+### 2025-11-05 Board Serialization
+- Added `getBoardAscii(includeMeta?)` to the controller so prompt builders can fetch the latest board snapshot using `BoardState.toAscii()` without mutating state.
+- This helper keeps serialization logic in one place and aligns with the upcoming AI prompt contract work in the Turn Engine tasks.
