@@ -5,22 +5,62 @@ import type { MatchListResponse } from '@arena/schema'
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
 import { MagicCard, NumberTicker, StateMessage } from '@/components/ui'
+import { useGameLoop } from '@/integrations/game-loop/context'
+import type { GameLoopState } from '@/lib/game/game-loop'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
-const mockTelemetry = {
-  activeModel: 'modelB' as const,
-  countdownSeconds: 12,
-  streak: 3,
-  averageMoveSeconds: 2.4,
-  lastMove: {
-    model: 'modelA' as const,
-    coordinate: 'B2',
-    rationale: 'Secured center control to threaten dual lines.',
-  },
+const ROW_LABELS = ['A', 'B', 'C', 'D', 'E']
+
+function toCoordinate(moveNumber: number, boardSize: number): string {
+  if (boardSize <= 0 || moveNumber <= 0) {
+    return '—'
+  }
+  const index = moveNumber - 1
+  const row = Math.floor(index / boardSize)
+  const column = index % boardSize
+  const rowLabel = ROW_LABELS[row] ?? `R${row + 1}`
+  return `${rowLabel}${column + 1}`
+}
+
+function computeAverageMoveSeconds(
+  totalMs: number,
+  count: number,
+): number | undefined {
+  if (count === 0) {
+    return undefined
+  }
+  return totalMs / count / 1000
+}
+
+function computeCurrentStreak(
+  summaries: GameLoopState['roundSummaries'],
+): number {
+  let streak = 0
+  let currentWinner: 'modelA' | 'modelB' | null = null
+  for (let index = summaries.length - 1; index >= 0; index -= 1) {
+    const summary = summaries[index]
+    if (summary.winner === 'tie') {
+      break
+    }
+    if (!currentWinner) {
+      currentWinner = summary.winner
+      streak = 1
+      continue
+    }
+    if (summary.winner === currentWinner) {
+      streak += 1
+    } else {
+      break
+    }
+  }
+  return streak
 }
 
 export function MatchTelemetry({ match }: { match?: MatchSummary }) {
+  const { state } = useGameLoop()
+  const boardSize = state.board.size
+
   const modelA = useMemo(() => {
     if (!match) return undefined
     return demoModels.find((model) => model.id === match.modelAId)
@@ -30,6 +70,26 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
     if (!match) return undefined
     return demoModels.find((model) => model.id === match.modelBId)
   }, [match])
+
+  const moveHistory = state.moveHistory
+  const lastMove = moveHistory.at(-1)
+  const totalDurationMs = moveHistory.reduce(
+    (sum, entry) => sum + entry.durationMs,
+    0,
+  )
+  const averageMoveSeconds = computeAverageMoveSeconds(
+    totalDurationMs,
+    moveHistory.length,
+  )
+  const currentStreak = computeCurrentStreak(state.roundSummaries)
+  const activeModelKey =
+    state.phase === 'running' ? state.activePlayer ?? undefined : undefined
+  const activeModel =
+    activeModelKey === 'modelA'
+      ? modelA
+      : activeModelKey === 'modelB'
+        ? modelB
+        : undefined
 
   if (!match) {
     return (
@@ -47,10 +107,9 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
     )
   }
 
-  const activeModel =
-    mockTelemetry.activeModel === 'modelA' ? modelA : (modelB ?? modelA)
+  const accentOwner = activeModelKey ?? lastMove?.actor ?? 'modelA'
   const activeAccent =
-    mockTelemetry.activeModel === 'modelA'
+    accentOwner === 'modelA'
       ? 'from-[#4ff2c2]/40 via-[#4ff2c2]/20'
       : 'from-[#f15bb5]/35 via-[#f15bb5]/20'
 
@@ -84,21 +143,20 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <TelemetryStat
-            label="Countdown"
-            suffix="s"
-            value={mockTelemetry.countdownSeconds}
+            label="Moves recorded"
+            value={moveHistory.length}
             emphasis="text-emerald-300"
           />
           <TelemetryStat
             label="Current streak"
             prefix="×"
-            value={mockTelemetry.streak}
+            value={currentStreak}
             emphasis="text-[#f15bb5]"
           />
           <TelemetryStat
             label="Avg move time"
             suffix="s"
-            value={mockTelemetry.averageMoveSeconds}
+            value={averageMoveSeconds}
             emphasis="text-[#ffb547]"
             decimalPlaces={1}
           />
@@ -108,14 +166,17 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
           <p className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
             <span>Last move</span>
             <span>
-              {(mockTelemetry.lastMove.model === 'modelA'
-                ? modelA?.name
-                : modelB?.name) ?? 'Model'}{' '}
-              at {mockTelemetry.lastMove.coordinate}
+              {lastMove
+                ? `${
+                    lastMove.actor === 'modelA'
+                      ? modelA?.name ?? 'Model A'
+                      : modelB?.name ?? 'Model B'
+                  } at ${toCoordinate(lastMove.moveNumber, boardSize)}`
+                : 'Awaiting first move'}
             </span>
           </p>
           <p className="mt-2 text-base text-white">
-            “{mockTelemetry.lastMove.rationale}”
+            {lastMove ? `“${lastMove.rationale}”` : 'No rationale yet.'}
           </p>
         </div>
       </div>
@@ -132,7 +193,7 @@ function TelemetryStat({
   decimalPlaces,
 }: {
   label: string
-  value: number
+  value?: number
   prefix?: string
   suffix?: string
   emphasis?: string
@@ -147,11 +208,15 @@ function TelemetryStat({
         {prefix ? (
           <span className="text-sm font-semibold text-white/60">{prefix}</span>
         ) : null}
-        <NumberTicker
-          value={value}
-          decimalPlaces={decimalPlaces}
-          className={cn('text-3xl font-semibold text-white', emphasis)}
-        />
+        {typeof value === 'number' ? (
+          <NumberTicker
+            value={value}
+            decimalPlaces={decimalPlaces}
+            className={cn('text-3xl font-semibold text-white', emphasis)}
+          />
+        ) : (
+          <span className="text-3xl font-semibold text-white/30">—</span>
+        )}
         {suffix ? (
           <span className="text-sm font-semibold text-white/60">{suffix}</span>
         ) : null}

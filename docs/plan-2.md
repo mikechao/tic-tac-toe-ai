@@ -27,7 +27,7 @@
 ## UI & Telemetry Broadcast
 - [x] Emit controller events (`phase:change`, `board:update`, `move:recorded`, `round:complete`, `match:complete`, `error`) and ensure observers receive immutable snapshots.
 - [x] Build or update a React context/hook (e.g., `useGameLoop`) that wires controller subscription into `MatchBoard`, `MatchTelemetry`, and `MatchMoveLog`.
-- [ ] Replace placeholder data sources in arena components to consume live controller state (board cells, active player, countdowns, streaks, move log entries).
+- [x] Replace placeholder data sources in arena components to consume live controller state (board cells, active player, countdowns, streaks, move log entries).
 - [ ] Disable `MatchControls` actions during `initializing`/`running` phases and re-enable them after `completed` or `error` states.
 
 ## Persistence & Analytics

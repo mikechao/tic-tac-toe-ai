@@ -5,46 +5,39 @@ import type { MatchListResponse } from '@arena/schema'
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
 import { MagicCard, NumberTicker, StateMessage } from '@/components/ui'
+import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
-type BoardCell = {
-  id: string
-  label: string
-  position: string
-  mark: 'X' | 'O' | null
-  isWinning?: boolean
+const ROW_LABELS = ['A', 'B', 'C', 'D', 'E']
+
+const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
+  modelA: 'X',
+  modelB: 'O',
 }
 
-const demoBoardState: BoardCell[] = [
-  {
-    id: 'cell-0',
-    label: 'A1',
-    position: 'Top left',
-    mark: 'X',
-    isWinning: true,
-  },
-  { id: 'cell-1', label: 'A2', position: 'Top center', mark: 'O' },
-  { id: 'cell-2', label: 'A3', position: 'Top right', mark: 'X' },
-  { id: 'cell-3', label: 'B1', position: 'Middle left', mark: 'O' },
-  { id: 'cell-4', label: 'B2', position: 'Center', mark: 'X', isWinning: true },
-  { id: 'cell-5', label: 'B3', position: 'Middle right', mark: null },
-  { id: 'cell-6', label: 'C1', position: 'Bottom left', mark: null },
-  { id: 'cell-7', label: 'C2', position: 'Bottom center', mark: 'O' },
-  {
-    id: 'cell-8',
-    label: 'C3',
-    position: 'Bottom right',
-    mark: 'X',
-    isWinning: true,
-  },
-]
+function formatCellLabel(row: number, column: number): string {
+  const rowLabel = ROW_LABELS[row] ?? `R${row + 1}`
+  return `${rowLabel}${column + 1}`
+}
 
-const demoScore = {
-  modelAWins: 2,
-  modelBWins: 1,
-  ties: 1,
-  currentRound: 4,
+function getActiveTurnText(
+  phase: string,
+  playerName?: string,
+): string {
+  if (phase === 'running' && playerName) {
+    return `${playerName} analysing next response...`
+  }
+  if (phase === 'initializing') {
+    return 'Preparing models for the opening move...'
+  }
+  if (phase === 'betweenRounds') {
+    return 'Intermission between rounds — queue the next showdown.'
+  }
+  if (phase === 'completed') {
+    return 'Match completed — configure a rematch to continue.'
+  }
+  return 'Awaiting match configuration.'
 }
 
 function PlayerBadge({
@@ -87,6 +80,10 @@ function PlayerBadge({
 }
 
 export function MatchBoard({ match }: { match?: MatchSummary }) {
+  const { state } = useGameLoop()
+  const board = state.board
+  const boardSize = board.size
+
   const modelAId = match?.modelAId
   const modelBId = match?.modelBId
 
@@ -116,11 +113,41 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     )
   }
 
-  const boardStatus = `Round ${demoScore.currentRound} of ${match.totalRounds}`
-  const turnsRemaining =
-    match.totalRounds - demoScore.currentRound >= 0
-      ? match.totalRounds - demoScore.currentRound
+  const totalRounds = state.totalRounds || match.totalRounds
+  const boardStatus = `Round ${Math.max(state.currentRound, 1)} of ${totalRounds}`
+  const turnsRemaining = Math.max(
+    0,
+    totalRounds - state.currentRound,
+  )
+  const boardRows = useMemo(() => {
+    const boardCells = board.getCells()
+    return Array.from({ length: boardSize }, (_, rowIndex) =>
+      Array.from({ length: boardSize }, (_, columnIndex) => {
+        const index = rowIndex * boardSize + columnIndex
+        return {
+          id: `cell-${index}`,
+          label: formatCellLabel(rowIndex, columnIndex),
+          mark: boardCells[index],
+        }
+      }),
+    )
+  }, [board, boardSize])
+
+  const scoreboard = state.score
+  const progressPercent =
+    totalRounds > 0
+      ? Math.min(100, (state.currentRound / totalRounds) * 100)
       : 0
+  const activePlayerName =
+    state.activePlayer === 'modelA'
+      ? modelA?.name ?? 'Model A'
+      : state.activePlayer === 'modelB'
+        ? modelB?.name ?? 'Model B'
+        : undefined
+  const activeMark = state.activePlayer
+    ? actorToMark[state.activePlayer]
+    : null
+  const activeTurnText = getActiveTurnText(state.phase, activePlayerName)
 
   return (
     <div className="flex flex-col gap-6 text-white">
@@ -142,35 +169,35 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                 variant={modelA?.variant ?? 'On-device prototype'}
                 mark="X"
                 accentClass="bg-[#4ff2c2]/30 border border-[#4ff2c2]/50"
-                isActive={false}
+                isActive={activeMark === 'X'}
               />
               <PlayerBadge
                 name={modelB?.name ?? 'Model B'}
                 variant={modelB?.variant ?? 'Experimental release'}
                 mark="O"
                 accentClass="bg-[#f15bb5]/25 border border-[#f15bb5]/45"
-                isActive
+                isActive={activeMark === 'O'}
               />
             </div>
             <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs uppercase tracking-[0.2em] text-white/60">
               <div className="flex items-center justify-between gap-6 text-sm tracking-[0.15em]">
                 <span className="text-white/60">X wins</span>
                 <NumberTicker
-                  value={demoScore.modelAWins}
+                  value={scoreboard.modelA}
                   className="text-base font-semibold text-white"
                 />
               </div>
               <div className="flex items-center justify-between gap-6 text-sm tracking-[0.15em]">
                 <span className="text-white/60">O wins</span>
                 <NumberTicker
-                  value={demoScore.modelBWins}
+                  value={scoreboard.modelB}
                   className="text-base font-semibold text-white"
                 />
               </div>
               <div className="flex items-center justify-between gap-6 text-sm tracking-[0.15em]">
                 <span className="text-white/60">Ties</span>
                 <NumberTicker
-                  value={demoScore.ties}
+                  value={scoreboard.ties}
                   className="text-base font-semibold text-white"
                 />
               </div>
@@ -192,13 +219,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
                 style={{
-                  width: `${Math.min(
-                    100,
-                    Math.max(
-                      0,
-                      (demoScore.currentRound / match.totalRounds) * 100,
-                    ),
-                  )}%`,
+                  width: `${progressPercent}%`,
                 }}
               />
             </div>
@@ -209,25 +230,18 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
             className="w-full border-separate border-spacing-3 sm:border-spacing-4"
           >
             <tbody>
-              {[0, 1, 2].map((rowIndex) => (
-                <tr
-                  key={demoBoardState[rowIndex * 3]?.id ?? `row-${rowIndex}`}
-                  className="align-middle"
-                >
-                  {demoBoardState
-                    .slice(rowIndex * 3, rowIndex * 3 + 3)
-                    .map((cell) => (
-                      <td
-                        key={cell.id}
-                        aria-label={`${cell.position} ${
-                          cell.mark ? `contains ${cell.mark}` : 'is empty'
-                        }`}
-                        className={cn(
-                          'relative h-24 min-w-[6rem] rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
+              {boardRows.map((row, rowIndex) => (
+                <tr key={`row-${rowIndex}`} className="align-middle">
+                  {row.map((cell) => (
+                    <td
+                      key={cell.id}
+                      aria-label={`${cell.label} ${
+                        cell.mark ? `contains ${cell.mark}` : 'is empty'
+                      }`}
+                      className={cn(
+                        'relative h-24 min-w-[6rem] rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
-                        cell.isWinning
-                          ? 'border-[#4ff2c2] bg-[#4ff2c2]/15 shadow-[0_0_32px_rgba(79,242,194,0.35)]'
-                          : 'hover:border-white/25 hover:bg-white/10',
+                        'hover:border-white/25 hover:bg-white/10',
                       )}
                     >
                       <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
@@ -255,10 +269,14 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
               Active turn
             </span>
             <p className="text-base text-white">
-              {modelB?.name ?? 'Model B'} analysing center lane response…
+              {activeTurnText}
             </p>
             <span className="text-xs uppercase tracking-[0.3em] text-emerald-300/80">
-              Thinking window 12s
+              {state.phase === 'running'
+                ? state.activePlayer
+                  ? `${actorToMark[state.activePlayer]} thinking`
+                  : 'Engine live'
+                : 'Awaiting action'}
             </span>
           </div>
         </div>

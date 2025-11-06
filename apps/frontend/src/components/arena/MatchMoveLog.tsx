@@ -7,82 +7,44 @@ import type { MatchListResponse } from '@arena/schema'
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
 import { AnimatedList, MagicCard, StateMessage } from '@/components/ui'
+import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
-type MoveEntry = {
+const ROW_LABELS = ['A', 'B', 'C', 'D', 'E']
+const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
+  modelA: 'X',
+  modelB: 'O',
+}
+
+type ResolvedMove = {
   id: string
-  modelKey: 'modelA' | 'modelB'
+  actor: 'modelA' | 'modelB'
   coordinate: string
   mark: 'X' | 'O'
   round: number
   turn: number
   durationSeconds: number
-  timestamp: string
+  timestamp: number
   rationale: string
+  modelName: string
 }
 
-const mockMoves: MoveEntry[] = [
-  {
-    id: 'move-1',
-    modelKey: 'modelA',
-    coordinate: 'A1',
-    mark: 'X',
-    round: 1,
-    turn: 1,
-    durationSeconds: 1.8,
-    timestamp: '2025-10-01T15:32:12.000Z',
-    rationale: 'Opened on the corner to create dual-win threats rapidly.',
-  },
-  {
-    id: 'move-2',
-    modelKey: 'modelB',
-    coordinate: 'B2',
-    mark: 'O',
-    round: 1,
-    turn: 2,
-    durationSeconds: 2.6,
-    timestamp: '2025-10-01T15:32:14.300Z',
-    rationale: 'Countered with center control to block future forks.',
-  },
-  {
-    id: 'move-3',
-    modelKey: 'modelA',
-    coordinate: 'C3',
-    mark: 'X',
-    round: 1,
-    turn: 3,
-    durationSeconds: 2.1,
-    timestamp: '2025-10-01T15:32:16.700Z',
-    rationale: 'Established diagonal dominance, setting up closing edge.',
-  },
-  {
-    id: 'move-4',
-    modelKey: 'modelB',
-    coordinate: 'A2',
-    mark: 'O',
-    round: 1,
-    turn: 4,
-    durationSeconds: 3.3,
-    timestamp: '2025-10-01T15:32:20.200Z',
-    rationale: 'Blocked diagonal threat while opening vertical counter.',
-  },
-  {
-    id: 'move-5',
-    modelKey: 'modelA',
-    coordinate: 'B3',
-    mark: 'X',
-    round: 1,
-    turn: 5,
-    durationSeconds: 1.9,
-    timestamp: '2025-10-01T15:32:22.000Z',
-    rationale: 'Forced opponent to defend bottom row, maintaining tempo.',
-  },
-]
+function toCoordinate(moveNumber: number, boardSize: number): string {
+  if (boardSize <= 0 || moveNumber <= 0) return '—'
+  const index = moveNumber - 1
+  const row = Math.floor(index / boardSize)
+  const column = index % boardSize
+  const rowLabel = ROW_LABELS[row] ?? `R${row + 1}`
+  return `${rowLabel}${column + 1}`
+}
 
 export function MatchMoveLog({ match }: { match?: MatchSummary }) {
   const [isPaused, setIsPaused] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+  const { state } = useGameLoop()
+  const boardSize = state.board.size
+  const moveHistory = state.moveHistory
 
   const modelAId = match?.modelAId
   const modelBId = match?.modelBId
@@ -98,16 +60,25 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
     return demoModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
-  const resolvedMoves = useMemo(() => {
+  const resolvedMoves: ResolvedMove[] = useMemo(() => {
     if (!match) return []
-    return mockMoves.map((move) => ({
-      ...move,
-      model:
-        move.modelKey === 'modelA'
-          ? (modelA ?? demoModels[0])
-          : (modelB ?? demoModels[1]),
-    }))
-  }, [match, modelA, modelB])
+    return moveHistory.map((entry) => {
+      const actorModel =
+        entry.actor === 'modelA' ? modelA ?? demoModels[0] : modelB ?? demoModels[1]
+      return {
+        id: `${entry.round}-${entry.turn}`,
+        actor: entry.actor,
+        coordinate: toCoordinate(entry.moveNumber, boardSize),
+        mark: actorToMark[entry.actor],
+        round: entry.round,
+        turn: entry.turn,
+        durationSeconds: entry.durationMs / 1000,
+        timestamp: entry.timestamp,
+        rationale: entry.rationale,
+        modelName: actorModel?.name ?? (entry.actor === 'modelA' ? 'Model A' : 'Model B'),
+      }
+    })
+  }, [match, modelA, modelB, boardSize, moveHistory])
 
   useEffect(() => {
     if (isPaused || !listRef.current || resolvedMoves.length === 0) return
@@ -120,6 +91,8 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
 
   const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
   const showEmptyState = resolvedMoves.length === 0
+  const reviewingRound =
+    resolvedMoves[resolvedMoves.length - 1]?.round ?? Math.max(state.currentRound, 1)
 
   return (
     <MagicCard
@@ -133,7 +106,7 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
               Move Log
             </p>
             <h3 className="font-display text-xl">
-              Reviewing round {resolvedMoves[0]?.round ?? 1}
+              Reviewing round {reviewingRound}
             </h3>
             <p className="text-sm text-white/70">
               Auto-scroll keeps you at the latest move; pause anytime to inspect
@@ -210,7 +183,7 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
                       </span>
                       <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
                         <p className="font-semibold text-white">
-                          {move.model.name}{' '}
+                          {move.modelName}{' '}
                           <span className="text-white/60">
                             · round {move.round}, turn {move.turn}
                           </span>
