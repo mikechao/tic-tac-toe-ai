@@ -5,6 +5,14 @@ import type { MatchListResponse } from '@arena/schema'
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
+import { MagicCard } from '@/components/ui/magic-card'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
@@ -41,41 +49,74 @@ function getActiveTurnText(
 }
 
 function PlayerBadge({
+  title,
   name,
   variant,
   mark,
   accentClass,
   isActive,
+  stats,
 }: {
+  title: string
   name: string
   variant: string
   mark: 'X' | 'O'
   accentClass: string
   isActive?: boolean
+  stats?: { wins: number; losses: number; ties: number }
 }) {
+  const gradientFrom = mark === 'X' ? '#4ff2c2' : '#f15bb5'
+  const gradientTo = mark === 'X' ? 'rgba(79,242,194,0.35)' : 'rgba(241,91,181,0.35)'
+  const gradientColor = mark === 'X' ? '#16382f' : '#3c1428'
+
+  const wins = stats?.wins ?? 0
+  const losses = stats?.losses ?? 0
+  const ties = stats?.ties ?? 0
+
   return (
-    <div
-      className={cn(
-        'flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition',
-        isActive
-          ? 'border-[#4ff2c2]/50 shadow-[0_0_36px_rgba(79,242,194,0.35)]'
-          : 'border-white/10',
-      )}
-    >
-      <span
+    <Card className="border-none bg-transparent p-0 shadow-none">
+      <MagicCard
+        gradientColor={gradientColor}
+        gradientFrom={gradientFrom}
+        gradientTo={gradientTo}
         className={cn(
-          'flex size-12 items-center justify-center rounded-xl text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.55)]',
-          accentClass,
+          'rounded-2xl border border-white/10 bg-white/5 text-white transition',
+          isActive
+            ? 'border-[#4ff2c2]/50 shadow-[0_0_36px_rgba(79,242,194,0.35)]'
+            : 'border-white/10',
         )}
-        aria-hidden="true"
       >
-        {mark}
-      </span>
-      <div className="flex flex-col">
-        <span className="text-sm font-semibold text-white">{name}</span>
-        <span className="text-xs text-white/60">{variant}</span>
-      </div>
-    </div>
+        <CardHeader className="border-b border-white/10 px-5 py-4">
+          <CardTitle className="text-xs uppercase tracking-[0.3em] text-white/60">
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-5 py-5">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                'flex size-12 items-center justify-center rounded-xl text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.55)]',
+                accentClass,
+              )}
+              aria-hidden="true"
+            >
+              {mark}
+            </span>
+            <div className="flex flex-col">
+              <span className="text-base font-semibold text-white">{name}</span>
+              <span className="text-xs text-white/60">{variant}</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="border-t border-white/10 px-5 py-4 text-[11px] uppercase tracking-[0.2em] text-white/45">
+          <div className="flex flex-wrap gap-4">
+            <span>Wins: {wins}</span>
+            <span>Losses: {losses}</span>
+            <span>Ties: {ties}</span>
+          </div>
+        </CardFooter>
+      </MagicCard>
+    </Card>
   )
 }
 
@@ -165,18 +206,30 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <PlayerBadge
+                title="Player 1"
                 name={modelA?.name ?? 'Model A'}
                 variant={modelA?.variant ?? 'On-device prototype'}
                 mark="X"
                 accentClass="bg-[#4ff2c2]/30 border border-[#4ff2c2]/50"
                 isActive={activeMark === 'X'}
+                stats={{
+                  wins: scoreboard.modelA,
+                  losses: scoreboard.modelB,
+                  ties: scoreboard.ties,
+                }}
               />
               <PlayerBadge
+                title="Player 2"
                 name={modelB?.name ?? 'Model B'}
                 variant={modelB?.variant ?? 'Experimental release'}
                 mark="O"
                 accentClass="bg-[#f15bb5]/25 border border-[#f15bb5]/45"
                 isActive={activeMark === 'O'}
+                stats={{
+                  wins: scoreboard.modelB,
+                  losses: scoreboard.modelA,
+                  ties: scoreboard.ties,
+                }}
               />
             </div>
             <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs uppercase tracking-[0.2em] text-white/60">
