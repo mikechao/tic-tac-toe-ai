@@ -1,38 +1,31 @@
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { Wifi } from 'lucide-react'
+import { Toaster as SonnerToaster, type ToasterProps } from 'sonner'
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+const transparentToastClass = 'bg-transparent p-0 shadow-none border-none'
 
-  return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
-      icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
-      }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  )
-}
+const Toaster = (props: ToasterProps) => (
+  <SonnerToaster
+    theme="dark"
+    toastOptions={{
+      className: transparentToastClass,
+      style: {
+        backgroundColor: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+      },
+      closeButton: false,
+    }}
+    icons={{
+      loading: (
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
+          <Wifi className="h-3.5 w-3.5 animate-pulse text-white/60" />
+          Syncing…
+        </div>
+      ),
+    }}
+    position="bottom-right"
+    {...props}
+  />
+)
 
 export { Toaster }
