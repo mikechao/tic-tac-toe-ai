@@ -1,7 +1,7 @@
 import { useId } from 'react'
 
 import { cn } from '@/lib/utils'
-import { MagicCard } from '@/components/ui'
+import { MyMagicCard } from '@/components/ui'
 
 const timeRanges = [
   { value: '7d', label: 'Last 7 days' },
@@ -35,7 +35,7 @@ export function LeaderboardFilters({
 
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-      <MagicCard
+      <MyMagicCard
         className="h-full border-white/15 bg-white/[0.04]"
         spotlight={false}
       >
@@ -56,8 +56,8 @@ export function LeaderboardFilters({
             ))}
           </div>
         </fieldset>
-      </MagicCard>
-      <MagicCard
+      </MyMagicCard>
+      <MyMagicCard
         className="h-full border-white/15 bg-white/[0.04]"
         spotlight={false}
       >
@@ -78,7 +78,7 @@ export function LeaderboardFilters({
             ))}
           </div>
         </fieldset>
-      </MagicCard>
+      </MyMagicCard>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
-import { MagicCard, NumberTicker, StateMessage } from '@/components/ui'
+import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
@@ -160,7 +160,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
         </h2>
       </header>
 
-      <MagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
+      <MyMagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -280,7 +280,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
             </span>
           </div>
         </div>
-      </MagicCard>
+      </MyMagicCard>
     </div>
   )
 }

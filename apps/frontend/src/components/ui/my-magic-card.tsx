@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
-interface MagicCardProps extends HTMLAttributes<HTMLDivElement> {
+interface MyMagicCardProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Enable the interactive spotlight effect on hover.
    * @default true
@@ -11,12 +11,12 @@ interface MagicCardProps extends HTMLAttributes<HTMLDivElement> {
   spotlight?: boolean
 }
 
-export function MagicCard({
+export function MyMagicCard({
   className,
   children,
   spotlight = true,
   ...props
-}: MagicCardProps) {
+}: MyMagicCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 50, y: 50 })
 

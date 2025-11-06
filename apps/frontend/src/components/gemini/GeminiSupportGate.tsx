@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { MagicCard, RainbowButton } from '@/components/ui'
+import { MyMagicCard, RainbowButton } from '@/components/ui'
 import { GeminiProvider, useGeminiContext } from '@/integrations/gemini/context'
 
 interface GeminiSupportGateProps {
@@ -29,20 +29,20 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
 
   if (status === 'checking') {
     return (
-      <MagicCard className="border border-white/20 bg-white/5 text-white">
+      <MyMagicCard className="border border-white/20 bg-white/5 text-white">
         <div className="flex flex-col gap-2">
           <h2 className="font-display text-lg">Preparing Gemini Nano</h2>
           <p className="text-sm text-white/80">
             Checking for built-in AI support…
           </p>
         </div>
-      </MagicCard>
+      </MyMagicCard>
     )
   }
 
   if (status === 'downloading') {
     return (
-      <MagicCard className="border border-indigo-400/40 bg-indigo-500/10 text-indigo-100">
+      <MyMagicCard className="border border-indigo-400/40 bg-indigo-500/10 text-indigo-100">
         <div className="space-y-3">
           <div>
             <h2 className="font-display text-lg">Fetching on-device model</h2>
@@ -59,13 +59,13 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
             />
           </div>
         </div>
-      </MagicCard>
+      </MyMagicCard>
     )
   }
 
   if (status === 'downloadable') {
     return (
-      <MagicCard className="border border-sky-400/40 bg-sky-500/10 text-sky-100">
+      <MyMagicCard className="border border-sky-400/40 bg-sky-500/10 text-sky-100">
         <div className="space-y-3">
           <div>
             <h2 className="font-display text-lg">Download Gemini Nano</h2>
@@ -82,13 +82,13 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
             Download Gemini Nano
           </RainbowButton>
         </div>
-      </MagicCard>
+      </MyMagicCard>
     )
   }
 
   if (status === 'unsupported') {
     return (
-      <MagicCard className="border border-amber-400/40 bg-amber-500/10 text-amber-200">
+      <MyMagicCard className="border border-amber-400/40 bg-amber-500/10 text-amber-200">
         <div className="space-y-2">
           <h2 className="font-display text-lg">Built-in AI not supported</h2>
           <p className="text-sm text-amber-100/80">
@@ -104,12 +104,12 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
             Recheck support
           </RainbowButton>
         </div>
-      </MagicCard>
+      </MyMagicCard>
     )
   }
 
   return (
-    <MagicCard className="border border-rose-400/50 bg-rose-500/10 text-rose-100">
+    <MyMagicCard className="border border-rose-400/50 bg-rose-500/10 text-rose-100">
       <div className="space-y-3">
         <div>
           <h2 className="font-display text-lg">
@@ -129,6 +129,6 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
           Try again
         </RainbowButton>
       </div>
-    </MagicCard>
+    </MyMagicCard>
   )
 }

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import {
   BentoCard,
   BentoGrid,
-  MagicCard,
+  MyMagicCard,
   RainbowButton,
   useToast,
 } from '@/components/ui'
@@ -247,7 +247,7 @@ export function MatchControls() {
   }
 
   return (
-    <MagicCard className="relative h-full overflow-hidden">
+    <MyMagicCard className="relative h-full overflow-hidden">
       {isBusyPhase ? (
         <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#050918]/85 text-center text-white backdrop-blur">
           <p className="text-sm font-semibold uppercase tracking-[0.3em]">
@@ -430,6 +430,6 @@ export function MatchControls() {
           </BentoCard>
         </BentoGrid>
       </div>
-    </MagicCard>
+    </MyMagicCard>
   )
 }

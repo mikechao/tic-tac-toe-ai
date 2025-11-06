@@ -6,7 +6,7 @@ import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
-import { AnimatedList, MagicCard, StateMessage } from '@/components/ui'
+import { AnimatedList, MyMagicCard, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
@@ -95,7 +95,7 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
     resolvedMoves[resolvedMoves.length - 1]?.round ?? Math.max(state.currentRound, 1)
 
   return (
-    <MagicCard
+    <MyMagicCard
       className="border-white/15 bg-white/[0.04] px-0 py-0"
       spotlight={false}
     >
@@ -210,6 +210,6 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
           )}
         </div>
       </div>
-    </MagicCard>
+    </MyMagicCard>
   )
 }

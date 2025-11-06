@@ -6,7 +6,7 @@ import {
   demoLeaderboardEntries,
   demoLeaderboardHighlights,
 } from '@/data/demo.leaderboard'
-import { BentoGrid, MagicCard, Marquee, NumberTicker } from '@/components/ui'
+import { BentoGrid, Marquee, MyMagicCard, NumberTicker } from '@/components/ui'
 import { LeaderboardFilters } from '@/components/leaderboard/LeaderboardFilters'
 import { LeaderboardCard } from '@/components/leaderboard/LeaderboardCard'
 
@@ -87,7 +87,7 @@ function LeaderboardRoute() {
         onSelectFamily={setFamily}
       />
 
-      <MagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
+      <MyMagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
         <div className="grid gap-6 text-white md:grid-cols-3">
           <SummaryStat label="Total matches" value={totalMatches} />
           <SummaryStat
@@ -107,7 +107,7 @@ function LeaderboardRoute() {
             </p>
           </div>
         </div>
-      </MagicCard>
+      </MyMagicCard>
 
       <section aria-label="Trend highlights">
         <p className="text-xs uppercase tracking-[0.3em] text-white/60">

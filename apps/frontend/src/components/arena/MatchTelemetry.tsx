@@ -4,7 +4,7 @@ import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
-import { MagicCard, NumberTicker, StateMessage } from '@/components/ui'
+import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { GameLoopState } from '@/lib/game/game-loop'
 
@@ -93,7 +93,7 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
 
   if (!match) {
     return (
-      <MagicCard
+      <MyMagicCard
         className="border-white/15 bg-white/[0.04] px-0 py-0"
         spotlight={false}
       >
@@ -103,7 +103,7 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
             description="We couldn’t load live stats for this session yet. Start a match or retry after the next sync."
           />
         </div>
-      </MagicCard>
+      </MyMagicCard>
     )
   }
 
@@ -114,7 +114,7 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
       : 'from-[#f15bb5]/35 via-[#f15bb5]/20'
 
   return (
-    <MagicCard
+    <MyMagicCard
       className={cn(
         'relative border-white/15 bg-white/[0.04] px-0 py-0',
         'overflow-hidden',
@@ -180,7 +180,7 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
           </p>
         </div>
       </div>
-    </MagicCard>
+    </MyMagicCard>
   )
 }
 
