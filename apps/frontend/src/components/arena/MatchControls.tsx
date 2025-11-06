@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ModelId } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
+import { cn } from '@/lib/utils'
 import {
   BentoCard,
   BentoGrid,
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useGeminiContext } from '@/integrations/gemini/context'
+import { useGameLoop } from '@/integrations/game-loop/context'
 
 type ModelOption = (typeof demoModels)[number]
 
@@ -38,6 +40,7 @@ type ModelSelectProps = {
   value: ModelId
   onValueChange: (value: ModelId) => void
   options: Array<ModelOption>
+  disabled?: boolean
 }
 
 function ModelSelect({
@@ -46,6 +49,7 @@ function ModelSelect({
   value,
   onValueChange,
   options,
+  disabled = false,
 }: ModelSelectProps) {
   const labelId = `${id}-label`
   return (
@@ -58,10 +62,15 @@ function ModelSelect({
         onValueChange={(nextValue) =>
           onValueChange(Number(nextValue) as ModelId)
         }
+        disabled={disabled}
       >
         <SelectTrigger
           aria-labelledby={labelId}
-          className={modelSelectTriggerClassName}
+          className={cn(
+            modelSelectTriggerClassName,
+            disabled && 'cursor-not-allowed opacity-50',
+          )}
+          disabled={disabled}
         >
           <SelectValue placeholder="Choose a model" />
         </SelectTrigger>
@@ -87,6 +96,7 @@ function ModelSelect({
 
 export function MatchControls() {
   const { status } = useGeminiContext()
+  const { state } = useGameLoop()
   const { showToast } = useToast()
 
   const availableModels = useMemo(
@@ -131,6 +141,11 @@ export function MatchControls() {
     status === 'ready'
       ? 'Gemini Nano ready for local inference'
       : 'Preparing Gemini models…'
+  const isBusyPhase = state.phase === 'initializing' || state.phase === 'running'
+  const busyLabel =
+    state.phase === 'initializing'
+      ? 'Match preparing…'
+      : 'Match running…'
 
   const handleRoundCountChange = (value: number) => {
     setRoundCount(clamp(Math.round(value || 1), 1, 100))
@@ -158,8 +173,26 @@ export function MatchControls() {
   }
 
   return (
-    <MagicCard className="h-full">
-      <div className="flex flex-col gap-6 text-white">
+    <MagicCard className="relative h-full overflow-hidden">
+      {isBusyPhase ? (
+        <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#050918]/85 text-center text-white backdrop-blur">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em]">
+            {busyLabel}
+          </p>
+          <p className="mt-2 text-xs text-white/70">
+            Controls re-enable after the current phase completes.
+          </p>
+        </div>
+      ) : null}
+      <span className="sr-only" aria-live="polite">
+        {isBusyPhase ? `${busyLabel} controls locked` : 'Controls ready'}
+      </span>
+      <div
+        className={cn(
+          'flex flex-col gap-6 text-white transition-opacity',
+          isBusyPhase ? 'pointer-events-none opacity-60' : 'opacity-100',
+        )}
+      >
         <header className="space-y-2">
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">
             Match Controls
@@ -186,6 +219,7 @@ export function MatchControls() {
                 value={modelAId}
                 onValueChange={setModelAId}
                 options={availableModels}
+                disabled={isBusyPhase}
               />
               {selectedModelA ? (
                 <p className="sr-only">{selectedModelA.variant}</p>
@@ -204,6 +238,7 @@ export function MatchControls() {
                 value={modelBId}
                 onValueChange={setModelBId}
                 options={availableModels}
+                disabled={isBusyPhase}
               />
               {selectedModelB ? (
                 <p className="sr-only">{selectedModelB.variant}</p>
@@ -229,9 +264,10 @@ export function MatchControls() {
                 <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
                   <button
                     type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => handleRoundCountChange(totalRounds - 1)}
                     aria-label="Decrease rounds"
+                    disabled={isBusyPhase}
                   >
                     –
                   </button>
@@ -244,12 +280,14 @@ export function MatchControls() {
                     onChange={(event) =>
                       handleRoundCountChange(Number(event.target.value))
                     }
-                    className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none"
+                    className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-white/40"
+                    disabled={isBusyPhase}
                     aria-label="Round count"
                   />
                   <button
                     type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isBusyPhase}
                     onClick={() => handleRoundCountChange(totalRounds + 1)}
                     aria-label="Increase rounds"
                   >
@@ -279,8 +317,8 @@ export function MatchControls() {
               </div>
               <RainbowButton
                 type="button"
-                disabled={!isConfigurationValid}
-                className="w-full uppercase tracking-[0.25em]"
+                disabled={!isConfigurationValid || isBusyPhase}
+                className="w-full uppercase tracking-[0.25em] disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={handleStartMatch}
               >
                 Start Match
