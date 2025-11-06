@@ -17,16 +17,14 @@ import { useGameLoop } from '@/integrations/game-loop/context'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
-const ROW_LABELS = ['A', 'B', 'C', 'D', 'E']
-
 const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
   modelA: 'X',
   modelB: 'O',
 }
 
-function formatCellLabel(row: number, column: number): string {
-  const rowLabel = ROW_LABELS[row] ?? `R${row + 1}`
-  return `${rowLabel}${column + 1}`
+function formatCellLabel(row: number, column: number, boardSize: number): string {
+  const index = row * boardSize + column + 1
+  return String(index)
 }
 
 function getActiveTurnText(
@@ -167,7 +165,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
         const index = rowIndex * boardSize + columnIndex
         return {
           id: `cell-${index}`,
-          label: formatCellLabel(rowIndex, columnIndex),
+          label: formatCellLabel(rowIndex, columnIndex, boardSize),
           mark: boardCells[index],
         }
       }),
