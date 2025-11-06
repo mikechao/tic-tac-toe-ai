@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useGeminiContext } from '@/integrations/gemini/context'
 import { useGameLoop } from '@/integrations/game-loop/context'
+import type { MatchConfig } from '@/lib/game/game-loop'
 
 type ModelOption = (typeof demoModels)[number]
 
@@ -33,6 +34,10 @@ const modelSelectItemClassName =
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
+
+const DEFAULT_BOARD_SIZE = 3
+const DEFAULT_STARTING_PLAYER: MatchConfig['startingPlayer'] = 'alternate'
+const DEFAULT_MOVE_TIMEOUT_MS = 30_000
 
 type ModelSelectProps = {
   id: string
@@ -96,17 +101,19 @@ function ModelSelect({
 
 export function MatchControls() {
   const { status } = useGeminiContext()
-  const { state } = useGameLoop()
+  const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
 
   const availableModels = useMemo(
-    () => demoModels.filter((model) => model.name === 'Gemini Nano'),
+    () => demoModels.filter((model) => model.provider === 'Google DeepMind'),
     [],
   )
-  const defaultModelId = availableModels[0]?.id ?? 1
+  const defaultModelId = availableModels[0]?.id ?? demoModels[0]?.id ?? 1
+  const secondaryDefaultModelId =
+    availableModels[1]?.id ?? demoModels[1]?.id ?? defaultModelId
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
-  const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
+  const [modelBId, setModelBId] = useState<ModelId>(secondaryDefaultModelId)
   const [roundCount, setRoundCount] = useState<number>(5)
   const totalRounds = clamp(
     Number.isFinite(roundCount) ? roundCount : 1,
@@ -130,29 +137,37 @@ export function MatchControls() {
     [modelBId],
   )
 
-  const isConfigurationValid = totalRounds >= 1 && totalRounds <= 100
+  const isRoundCountValid = totalRounds >= 1 && totalRounds <= 100
+  const hasDistinctModels = modelAId !== modelBId
+  const isConfigurationValid = isRoundCountValid && hasDistinctModels
 
   const summaryLine = `${selectedModelA?.name ?? 'Model A'} vs ${
     selectedModelB?.name ?? 'Model B'
   }`
   const summaryDetails = `${totalRounds} ${totalRounds === 1 ? 'round' : 'rounds'}`
 
-  const statusMessage =
-    status === 'ready'
-      ? 'Gemini Nano ready for local inference'
-      : 'Preparing Gemini models…'
+  const isGeminiReady = status === 'ready'
+  const statusMessage = isGeminiReady
+    ? 'Gemini Nano ready for local inference'
+    : 'Preparing Gemini models…'
   const isBusyPhase = state.phase === 'initializing' || state.phase === 'running'
+  const [isStarting, setIsStarting] = useState(false)
   const busyLabel =
     state.phase === 'initializing'
       ? 'Match preparing…'
       : 'Match running…'
+  const isStartDisabled =
+    !isConfigurationValid || isBusyPhase || !isGeminiReady || isStarting
 
   const handleRoundCountChange = (value: number) => {
     setRoundCount(clamp(Math.round(value || 1), 1, 100))
   }
 
-  const handleStartMatch = () => {
-    if (!isConfigurationValid) {
+  const handleStartMatch = async () => {
+    if (isStartDisabled) {
+      return
+    }
+    if (!isRoundCountValid) {
       showToast({
         title: 'Adjust configuration',
         description:
@@ -161,15 +176,56 @@ export function MatchControls() {
       })
       return
     }
-    showToast({
-      title: 'Match queued',
-      description: `${selectedModelA?.name ?? 'Model A'} vs ${
-        selectedModelB?.name ?? 'Model B'
-      } • ${totalRounds} ${
-        totalRounds === 1 ? 'round' : 'rounds'
-      }. Rematch ready when results persist.`,
-      variant: 'success',
-    })
+    if (!hasDistinctModels) {
+      showToast({
+        title: 'Pick different contenders',
+        description:
+          'Choose two distinct models so we can compare their strategies during the match.',
+        variant: 'warning',
+      })
+      return
+    }
+    if (!isGeminiReady) {
+      showToast({
+        title: 'Models still preparing',
+        description:
+          'Wait for Gemini Nano to finish downloading before starting the match.',
+        variant: 'warning',
+      })
+      return
+    }
+
+    const matchConfig: MatchConfig = {
+      modelAId,
+      modelBId,
+      boardSize: DEFAULT_BOARD_SIZE,
+      totalRounds,
+      startingPlayer: DEFAULT_STARTING_PLAYER,
+      moveTimeoutMs: DEFAULT_MOVE_TIMEOUT_MS,
+    }
+
+    try {
+      setIsStarting(true)
+      configure(matchConfig)
+      await start()
+      showToast({
+        title: 'Match starting',
+        description: `${selectedModelA?.name ?? 'Model A'} vs ${
+          selectedModelB?.name ?? 'Model B'
+        } • ${totalRounds} ${totalRounds === 1 ? 'round' : 'rounds'}.`,
+        variant: 'success',
+      })
+    } catch (error) {
+      const description =
+        error instanceof Error ? error.message : 'Unknown error occurred.'
+      showToast({
+        title: 'Unable to start match',
+        description,
+        variant: 'warning',
+      })
+    } finally {
+      setIsStarting(false)
+    }
   }
 
   return (
@@ -317,17 +373,28 @@ export function MatchControls() {
               </div>
               <RainbowButton
                 type="button"
-                disabled={!isConfigurationValid || isBusyPhase}
+                disabled={isStartDisabled}
                 className="w-full uppercase tracking-[0.25em] disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={handleStartMatch}
+                onClick={() => {
+                  void handleStartMatch()
+                }}
               >
                 Start Match
               </RainbowButton>
             </div>
-            {!isConfigurationValid ? (
+            {!isRoundCountValid ? (
               <p className="text-sm font-medium text-amber-300/80">
                 Adjust the matchup to start—choose different models and ensure
                 round count is between 1 and 100.
+              </p>
+            ) : !hasDistinctModels ? (
+              <p className="text-sm font-medium text-amber-300/80">
+                Pick two different contenders to start the showdown.
+              </p>
+            ) : !isGeminiReady ? (
+              <p className="text-sm font-medium text-white/70">
+                Gemini models are still initializing—start will unlock once the
+                download finishes.
               </p>
             ) : (
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">
