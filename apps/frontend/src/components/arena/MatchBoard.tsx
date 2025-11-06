@@ -106,15 +106,24 @@ function PlayerBadge({
             </div>
           </div>
         </CardContent>
-        <CardFooter className="border-t border-white/10 px-5 pt-0 pb-3 text-[11px] uppercase tracking-[0.2em] text-white/45">
+        <CardFooter className="border-t border-white/10 px-5 pt-0 pb-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
           <div className="flex flex-wrap gap-4">
-            <span>Wins: {wins}</span>
-            <span>Losses: {losses}</span>
-            <span>Ties: {ties}</span>
+            <StatTicker label="Wins" value={wins} />
+            <StatTicker label="Losses" value={losses} />
+            <StatTicker label="Ties" value={ties} />
           </div>
         </CardFooter>
       </MagicCard>
     </Card>
+  )
+}
+
+function StatTicker({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="flex items-center gap-1">
+      {label}:
+      <NumberTicker value={value} className="text-white" duration={0.7} />
+    </span>
   )
 }
 
