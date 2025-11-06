@@ -34,6 +34,8 @@ export interface GameLoopState {
   phase: GameLoopPhase
   currentRound: number
   totalRounds: number
+  modelAId: number | null
+  modelBId: number | null
   activePlayer: 'modelA' | 'modelB' | null
   board: BoardState
   roundBoards: BoardState[]
@@ -79,6 +81,8 @@ const createInitialState = (): GameLoopState => ({
   phase: 'idle',
   currentRound: 0,
   totalRounds: 0,
+  modelAId: null,
+  modelBId: null,
   activePlayer: null,
   board: new BoardState(),
   roundBoards: [],
@@ -208,6 +212,8 @@ const transitionMap: Record<
           ...current,
           phase: 'idle',
           totalRounds: config.totalRounds,
+          modelAId: config.modelAId,
+          modelBId: config.modelBId,
           board,
           roundBoards: [],
           score: { ...defaultScore },
@@ -549,6 +555,8 @@ const transitionMap: Record<
           phase: 'idle',
           currentRound: 0,
           totalRounds: config.totalRounds,
+          modelAId: config.modelAId,
+          modelBId: config.modelBId,
           activePlayer: null,
           board,
           roundBoards: [],
@@ -576,6 +584,8 @@ const transitionMap: Record<
           phase: 'idle',
           currentRound: 0,
           totalRounds: config.totalRounds,
+          modelAId: config.modelAId,
+          modelBId: config.modelBId,
           activePlayer: null,
           board,
           roundBoards: [],

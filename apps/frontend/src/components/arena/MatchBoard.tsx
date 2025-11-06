@@ -84,8 +84,8 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
   const board = state.board
   const boardSize = board.size
 
-  const modelAId = match?.modelAId
-  const modelBId = match?.modelBId
+  const modelAId = state.modelAId ?? match?.modelAId ?? null
+  const modelBId = state.modelBId ?? match?.modelBId ?? null
 
   const modelA = useMemo(() => {
     if (modelAId == null) return undefined

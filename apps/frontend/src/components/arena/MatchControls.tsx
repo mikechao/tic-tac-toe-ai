@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ModelId } from '@arena/schema'
 
@@ -121,10 +121,46 @@ export function MatchControls() {
   const [roundAnnouncement, setRoundAnnouncement] = useState<string>(
     `Rounds set to ${totalRounds}`,
   )
+  const matchConfig = useMemo<MatchConfig>(
+    () => ({
+      modelAId,
+      modelBId,
+      boardSize: DEFAULT_BOARD_SIZE,
+      totalRounds,
+      startingPlayer: DEFAULT_STARTING_PLAYER,
+      moveTimeoutMs: DEFAULT_MOVE_TIMEOUT_MS,
+    }),
+    [modelAId, modelBId, totalRounds],
+  )
+  const lastConfigRef = useRef<MatchConfig | null>(null)
 
   useEffect(() => {
     setRoundAnnouncement(`Rounds set to ${totalRounds}`)
   }, [totalRounds])
+
+  useEffect(() => {
+    if (!['idle', 'completed', 'error'].includes(state.phase)) {
+      return
+    }
+
+    const previousConfig = lastConfigRef.current
+    const hasConfigChanged =
+      !previousConfig ||
+      previousConfig.modelAId !== matchConfig.modelAId ||
+      previousConfig.modelBId !== matchConfig.modelBId ||
+      previousConfig.boardSize !== matchConfig.boardSize ||
+      previousConfig.totalRounds !== matchConfig.totalRounds ||
+      previousConfig.startingPlayer !== matchConfig.startingPlayer ||
+      previousConfig.moveTimeoutMs !== matchConfig.moveTimeoutMs
+
+    if (!hasConfigChanged) {
+      return
+    }
+
+    // Keep the game loop configuration aligned with the current controls so the board reflects updates immediately.
+    configure(matchConfig)
+    lastConfigRef.current = matchConfig
+  }, [configure, matchConfig, state.phase])
 
   const selectedModelA = useMemo(
     () => demoModels.find((model) => model.id === modelAId),
@@ -183,18 +219,10 @@ export function MatchControls() {
       return
     }
 
-    const matchConfig: MatchConfig = {
-      modelAId,
-      modelBId,
-      boardSize: DEFAULT_BOARD_SIZE,
-      totalRounds,
-      startingPlayer: DEFAULT_STARTING_PLAYER,
-      moveTimeoutMs: DEFAULT_MOVE_TIMEOUT_MS,
-    }
-
     try {
       setIsStarting(true)
       configure(matchConfig)
+      lastConfigRef.current = matchConfig
       console.debug('[MatchControls] configured match', matchConfig)
       await start()
       console.debug('[MatchControls] start command resolved')
