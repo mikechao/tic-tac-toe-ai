@@ -1,5 +1,6 @@
 import type { Move, PlayerMark } from './board-state'
 import { BoardState } from './board-state'
+import { MatchLog, type MoveLogEntry } from './match-log'
 
 export type GameLoopPhase =
   | 'idle'
@@ -19,18 +20,7 @@ export interface MatchConfig {
   moveTimeoutMs?: number
 }
 
-export interface MoveLogEntry {
-  round: number
-  turn: number
-  actor: 'modelA' | 'modelB'
-  moveNumber: number
-  rationale: string
-  wasValid: boolean
-  durationMs: number
-  rawResponse?: unknown
-  timestamp: number
-  timeout?: boolean
-}
+export type { MoveLogEntry } from './match-log'
 
 export interface RoundSummary {
   round: number
@@ -68,6 +58,7 @@ export type GameLoopEvent =
 
 export interface GameLoopController {
   getState(): GameLoopState
+  getMatchLog(): MoveLogEntry[]
   getBoardAscii(includeMeta?: boolean): string
   subscribe(
     listener: (state: GameLoopState, event?: GameLoopEvent) => void,
@@ -160,10 +151,15 @@ type TransitionResult = {
   events?: GameLoopEvent[]
 }
 
+type TransitionContext = {
+  config: MatchConfig | null
+  matchLog: MatchLog
+}
+
 type TransitionHandler = (
   current: GameLoopState,
   action: GameLoopAction,
-  context: { config: MatchConfig | null },
+  context: TransitionContext,
 ) => TransitionResult
 
 const determineStartingPlayer = (
@@ -391,11 +387,13 @@ const transitionMap: Record<
       },
       events: [{ type: 'phase:change', phase: 'betweenRounds' }],
     }),
-    RECORD_MOVE: (current, action) => {
+    RECORD_MOVE: (current, action, context) => {
       const { payload } = action as Extract<
         GameLoopAction,
         { type: 'RECORD_MOVE' }
       >
+      context.matchLog.append(payload.entry)
+      const moveHistorySnapshot = context.matchLog.getEntries()
       const events: GameLoopEvent[] = [
         { type: 'board:update', board: payload.board },
         { type: 'move:recorded', entry: payload.entry },
@@ -442,7 +440,7 @@ const transitionMap: Record<
           ...current,
           phase: nextPhase,
           board: payload.board,
-          moveHistory: [...current.moveHistory, payload.entry],
+          moveHistory: moveHistorySnapshot,
           score: nextScore,
           roundSummaries: nextSummaries,
           activePlayer: nextActivePlayer,
@@ -592,6 +590,7 @@ export function createGameLoopController(
 ): GameLoopController {
   let state = createInitialState()
   let config: MatchConfig | null = null
+  const matchLog = new MatchLog()
   const { loadModelSession } = options
   const phaseCallback = options.onPhaseChange
   const modelSessions = new Map<number, unknown>()
@@ -633,7 +632,7 @@ export function createGameLoopController(
       if (!handler) {
         return
       }
-      const result = handler(state, action, { config })
+      const result = handler(state, action, { config, matchLog })
       publish(result)
       return
     }
@@ -642,7 +641,7 @@ export function createGameLoopController(
     if (!handler) {
       return
     }
-    const result = handler(state, action, { config })
+    const result = handler(state, action, { config, matchLog })
     publish(result)
   }
 
@@ -669,6 +668,8 @@ export function createGameLoopController(
 
   const getState = (): GameLoopState => cloneGameLoopState(state)
 
+  const getMatchLog = (): MoveLogEntry[] => matchLog.getEntries()
+
   const getBoardAscii = (includeMeta = true): string =>
     state.board.toAscii(includeMeta)
 
@@ -685,6 +686,7 @@ export function createGameLoopController(
   const configure = (nextConfig: MatchConfig): void => {
     validateConfig(nextConfig)
     config = nextConfig
+    matchLog.clear()
     dispatch({ type: 'CONFIGURE', config: nextConfig })
   }
 
@@ -808,12 +810,14 @@ export function createGameLoopController(
     listeners.clear()
     state = createInitialState()
     config = null
+    matchLog.clear()
     notify()
     notify({ type: 'phase:change', phase: state.phase })
   }
 
   return {
     getState,
+    getMatchLog,
     getBoardAscii,
     subscribe,
     configure,

@@ -31,7 +31,7 @@
 - [x] Disable `MatchControls` actions during `initializing`/`running` phases and re-enable them after `completed` or `error` states.
 
 ## Persistence & Analytics
-- [ ] Maintain an in-memory match log capturing `{ round, turn, player, moveNumber, rationale, wasValid, durationMs, rawResponse, timestamp, timeout }` for every AI move.
+- [x] Maintain an in-memory match log capturing `{ round, turn, player, moveNumber, rationale, wasValid, durationMs, rawResponse, timestamp, timeout }` for every AI move.
 - [ ] On match completion, POST telemetry (config, scores, per-round summaries) to the backend API and trigger leaderboard cache invalidation.
 - [ ] Document and coordinate any required schema extensions in `packages/schema` to support variable board sizes and richer telemetry payloads.
 
