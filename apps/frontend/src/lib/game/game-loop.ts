@@ -97,6 +97,44 @@ const createInitialState = (): GameLoopState => ({
   isPaused: false,
 })
 
+const cloneMoveEntry = (entry: MoveLogEntry): MoveLogEntry => ({ ...entry })
+
+const cloneRoundSummary = (summary: RoundSummary): RoundSummary => ({
+  ...summary,
+})
+
+const cloneScore = (score: GameLoopState['score']): GameLoopState['score'] => ({
+  ...score,
+})
+
+const cloneGameLoopState = (snapshot: GameLoopState): GameLoopState => ({
+  ...snapshot,
+  board: snapshot.board.clone(),
+  roundBoards: snapshot.roundBoards.map((board) => board.clone()),
+  score: cloneScore(snapshot.score),
+  moveHistory: snapshot.moveHistory.map(cloneMoveEntry),
+  roundSummaries: snapshot.roundSummaries.map(cloneRoundSummary),
+})
+
+const cloneGameLoopEvent = (event: GameLoopEvent): GameLoopEvent => {
+  switch (event.type) {
+    case 'board:update':
+      return { type: 'board:update', board: event.board.clone() }
+    case 'move:recorded':
+      return { type: 'move:recorded', entry: cloneMoveEntry(event.entry) }
+    case 'round:complete':
+      return { type: 'round:complete', summary: cloneRoundSummary(event.summary) }
+    case 'match:complete':
+      return {
+        type: 'match:complete',
+        summaries: event.summaries.map(cloneRoundSummary),
+        score: cloneScore(event.score),
+      }
+    default:
+      return event
+  }
+}
+
 type GameLoopAction =
   | { type: 'CONFIGURE'; config: MatchConfig }
   | { type: 'START' }
@@ -561,22 +599,27 @@ export function createGameLoopController(
     (next: GameLoopState, event?: GameLoopEvent) => void
   >()
 
-  const notify = (event?: GameLoopEvent): void => {
-    const snapshot = state
-    if (event?.type === 'phase:change' && phaseCallback) {
-      phaseCallback(event.phase)
+  const notify = (
+    event?: GameLoopEvent,
+    snapshot?: GameLoopState,
+  ): void => {
+    const nextSnapshot = snapshot ?? cloneGameLoopState(state)
+    const eventPayload = event ? cloneGameLoopEvent(event) : undefined
+    if (eventPayload?.type === 'phase:change' && phaseCallback) {
+      phaseCallback(eventPayload.phase)
     }
     for (const listener of listeners) {
-      listener(snapshot, event)
+      listener(nextSnapshot, eventPayload)
     }
   }
 
   const publish = (result: TransitionResult): void => {
     state = result.state
-    notify()
+    const snapshot = cloneGameLoopState(state)
+    notify(undefined, snapshot)
     if (result.events) {
       for (const event of result.events) {
-        notify(event)
+        notify(event, snapshot)
       }
     }
   }
@@ -624,7 +667,7 @@ export function createGameLoopController(
     )
   }
 
-  const getState = (): GameLoopState => state
+  const getState = (): GameLoopState => cloneGameLoopState(state)
 
   const getBoardAscii = (includeMeta = true): string =>
     state.board.toAscii(includeMeta)
@@ -633,7 +676,7 @@ export function createGameLoopController(
     listener: (next: GameLoopState, event?: GameLoopEvent) => void,
   ): (() => void) => {
     listeners.add(listener)
-    listener(state)
+    listener(cloneGameLoopState(state))
     return () => {
       listeners.delete(listener)
     }

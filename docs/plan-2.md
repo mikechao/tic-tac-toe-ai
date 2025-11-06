@@ -25,7 +25,7 @@
 - [x] Enforce per-move timeout logic (default 30s), cancelling late inferences, marking the active model’s turn as a forfeit, and surfacing toast notifications.
 
 ## UI & Telemetry Broadcast
-- [ ] Emit controller events (`phase:change`, `board:update`, `move:recorded`, `round:complete`, `match:complete`, `error`) and ensure observers receive immutable snapshots.
+- [x] Emit controller events (`phase:change`, `board:update`, `move:recorded`, `round:complete`, `match:complete`, `error`) and ensure observers receive immutable snapshots.
 - [ ] Build or update a React context/hook (e.g., `useGameLoop`) that wires controller subscription into `MatchBoard`, `MatchTelemetry`, and `MatchMoveLog`.
 - [ ] Replace placeholder data sources in arena components to consume live controller state (board cells, active player, countdowns, streaks, move log entries).
 - [ ] Disable `MatchControls` actions during `initializing`/`running` phases and re-enable them after `completed` or `error` states.

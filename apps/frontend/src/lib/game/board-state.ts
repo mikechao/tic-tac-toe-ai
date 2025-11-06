@@ -180,6 +180,14 @@ export class BoardState {
     return withinRow && withinColumn
   }
 
+  clone(): BoardState {
+    const copy = new BoardState(this.size, this.currentPlayer)
+    copy.moveCount = this.moveCount
+    copy.currentPlayer = this.currentPlayer
+    copy.cells = [...this.cells]
+    return copy
+  }
+
   private evaluateLine(line: CellValue[]): PlayerMark | null {
     if (line.length !== this.winLength) {
       return null
