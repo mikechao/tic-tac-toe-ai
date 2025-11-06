@@ -114,6 +114,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.134.9
         version: 1.134.9(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      ai:
+        specifier: ^5.0.87
+        version: 5.0.87(zod@4.1.12)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
