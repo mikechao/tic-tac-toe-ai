@@ -37,7 +37,7 @@
 
 ## Manual Test Readiness
 - [x] Wire `MatchControls` into the game loop controller so `configure`/`start` execute with the selected models and rounds, triggering the real Gemini flow.
-- [ ] Implement the AI turn executor that pulls moves from Gemini responses and pipes them through `recordMove`, including retry/timeout handling.
+- [x] Implement the AI turn executor that pulls moves from Gemini responses and pipes them through `recordMove`, including retry/timeout handling.
 - [ ] Add arena-side debug affordances (e.g., progress indicators, cancel button) to observe live Gemini turns during manual smoke tests.
 - [ ] Document a step-by-step manual QA script in `docs/game-loop.md` covering match start, mid-round observation, completion, and error recovery using the integrated AI loop.
 

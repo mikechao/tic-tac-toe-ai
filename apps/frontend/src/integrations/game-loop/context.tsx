@@ -16,6 +16,8 @@ import {
   type MatchConfig,
   type RecordMoveInput,
 } from '@/lib/game/game-loop'
+import { requestGeminiMove } from '@/lib/game/ai-turn'
+import type { PlayerMark } from '@/lib/game/board-state'
 
 type GameLoopContextValue = {
   state: GameLoopState
@@ -42,6 +44,9 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
   const controller = controllerRef.current
   const [state, setState] = useState<GameLoopState>(() => controller.getState())
   const [lastEvent, setLastEvent] = useState<GameLoopEvent | undefined>()
+  const matchConfigRef = useRef<MatchConfig | null>(null)
+  const turnInFlightRef = useRef(false)
+  const turnAbortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const unsubscribe = controller.subscribe((nextState, event) => {
@@ -54,6 +59,10 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
       unsubscribe()
       controller.dispose()
       controllerRef.current = null
+      matchConfigRef.current = null
+      turnAbortRef.current?.abort()
+      turnAbortRef.current = null
+      turnInFlightRef.current = false
     }
   }, [controller])
 
@@ -61,7 +70,10 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       lastEvent,
-      configure: (config) => controller.configure(config),
+      configure: (config) => {
+        matchConfigRef.current = config
+        controller.configure(config)
+      },
       start: () => controller.start(),
       pause: () => controller.pause(),
       resume: () => controller.resume(),
@@ -72,6 +84,94 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
     }),
     [controller, lastEvent, state],
   )
+
+  useEffect(() => {
+    const config = matchConfigRef.current
+    if (
+      !config ||
+      state.phase !== 'running' ||
+      state.activePlayer == null ||
+      state.isPaused ||
+      turnInFlightRef.current
+    ) {
+      if (
+        (state.phase !== 'running' || state.activePlayer == null || state.isPaused) &&
+        turnAbortRef.current
+      ) {
+        turnAbortRef.current.abort()
+        turnAbortRef.current = null
+        turnInFlightRef.current = false
+      }
+      return
+    }
+
+    const actor = state.activePlayer
+    const actorMark: PlayerMark = actor === 'modelA' ? 'X' : 'O'
+    const opponentMark: PlayerMark = actorMark === 'X' ? 'O' : 'X'
+
+    const abortController = new AbortController()
+    turnAbortRef.current = abortController
+    turnInFlightRef.current = true
+
+    ;(async () => {
+      try {
+        const result = await requestGeminiMove({
+          board: state.board,
+          activeMark: actorMark,
+          opponentMark,
+          round: state.currentRound,
+          totalRounds: config.totalRounds,
+          actorLabel: actor,
+          timeoutMs: config.moveTimeoutMs,
+          abortSignal: abortController.signal,
+        })
+
+        if (abortController.signal.aborted) {
+          return
+        }
+
+        if (result.ok) {
+          controller.recordMove({
+            actor,
+            move: result.move,
+            rationale: result.rationale,
+            durationMs: result.durationMs,
+            rawResponse: result.raw,
+            wasValid: true,
+            timestamp: Date.now(),
+            timeout: false,
+          })
+        } else {
+          controller.abort(result.message)
+        }
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          const message =
+            error instanceof Error ? error.message : 'Unexpected AI turn error'
+          controller.abort(message)
+        }
+      } finally {
+        if (turnAbortRef.current === abortController) {
+          turnAbortRef.current = null
+        }
+        turnInFlightRef.current = false
+      }
+    })()
+
+    return () => {
+      if (!abortController.signal.aborted) {
+        abortController.abort()
+      }
+    }
+  }, [
+    controller,
+    state.activePlayer,
+    state.board,
+    state.currentRound,
+    state.isPaused,
+    state.phase,
+    state.totalRounds,
+  ])
 
   return (
     <GameLoopContext.Provider value={value}>
