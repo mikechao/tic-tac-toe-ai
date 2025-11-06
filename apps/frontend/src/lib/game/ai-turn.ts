@@ -27,6 +27,9 @@ export type GeminiMoveSuccess = {
   cellNumber: number
   rationale: string
   raw: unknown
+  durationMs: number
+  startedAt: number
+  finishedAt: number
 }
 
 export type GeminiMoveFailure = {
@@ -34,6 +37,9 @@ export type GeminiMoveFailure = {
   reason: 'invalid-response' | 'unavailable'
   message: string
   raw?: unknown
+  durationMs?: number
+  startedAt?: number
+  finishedAt?: number
 }
 
 export type GeminiMoveResult = GeminiMoveSuccess | GeminiMoveFailure
@@ -87,6 +93,9 @@ export async function requestGeminiMove(
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
+      const startedAt = typeof performance !== 'undefined'
+        ? performance.now()
+        : Date.now()
       const result = await generateObject({
         model,
         schema: moveResponseSchema,
@@ -95,6 +104,10 @@ export async function requestGeminiMove(
         abortSignal: request.abortSignal,
       })
       const { object } = result
+      const finishedAt = typeof performance !== 'undefined'
+        ? performance.now()
+        : Date.now()
+      const durationMs = finishedAt - startedAt
 
       if (!availableCells.has(object.nextMove)) {
         lastError = {
@@ -102,6 +115,9 @@ export async function requestGeminiMove(
           reason: 'invalid-response',
           message: `Model selected occupied cell ${object.nextMove}.`,
           raw: result.response.body,
+          durationMs,
+          startedAt,
+          finishedAt,
         }
         currentPrompt = `Previous response chose invalid cell ${object.nextMove}. Choose from these open cells: ${Array.from(availableCells).join(', ')}.\n${buildPrompt(request, asciiBoard)}`
         continue
@@ -115,13 +131,22 @@ export async function requestGeminiMove(
         cellNumber: object.nextMove,
         rationale: object.rationale,
         raw: result.response.body,
+        durationMs,
+        startedAt,
+        finishedAt,
       }
     } catch (error) {
+      const finishedAt = typeof performance !== 'undefined'
+        ? performance.now()
+        : Date.now()
+      const durationMs = 0
       lastError = {
         ok: false,
         reason: 'unavailable',
         message:
           error instanceof Error ? error.message : 'Failed to call Gemini model',
+        finishedAt,
+        durationMs,
       }
       break
     }

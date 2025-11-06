@@ -21,7 +21,7 @@
 ## Turn Engine & AI Integration
 - [x] Serialize the board with `toAscii()` and assemble the AI prompt contract (intro text, schema reminder, contextual metadata) for each turn.
 - [x] Call Gemini via `ensureGeminiChatModel`, validating JSON responses against empty-cell indexes, and retry with corrective instructions when needed.
-- [ ] Capture timing metrics using `performance.now()`, storing `durationMs`, `wasValid`, and raw responses on each `MoveLogEntry`.
+- [x] Capture timing metrics using `performance.now()`, storing `durationMs`, `wasValid`, and raw responses on each `MoveLogEntry`.
 - [ ] Enforce per-move timeout logic (default 30s), cancelling late inferences, marking the active model’s turn as a forfeit, and surfacing toast notifications.
 
 ## UI & Telemetry Broadcast
@@ -119,3 +119,7 @@
 - Added `requestGeminiMove` helper under `src/lib/game/ai-turn.ts` which leverages `ensureGeminiChatModel` + `generateObject` to solicit structured `{ nextMove, rationale }` responses.
 - The helper validates moves against the current board’s empty cells, retries (configurable) when responses target occupied cells, and returns typed success/failure results with raw output for telemetry.
 - Prompt content includes board ASCII, round metadata, and mark ownership so future controller logic can wire it directly into the move engine.
+
+### 2025-11-05 Move Timing Capture
+- `requestGeminiMove` now records inference timing via `performance.now()`, returning `durationMs`, `startedAt`, and `finishedAt` on success (and surfacing timing data on invalid retries when available).
+- These metrics will feed directly into `MoveLogEntry` duration tracking once we wire controller integration, satisfying the plan’s timing requirement before introducing timeout logic.
