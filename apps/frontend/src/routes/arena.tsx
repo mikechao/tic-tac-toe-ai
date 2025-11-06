@@ -17,14 +17,14 @@ function ArenaRoute() {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:px-8">
-      <section className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        <WarpBackground className="p-8">
-          <MatchBoard match={featuredMatch} />
-        </WarpBackground>
-
+      <section className="grid gap-6 lg:grid-cols-[2fr_3fr]">
         <GeminiSupportGate>
           <MatchControls />
         </GeminiSupportGate>
+
+        <WarpBackground className="p-4">
+          <MatchBoard match={featuredMatch} />
+        </WarpBackground>
       </section>
 
       <section>
