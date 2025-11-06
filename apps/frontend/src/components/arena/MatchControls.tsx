@@ -285,7 +285,13 @@ export function MatchControls() {
           <BentoCard colSpanClassName="md:col-span-12">
             <fieldset className="space-y-3">
               <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                Player 1 Model Selection
+                <span>Player 1 Model Selection</span>
+                <span
+                  aria-hidden="true"
+                  className="ml-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#4ff2c2]/50 bg-[#4ff2c2]/30 text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.45)]"
+                >
+                  <span className="font-display leading-none text-center">X</span>
+                </span>
               </legend>
               <ModelSelect
                 id="modelA"
@@ -304,7 +310,13 @@ export function MatchControls() {
           <BentoCard colSpanClassName="md:col-span-12">
             <fieldset className="space-y-3">
               <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                Player 2 Model Selection
+                <span>Player 2 Model Selection</span>
+                <span
+                  aria-hidden="true"
+                  className="ml-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#f15bb5]/45 bg-[#f15bb5]/25 text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.45)]"
+                >
+                  <span className="font-display leading-none text-center">O</span>
+                </span>
               </legend>
               <ModelSelect
                 id="modelB"
