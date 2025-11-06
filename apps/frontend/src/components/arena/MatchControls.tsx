@@ -109,11 +109,9 @@ export function MatchControls() {
     [],
   )
   const defaultModelId = availableModels[0]?.id ?? demoModels[0]?.id ?? 1
-  const secondaryDefaultModelId =
-    availableModels[1]?.id ?? demoModels[1]?.id ?? defaultModelId
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
-  const [modelBId, setModelBId] = useState<ModelId>(secondaryDefaultModelId)
+  const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
   const [roundCount, setRoundCount] = useState<number>(5)
   const totalRounds = clamp(
     Number.isFinite(roundCount) ? roundCount : 1,
@@ -138,8 +136,7 @@ export function MatchControls() {
   )
 
   const isRoundCountValid = totalRounds >= 1 && totalRounds <= 100
-  const hasDistinctModels = modelAId !== modelBId
-  const isConfigurationValid = isRoundCountValid && hasDistinctModels
+  const isConfigurationValid = isRoundCountValid
 
   const summaryLine = `${selectedModelA?.name ?? 'Model A'} vs ${
     selectedModelB?.name ?? 'Model B'
@@ -171,16 +168,7 @@ export function MatchControls() {
       showToast({
         title: 'Adjust configuration',
         description:
-          'Select distinct models and ensure rounds stay between 1 and 100 before starting the match.',
-        variant: 'warning',
-      })
-      return
-    }
-    if (!hasDistinctModels) {
-      showToast({
-        title: 'Pick different contenders',
-        description:
-          'Choose two distinct models so we can compare their strategies during the match.',
+          'Ensure the round count stays between 1 and 100 before starting the match.',
         variant: 'warning',
       })
       return
@@ -384,12 +372,7 @@ export function MatchControls() {
             </div>
             {!isRoundCountValid ? (
               <p className="text-sm font-medium text-amber-300/80">
-                Adjust the matchup to start—choose different models and ensure
-                round count is between 1 and 100.
-              </p>
-            ) : !hasDistinctModels ? (
-              <p className="text-sm font-medium text-amber-300/80">
-                Pick two different contenders to start the showdown.
+                Adjust the matchup to start—keep the round count between 1 and 100.
               </p>
             ) : !isGeminiReady ? (
               <p className="text-sm font-medium text-white/70">

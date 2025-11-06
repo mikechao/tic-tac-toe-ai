@@ -575,9 +575,6 @@ const validateConfig = (config: MatchConfig): void => {
   if (config.boardSize < 3 || config.boardSize > 5) {
     throw new Error('boardSize must be between 3 and 5')
   }
-  if (config.modelAId === config.modelBId) {
-    throw new Error('Select distinct models for modelA and modelB')
-  }
 }
 
 export interface GameLoopControllerOptions {
