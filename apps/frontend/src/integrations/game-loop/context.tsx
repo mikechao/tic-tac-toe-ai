@@ -19,13 +19,7 @@ import {
 import { requestGeminiMove } from '@/lib/game/ai-turn'
 import type { PlayerMark } from '@/lib/game/board-state'
 
-type GameLoopStore = {
-  state: GameLoopState
-  lastEvent?: GameLoopEvent
-}
-
 type GameLoopContextValue = {
-  store: GameLoopStore
   state: GameLoopState
   lastEvent?: GameLoopEvent
   configure: (config: MatchConfig) => void
@@ -42,33 +36,33 @@ const GameLoopContext = createContext<GameLoopContextValue | undefined>(
   undefined,
 )
 
-export function GameLoopProvider({ children }: { children: ReactNode }) {
+export function GameLoopProvider({ children }: { children: React.ReactNode }) {
   const controllerRef = useRef<GameLoopController | null>(null)
   if (!controllerRef.current) {
     controllerRef.current = createGameLoopController()
   }
   const controller = controllerRef.current
-  const [store, setStore] = useState<GameLoopStore>(() => ({
-    state: controller.getState(),
-    lastEvent: undefined,
-  }))
-  const { state, lastEvent } = store
+
+  const [state, setState] = useState<GameLoopState>(() => controller.getState())
+  const [lastEvent, setLastEvent] = useState<GameLoopEvent | undefined>()
   const matchConfigRef = useRef<MatchConfig | null>(null)
   const turnInFlightRef = useRef(false)
   const turnAbortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const unsubscribe = controller.subscribe((nextState, event) => {
-      setStore({ state: nextState, lastEvent: event })
+      console.debug('[GameLoopProvider] controller update', {
+        phase: nextState.phase,
+        activePlayer: nextState.activePlayer,
+        event,
+      })
+      setState(nextState)
+      setLastEvent(event)
     })
+
     return () => {
+      console.debug('[GameLoopProvider] unsubscribe')
       unsubscribe()
-      controller.dispose()
-      controllerRef.current = null
-      matchConfigRef.current = null
-      turnAbortRef.current?.abort()
-      turnAbortRef.current = null
-      turnInFlightRef.current = false
     }
   }, [])
 
@@ -95,7 +89,15 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const config = matchConfigRef.current
-    const { state, lastEvent } = store
+
+    console.debug('[GameLoopProvider] turn effect check', {
+      phase: state.phase,
+      isPaused: state.isPaused,
+      activePlayer: state.activePlayer,
+      inFlight: turnInFlightRef.current,
+      lastEvent,
+      hasConfig: Boolean(config),
+    })
 
     const shouldRunTurn =
       config &&
@@ -109,6 +111,7 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
         lastEvent.type === 'board:update')
 
     if (!shouldRunTurn) {
+      console.debug('[GameLoopProvider] turn effect skipping')
       if (
         (state.phase !== 'running' || state.activePlayer == null || state.isPaused) &&
         turnAbortRef.current
@@ -122,6 +125,7 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
 
     const snapshot = controller.getState()
     if (snapshot.activePlayer == null || snapshot.phase !== 'running') {
+      console.warn('[GameLoopProvider] snapshot not ready for turn')
       return
     }
 
@@ -130,12 +134,18 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
     const opponentMark: PlayerMark = actorMark === 'X' ? 'O' : 'X'
     const board = snapshot.board
     if (board.getValidMoves().length === 0) {
+      console.warn('[GameLoopProvider] No valid moves remaining, skipping turn')
       return
     }
 
     const abortController = new AbortController()
     turnAbortRef.current = abortController
     turnInFlightRef.current = true
+
+    console.debug('[GameLoopProvider] requesting Gemini move', {
+      activePlayer: actor,
+      round: snapshot.currentRound,
+    })
 
     ;(async () => {
       try {
@@ -151,10 +161,12 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
         })
 
         if (abortController.signal.aborted) {
+          console.debug('[GameLoopProvider] Gemini turn aborted')
           return
         }
 
         if (result.ok) {
+          console.debug('[GameLoopProvider] Gemini move result', result)
           controller.recordMove({
             actor,
             move: result.move,
@@ -166,9 +178,11 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
             timeout: false,
           })
         } else {
+          console.warn('[GameLoopProvider] Gemini move failure', result)
           controller.abort(result.message)
         }
       } catch (error) {
+        console.error('[GameLoopProvider] Gemini turn executor error', error)
         if (!abortController.signal.aborted) {
           const message =
             error instanceof Error ? error.message : 'Unexpected AI turn error'
@@ -187,24 +201,23 @@ export function GameLoopProvider({ children }: { children: ReactNode }) {
         abortController.abort()
       }
     }
-  }, [controller, state.phase, state.isPaused, state.activePlayer, lastEvent])
-
-  const value: GameLoopContextValue = {
-    store,
-    state: store.state,
-    lastEvent: store.lastEvent,
-    configure,
-    start,
-    pause,
-    resume,
-    abort,
-    nextRound,
-    recordMove,
-    controller,
-  }
+  }, [controller, state, lastEvent])
 
   return (
-    <GameLoopContext.Provider value={value}>
+    <GameLoopContext.Provider
+      value={{
+        state,
+        lastEvent,
+        configure,
+        start,
+        pause,
+        resume,
+        abort,
+        nextRound,
+        recordMove,
+        controller,
+      }}
+    >
       {children}
     </GameLoopContext.Provider>
   )

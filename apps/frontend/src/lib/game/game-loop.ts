@@ -166,6 +166,10 @@ const determineStartingPlayer = (
   config: MatchConfig,
   round: number,
 ): 'modelA' | 'modelB' => {
+  console.debug('[GameLoopController] determineStartingPlayer', {
+    round,
+    startingPlayer: config.startingPlayer,
+  })
   if (config.startingPlayer === 'alternate') {
     return round % 2 === 1 ? 'modelA' : 'modelB'
   }
@@ -196,6 +200,7 @@ const transitionMap: Record<
 > = {
   idle: {
     CONFIGURE: (current, action) => {
+      console.debug('[GameLoopController] transition idle.CONFIGURE')
       const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
@@ -215,6 +220,7 @@ const transitionMap: Record<
       }
     },
     START: (current, _action, context) => {
+      console.debug('[GameLoopController] transition idle.START')
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
@@ -252,6 +258,7 @@ const transitionMap: Record<
   },
   initializing: {
     BEGIN_ROUND: (current, action, context) => {
+      console.debug('[GameLoopController] transition initializing.BEGIN_ROUND')
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
@@ -297,6 +304,7 @@ const transitionMap: Record<
       }
     },
     ERROR: (current, action) => {
+      console.debug('[GameLoopController] transition initializing.ERROR')
       const { message } = action as Extract<GameLoopAction, { type: 'ERROR' }>
       return {
         state: {
@@ -313,13 +321,20 @@ const transitionMap: Record<
     },
   },
   running: {
-    PAUSE: (current) => ({
-      state: { ...current, isPaused: true },
-    }),
-    RESUME: (current) => ({
-      state: { ...current, isPaused: false },
-    }),
+    PAUSE: (current) => {
+      console.debug('[GameLoopController] transition running.PAUSE')
+      return {
+        state: { ...current, isPaused: true },
+      }
+    },
+    RESUME: (current) => {
+      console.debug('[GameLoopController] transition running.RESUME')
+      return {
+        state: { ...current, isPaused: false },
+      }
+    },
     ABORT: (current, action) => {
+      console.debug('[GameLoopController] transition running.ABORT')
       const { reason } = action as Extract<GameLoopAction, { type: 'ABORT' }>
       const message = reason ?? 'Match aborted'
       return {
@@ -339,6 +354,7 @@ const transitionMap: Record<
       }
     },
     BEGIN_ROUND: (current, action, context) => {
+      console.debug('[GameLoopController] transition running.BEGIN_ROUND')
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
@@ -378,16 +394,22 @@ const transitionMap: Record<
         events: [{ type: 'board:update', board }],
       }
     },
-    ADVANCE_TO_BETWEEN_ROUNDS: (current) => ({
-      state: {
-        ...current,
-        phase: 'betweenRounds',
-        activePlayer: null,
-        isPaused: false,
-      },
-      events: [{ type: 'phase:change', phase: 'betweenRounds' }],
-    }),
+    ADVANCE_TO_BETWEEN_ROUNDS: (current) => {
+      console.debug(
+        '[GameLoopController] transition running.ADVANCE_TO_BETWEEN_ROUNDS',
+      )
+      return {
+        state: {
+          ...current,
+          phase: 'betweenRounds',
+          activePlayer: null,
+          isPaused: false,
+        },
+        events: [{ type: 'phase:change', phase: 'betweenRounds' }],
+      }
+    },
     RECORD_MOVE: (current, action, context) => {
+      console.debug('[GameLoopController] transition running.RECORD_MOVE')
       const { payload } = action as Extract<
         GameLoopAction,
         { type: 'RECORD_MOVE' }
@@ -452,6 +474,7 @@ const transitionMap: Record<
   },
   betweenRounds: {
     BEGIN_ROUND: (current, action, context) => {
+      console.debug('[GameLoopController] transition betweenRounds.BEGIN_ROUND')
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
@@ -495,6 +518,7 @@ const transitionMap: Record<
       }
     },
     ABORT: (current, action) => {
+      console.debug('[GameLoopController] transition betweenRounds.ABORT')
       const { reason } = action as Extract<GameLoopAction, { type: 'ABORT' }>
       const message = reason ?? 'Match aborted'
       return {
@@ -516,6 +540,7 @@ const transitionMap: Record<
   },
   completed: {
     CONFIGURE: (current, action) => {
+      console.debug('[GameLoopController] transition completed.CONFIGURE')
       const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
@@ -542,6 +567,7 @@ const transitionMap: Record<
   },
   error: {
     CONFIGURE: (current, action) => {
+      console.debug('[GameLoopController] transition error.CONFIGURE')
       const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
@@ -601,6 +627,12 @@ export function createGameLoopController(
   ): void => {
     const nextSnapshot = snapshot ?? cloneGameLoopState(state)
     const eventPayload = event ? cloneGameLoopEvent(event) : undefined
+    console.debug('[GameLoopController] notify', {
+      listeners: listeners.size,
+      event: eventPayload,
+      phase: nextSnapshot.phase,
+      activePlayer: nextSnapshot.activePlayer,
+    })
     if (eventPayload?.type === 'phase:change' && phaseCallback) {
       phaseCallback(eventPayload.phase)
     }
@@ -674,13 +706,20 @@ export function createGameLoopController(
     listener: (next: GameLoopState, event?: GameLoopEvent) => void,
   ): (() => void) => {
     listeners.add(listener)
+    console.debug('[GameLoopController] listener added', {
+      size: listeners.size,
+    })
     listener(cloneGameLoopState(state))
     return () => {
       listeners.delete(listener)
+      console.debug('[GameLoopController] listener removed', {
+        size: listeners.size,
+      })
     }
   }
 
   const configure = (nextConfig: MatchConfig): void => {
+    console.debug('[GameLoopController] configure called', nextConfig)
     validateConfig(nextConfig)
     config = nextConfig
     matchLog.clear()
@@ -688,6 +727,7 @@ export function createGameLoopController(
   }
 
   const start = async (): Promise<void> => {
+    console.debug('[GameLoopController] start called')
     dispatch({ type: 'START' })
     if (!config) {
       throw new Error('Match configuration missing. Call configure() first.')

@@ -195,7 +195,9 @@ export function MatchControls() {
     try {
       setIsStarting(true)
       configure(matchConfig)
+      console.debug('[MatchControls] configured match', matchConfig)
       await start()
+      console.debug('[MatchControls] start command resolved')
       showToast({
         title: 'Match starting',
         description: `${selectedModelA?.name ?? 'Model A'} vs ${

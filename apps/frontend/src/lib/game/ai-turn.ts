@@ -136,10 +136,18 @@ Respond with JSON { "nextMove": number, "rationale": string } only.`,
 export async function requestGeminiMove(
   request: GeminiMoveRequest,
 ): Promise<GeminiMoveResult> {
+  console.debug('[AI Turn] Requesting Gemini move', {
+    activeMark: request.activeMark,
+    opponentMark: request.opponentMark,
+    round: request.round,
+    totalRounds: request.totalRounds,
+    actorLabel: request.actorLabel,
+  })
   let model
   try {
     model = await ensureGeminiChatModel()
   } catch (error) {
+    console.error('[AI Turn] Failed to ensure Gemini model', error)
     return {
       ok: false,
       reason: 'unavailable',
@@ -184,6 +192,9 @@ export async function requestGeminiMove(
       const durationMs = finishedAt - startedAt
 
       if (!availableCells.has(object.nextMove)) {
+        console.warn('[AI Turn] Gemini chose invalid cell', object.nextMove, {
+          availableCells: Array.from(availableCells),
+        })
         lastError = {
           ok: false,
           reason: 'invalid-response',
@@ -198,6 +209,10 @@ export async function requestGeminiMove(
       }
 
       const move = request.board.fromIndex(object.nextMove - 1)
+      console.debug('[AI Turn] Gemini move parsed', {
+        moveIndex: object.nextMove,
+        rationale: object.rationale,
+      })
 
       return {
         ok: true,
@@ -215,6 +230,7 @@ export async function requestGeminiMove(
         ? performance.now()
         : Date.now()
       const durationMs = finishedAt - startedAt
+      console.error('[AI Turn] Gemini call failed', error)
       if (isAbortError(error)) {
         const message = controller?.didTimeout()
           ? 'Gemini move inference timed out.'
