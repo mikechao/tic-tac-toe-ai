@@ -232,29 +232,6 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                 }}
               />
             </div>
-            <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs uppercase tracking-[0.2em] text-white/60">
-              <div className="flex items-center justify-between gap-6 text-sm tracking-[0.15em]">
-                <span className="text-white/60">X wins</span>
-                <NumberTicker
-                  value={scoreboard.modelA}
-                  className="text-base font-semibold text-white"
-                />
-              </div>
-              <div className="flex items-center justify-between gap-6 text-sm tracking-[0.15em]">
-                <span className="text-white/60">O wins</span>
-                <NumberTicker
-                  value={scoreboard.modelB}
-                  className="text-base font-semibold text-white"
-                />
-              </div>
-              <div className="flex items-center justify-between gap-6 text-sm tracking-[0.15em]">
-                <span className="text-white/60">Ties</span>
-                <NumberTicker
-                  value={scoreboard.ties}
-                  className="text-base font-semibold text-white"
-                />
-              </div>
-            </div>
           </div>
 
           <div>
