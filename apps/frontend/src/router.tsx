@@ -3,6 +3,7 @@ import { createRouter } from '@tanstack/react-router'
 import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 import { PreferencesProvider } from './integrations/state/preferences'
 import { LiveRegionProvider } from './integrations/a11y'
+import { GameLoopProvider } from './integrations/game-loop/context'
 import { routeTree } from './routeTree.gen.ts'
 
 export const getRouter = () => {
@@ -15,7 +16,9 @@ export const getRouter = () => {
     Wrap: ({ children }: { children: React.ReactNode }) => (
       <TanstackQuery.Provider queryClient={queryClient}>
         <PreferencesProvider>
-          <LiveRegionProvider>{children}</LiveRegionProvider>
+          <LiveRegionProvider>
+            <GameLoopProvider>{children}</GameLoopProvider>
+          </LiveRegionProvider>
         </PreferencesProvider>
       </TanstackQuery.Provider>
     ),
