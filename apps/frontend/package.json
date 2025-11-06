@@ -16,6 +16,7 @@
   "dependencies": {
     "@arena/schema": "workspace:*",
     "@built-in-ai/core": "^2.0.1",
+    "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/react": "10.22.0",

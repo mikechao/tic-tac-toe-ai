@@ -1,6 +1,8 @@
 import { Link, useLocation } from '@tanstack/react-router'
+import { Github } from 'lucide-react'
 
 import { AuroraText, WarpBackground } from '@/components/ui'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -49,7 +51,21 @@ export function AppHeader() {
                 )
               })}
             </nav>
-            <div className="hidden items-center justify-end gap-3 lg:flex lg:flex-1" />
+            <div className="hidden items-center justify-end gap-3 lg:flex lg:flex-1">
+              <a
+                href="https://github.com/mikechao/"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="Visit Mike Chao on GitHub"
+                className="rounded-full border border-white/15 p-1 transition hover:border-white/40"
+              >
+                <Avatar className="size-10 border border-white/10 bg-white/5">
+                  <AvatarFallback className="bg-transparent text-white">
+                    <Github className="h-5 w-5" aria-hidden="true" />
+                  </AvatarFallback>
+                </Avatar>
+              </a>
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-4 rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3 text-[0.65rem] uppercase tracking-[0.3em] text-white/60 lg:hidden">
