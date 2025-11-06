@@ -77,19 +77,32 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
     })
   }, [match, modelA, modelB, boardSize, moveHistory])
 
-  useEffect(() => {
-    if (isPaused || !listRef.current || resolvedMoves.length === 0) return
-    const element = listRef.current
-    element.scrollTo({
-      top: element.scrollHeight,
-      behavior: 'smooth',
-    })
-  }, [isPaused, resolvedMoves.length])
-
   const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
   const showEmptyState = resolvedMoves.length === 0
   const reviewingRound =
     resolvedMoves[resolvedMoves.length - 1]?.round ?? Math.max(state.currentRound, 1)
+
+  useEffect(() => {
+    if (isPaused || !listRef.current || resolvedMoves.length === 0) {
+      return
+    }
+    const element = listRef.current
+    const lastItem = element.querySelector<HTMLElement>(
+      `[data-move-id=\"${latestMoveId}\"]`,
+    )
+    if (!lastItem) {
+      return
+    }
+    const raf = requestAnimationFrame(() => {
+      lastItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf)
+    }
+  }, [isPaused, latestMoveId, resolvedMoves.length])
 
   return (
     <MyMagicCard
@@ -159,6 +172,7 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
                 return (
                   <article
                     key={move.id}
+                    data-move-id={move.id}
                     className={cn(
                       'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
                       isLatest
