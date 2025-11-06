@@ -244,20 +244,20 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                         'hover:border-white/25 hover:bg-white/10',
                       )}
                     >
-                      <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
-                        {cell.label}
-                      </span>
-                      <span
-                        className={cn(
-                          'transition-transform duration-300',
-                          cell.mark
-                            ? 'scale-100 text-white'
-                            : 'scale-90 text-white/30',
-                        )}
-                      >
-                        {cell.mark ?? '·'}
-                      </span>
-                    </td>
+                  <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
+                    {cell.label}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-4xl font-semibold transition-transform duration-300 sm:text-5xl',
+                      cell.mark ? 'scale-100' : 'scale-90 text-white/30',
+                      cell.mark === 'X' && 'text-[#4ff2c2]',
+                      cell.mark === 'O' && 'text-[#f15bb5]',
+                    )}
+                  >
+                    {cell.mark ?? '·'}
+                  </span>
+                </td>
                   ))}
                 </tr>
               ))}
