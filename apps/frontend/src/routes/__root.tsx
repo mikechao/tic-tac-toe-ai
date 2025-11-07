@@ -8,6 +8,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import appCss from '../styles.css?url'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { ToastProvider } from '@/components/ui'
+import { Confetti } from '@/components/ui/confetti'
 
 interface RouterContext {
   queryClient: QueryClient
@@ -30,10 +31,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <>
       <HeadContent />
       <ToastProvider>
-        <div className="min-h-screen bg-slate-950 text-white antialiased">
-          <AppHeader />
-          <div className="pb-16 pt-8">{children}</div>
-        </div>
+        <Confetti
+          manualstart
+          className="pointer-events-none fixed inset-0 z-50 h-screen w-screen"
+        >
+          <div className="min-h-screen bg-slate-950 text-white antialiased">
+            <AppHeader />
+            <div className="pb-16 pt-8">{children}</div>
+          </div>
+        </Confetti>
       </ToastProvider>
       <Scripts />
     </>

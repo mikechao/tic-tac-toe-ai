@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import type { MatchListResponse } from '@arena/schema'
 
@@ -7,6 +7,7 @@ import type { BoardState, PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { MagicCard } from '@/components/ui/magic-card'
+import { useConfetti } from '@/components/ui/confetti'
 import {
   Card,
   CardContent,
@@ -251,6 +252,9 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
       ? 'border-[#4ff2c2]/70 bg-[#4ff2c2]/15 shadow-[0_0_28px_rgba(79,242,194,0.45)]'
       : 'border-[#f15bb5]/70 bg-[#f15bb5]/12 shadow-[0_0_28px_rgba(241,91,181,0.45)]'
     : ''
+  const confetti = useConfetti()
+  const lastCelebrationKey = useRef<string | null>(null)
+  const celebrationTypeRef = useRef<'fireworks' | 'sideCannons'>('sideCannons')
 
   const scoreboard = state.score
   const progressPercent =
@@ -267,6 +271,98 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     ? actorToMark[state.activePlayer]
     : null
   const activeTurnText = getActiveTurnText(state.phase, activePlayerName)
+
+  const runFireworks = useCallback(() => {
+    if (typeof window === 'undefined' || !confetti) {
+      return
+    }
+    const duration = 5000
+    const animationEnd = Date.now() + duration
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 }
+    const randomInRange = (min: number, max: number) =>
+      Math.random() * (max - min) + min
+
+    const interval = window.setInterval(() => {
+      const timeLeft = animationEnd - Date.now()
+      if (timeLeft <= 0) {
+        window.clearInterval(interval)
+        return
+      }
+      const particleCount = Math.round(50 * (timeLeft / duration))
+      confetti.fire({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() * 0.2 },
+      })
+      confetti.fire({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() * 0.2 },
+      })
+    }, 250)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [confetti])
+
+  const runSideCannons = useCallback(() => {
+    if (typeof window === 'undefined' || !confetti) {
+      return
+    }
+    const end = Date.now() + 3000
+    const colors = ['#a786ff', '#fd8bbc', '#eca184', '#f8deb1'] as const
+    let rafId = 0
+
+    const frame = () => {
+      if (Date.now() > end) {
+        return
+      }
+      confetti.fire({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 0, y: 0.5 },
+        colors: [...colors],
+      })
+      confetti.fire({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 1, y: 0.5 },
+        colors: [...colors],
+      })
+      rafId = window.requestAnimationFrame(frame)
+    }
+
+    rafId = window.requestAnimationFrame(frame)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+    }
+  }, [confetti])
+
+  useEffect(() => {
+    if (!winningLine || !confetti) {
+      return
+    }
+    const celebrationKey = `${state.currentRound}-${winningLine.indices.join('-')}`
+    if (lastCelebrationKey.current === celebrationKey) {
+      return
+    }
+    lastCelebrationKey.current = celebrationKey
+    const nextType =
+      celebrationTypeRef.current === 'fireworks' ? 'sideCannons' : 'fireworks'
+    celebrationTypeRef.current = nextType
+
+    const cleanup = nextType === 'fireworks' ? runFireworks() : runSideCannons()
+
+    return () => {
+      cleanup?.()
+    }
+  }, [winningLine, state.currentRound, runFireworks, runSideCannons, confetti])
 
   return (
     <div className="flex flex-col gap-6 text-white">
@@ -354,20 +450,20 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
                           : 'hover:border-white/25 hover:bg-white/10',
                       )}
                     >
-                  <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
-                    {cell.label}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-4xl font-semibold transition-transform duration-300 sm:text-5xl',
-                      cell.mark ? 'scale-100' : 'scale-90 text-white/30',
-                      cell.mark === 'X' && 'text-[#4ff2c2]',
-                      cell.mark === 'O' && 'text-[#f15bb5]',
-                    )}
-                  >
-                    {cell.mark ?? '·'}
-                  </span>
-                </td>
+                      <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
+                        {cell.label}
+                      </span>
+                      <span
+                        className={cn(
+                          'text-4xl font-semibold transition-transform duration-300 sm:text-5xl',
+                          cell.mark ? 'scale-100' : 'scale-90 text-white/30',
+                          cell.mark === 'X' && 'text-[#4ff2c2]',
+                          cell.mark === 'O' && 'text-[#f15bb5]',
+                        )}
+                      >
+                        {cell.mark ?? '·'}
+                      </span>
+                    </td>
                   ))}
                 </tr>
               ))}

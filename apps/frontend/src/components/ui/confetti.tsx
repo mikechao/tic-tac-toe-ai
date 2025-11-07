@@ -3,6 +3,7 @@ import React, {
   createContext,
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -30,7 +31,7 @@ type Props = React.ComponentPropsWithRef<"canvas"> & {
 
 export type ConfettiRef = Api | null
 
-const ConfettiContext = createContext<Api>({} as Api)
+const ConfettiContext = createContext<Api | null>(null)
 
 // Define component first
 const ConfettiComponent = forwardRef<ConfettiRef, Props>((props, ref) => {
@@ -106,6 +107,10 @@ ConfettiComponent.displayName = "Confetti"
 
 // Export as Confetti
 export const Confetti = ConfettiComponent
+
+export function useConfetti(): Api | null {
+  return useContext(ConfettiContext)
+}
 
 interface ConfettiButtonProps extends React.ComponentProps<"button"> {
   options?: ConfettiOptions &
