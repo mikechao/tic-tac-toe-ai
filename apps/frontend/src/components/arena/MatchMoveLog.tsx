@@ -6,6 +6,7 @@ import { localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import { AnimatedList, MyMagicCard, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
+import type { MoveLogEntry } from '@/lib/game/match-log'
 
 const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
   modelA: 'X',
@@ -34,15 +35,24 @@ function toCoordinate(moveNumber: number, boardSize: number): string {
 
 type MatchMoveLogProps = {
   variant?: 'default' | 'recap'
+  moves?: MoveLogEntry[]
+  selectedMoveId?: string
+  onSelectMove?: (moveId: string) => void
 }
 
-export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
+export function MatchMoveLog({
+  variant = 'default',
+  moves,
+  selectedMoveId,
+  onSelectMove,
+}: MatchMoveLogProps) {
   const [isPaused, setIsPaused] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const { state } = useGameLoop()
   const boardSize = state.board.size
-  const moveHistory = state.moveHistory
+  const moveHistory = moves ?? state.moveHistory
   const isRecapVariant = variant === 'recap'
+  const isInteractive = typeof onSelectMove === 'function'
 
   const modelAId = state.modelAId
   const modelBId = state.modelBId
@@ -82,58 +92,10 @@ export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
   }, [modelA, modelB, boardSize, moveHistory])
 
   const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
+  const selectedId = selectedMoveId ?? latestMoveId
   const showEmptyState = resolvedMoves.length === 0
   const reviewingRound =
     resolvedMoves[resolvedMoves.length - 1]?.round ?? Math.max(state.currentRound, 1)
-
-  const moveListItems = resolvedMoves.map((move) => {
-    const isLatest = move.id === latestMoveId
-    return (
-      <article
-        key={move.id}
-        data-move-id={move.id}
-        className={cn(
-          'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
-          isLatest
-            ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
-            : 'hover:border-white/25 hover:bg-white/10',
-        )}
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <span
-            className={cn(
-              'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
-              move.mark === 'X' ? 'text-[#4ff2c2]' : 'text-[#f15bb5]',
-            )}
-            aria-hidden="true"
-          >
-            {move.mark}
-          </span>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
-            <p className="font-semibold text-white">
-              {move.modelName}{' '}
-              <span className="text-white/60">
-                · round {move.round}, turn {move.turn}
-              </span>
-            </p>
-            <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-              {new Date(move.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-              })}
-            </span>
-          </div>
-          <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
-            {move.coordinate} · {move.durationSeconds.toFixed(1)}s
-          </span>
-        </div>
-        <div className="mt-3">
-          <p className="text-white/70">{move.rationale}</p>
-        </div>
-      </article>
-    )
-  })
 
   useEffect(() => {
     if (isRecapVariant || isPaused || !listRef.current || resolvedMoves.length === 0) {
@@ -227,17 +189,114 @@ export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
                 className="w-full"
               />
             </div>
+          ) : isRecapVariant ? (
+            <div className="flex flex-col gap-3">
+              {resolvedMoves.map((move) => (
+                <MoveEntry
+                  key={move.id}
+                  move={move}
+                  isLatest={move.id === latestMoveId}
+                  isSelected={move.id === selectedId}
+                  interactive={isInteractive}
+                  onSelect={onSelectMove}
+                />
+              ))}
+            </div>
           ) : (
-            isRecapVariant ? (
-              <div className="flex flex-col gap-3">{moveListItems}</div>
-            ) : (
-              <AnimatedList className="flex flex-col gap-3" delay={600}>
-                {moveListItems}
-              </AnimatedList>
-            )
+            <AnimatedList className="flex flex-col gap-3" delay={600}>
+              {resolvedMoves.map((move) => (
+                <MoveEntry
+                  key={move.id}
+                  move={move}
+                  isLatest={move.id === latestMoveId}
+                />
+              ))}
+            </AnimatedList>
           )}
         </div>
       </div>
     </MyMagicCard>
+  )
+}
+
+function MoveEntry({
+  move,
+  isLatest,
+  isSelected = false,
+  interactive = false,
+  onSelect,
+}: {
+  move: ResolvedMove
+  isLatest: boolean
+  isSelected?: boolean
+  interactive?: boolean
+  onSelect?: (moveId: string) => void
+}) {
+  const handleSelect = () => {
+    if (interactive && onSelect) {
+      onSelect(move.id)
+    }
+  }
+
+  return (
+    <article
+      data-move-id={move.id}
+      className={cn(
+        'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
+        isSelected
+          ? 'border-[#ffb547]/60 bg-white/15 shadow-[0_0_28px_rgba(255,181,71,0.3)]'
+          : isLatest
+            ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
+            : 'hover:border-white/25 hover:bg-white/10',
+        interactive && 'cursor-pointer',
+      )}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-pressed={interactive ? isSelected : undefined}
+      onClick={interactive ? handleSelect : undefined}
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                handleSelect()
+              }
+            }
+          : undefined
+      }
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <span
+          className={cn(
+            'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
+            move.mark === 'X' ? 'text-[#4ff2c2]' : 'text-[#f15bb5]',
+          )}
+          aria-hidden="true"
+        >
+          {move.mark}
+        </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+          <p className="font-semibold text-white">
+            {move.modelName}{' '}
+            <span className="text-white/60">
+              · round {move.round}, turn {move.turn}
+            </span>
+          </p>
+          <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+            {new Date(move.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })}
+          </span>
+        </div>
+        <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
+          {move.coordinate} · {move.durationSeconds.toFixed(1)}s
+        </span>
+      </div>
+      <div className="mt-3">
+        <p className="text-white/70">{move.rationale}</p>
+      </div>
+    </article>
   )
 }

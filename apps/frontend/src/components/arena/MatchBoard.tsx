@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { localAIModels } from '@/data/models'
-import type { BoardState, PlayerMark } from '@/lib/game/board-state'
+import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
 import { MarkAvatar, MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
 import { MagicCard } from '@/components/ui/magic-card'
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { MatchMoveLog } from '@/components/arena/MatchMoveLog'
 import { BoardGrid } from '@/components/arena/BoardGrid'
+import type { MoveLogEntry } from '@/lib/game/match-log'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { MatchConfig } from '@/lib/game/game-loop'
 
@@ -95,6 +96,32 @@ function getWinningCellTheme(mark: PlayerMark | null): string {
     return 'border-[#f15bb5]/70 bg-[#f15bb5]/12 shadow-[0_0_28px_rgba(241,91,181,0.45)]'
   }
   return ''
+}
+
+function getMoveId(entry: MoveLogEntry): string {
+  return `${entry.round}-${entry.turn}`
+}
+
+function buildBoardSnapshot(
+  boardSize: number,
+  moves: MoveLogEntry[],
+  moveCount: number,
+): BoardState {
+  const snapshot = new BoardState(boardSize)
+  const total = Math.min(moveCount, moves.length)
+  for (let index = 0; index < total; index += 1) {
+    const entry = moves[index]
+    const moveIndex = Math.max(0, entry.moveNumber - 1)
+    const move = snapshot.fromIndex(moveIndex)
+    snapshot.applyMove(move, actorToMark[entry.actor])
+  }
+  return snapshot
+}
+
+function getActorHighlightClass(actor: 'modelA' | 'modelB'): string {
+  return actor === 'modelA'
+    ? 'border-[#4ff2c2]/60 bg-[#4ff2c2]/20 shadow-[0_0_20px_rgba(79,242,194,0.3)]'
+    : 'border-[#f15bb5]/60 bg-[#f15bb5]/18 shadow-[0_0_20px_rgba(241,91,181,0.3)]'
 }
 
 function getActiveTurnText(
@@ -220,9 +247,18 @@ export function MatchBoard() {
   const celebrationTypeRef = useRef<'fireworks' | 'sideCannons'>('sideCannons')
   const [roundSummaryOpen, setRoundSummaryOpen] = useState(false)
   const [dialogActionPending, setDialogActionPending] = useState(false)
+  const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null)
   const lastDialogRoundRef = useRef<number | null>(null)
   const latestRoundSummary = state.roundSummaries.at(-1)
   const roundEnded = state.phase === 'betweenRounds' || state.phase === 'completed'
+  const roundMoves = useMemo<MoveLogEntry[]>(() => {
+    if (!latestRoundSummary) {
+      return []
+    }
+    return state.moveHistory.filter(
+      (entry) => entry.round === latestRoundSummary.round,
+    )
+  }, [state.moveHistory, latestRoundSummary])
 
   const scoreboard = state.score
   const progressPercent =
@@ -283,15 +319,45 @@ export function MatchBoard() {
   const player2Name = modelB?.name ?? 'Model B'
   const dialogScoreLine = `Player 1 (${player1Name}) W: ${scoreboard.modelA} L: ${scoreboard.modelB} T: ${scoreboard.ties} • Player 2 (${player2Name}) W: ${scoreboard.modelB} L: ${scoreboard.modelA} T: ${scoreboard.ties}`
   const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
+  const rematchReady = modelAId != null && modelBId != null
+  const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
+
   const latestRoundBoard =
     latestRoundSummary && latestRoundSummary.round > 0
       ? state.roundBoards[latestRoundSummary.round - 1] ?? null
       : null
-  const recapBoard = latestRoundBoard ?? board
-  const recapWinningLine = latestRoundBoard ? findWinningLine(latestRoundBoard) : null
-  const recapWinningTheme = getWinningCellTheme(recapWinningLine?.mark ?? null)
-  const rematchReady = modelAId != null && modelBId != null
-  const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
+
+  const selectedMoveEntry = useMemo(() => {
+    if (!roundMoves.length) {
+      return null
+    }
+    const explicit = roundMoves.find((entry) => getMoveId(entry) === selectedMoveId)
+    return explicit ?? roundMoves.at(-1) ?? null
+  }, [roundMoves, selectedMoveId])
+
+  const recapBoardSnapshot = useMemo(() => {
+    if (roundMoves.length === 0) {
+      const base = latestRoundBoard ?? board
+      return base.clone()
+    }
+    const moveCount = selectedMoveEntry?.turn ?? roundMoves.length
+    return buildBoardSnapshot(boardSize, roundMoves, moveCount)
+  }, [board, boardSize, latestRoundBoard, roundMoves, selectedMoveEntry])
+
+  const recapWinningLine = findWinningLine(recapBoardSnapshot)
+  const recapHighlights: Array<{ indices: number[]; className?: string }> = []
+  if (recapWinningLine) {
+    recapHighlights.push({
+      indices: recapWinningLine.indices,
+      className: getWinningCellTheme(recapWinningLine.mark),
+    })
+  }
+  if (selectedMoveEntry) {
+    recapHighlights.push({
+      indices: [Math.max(0, selectedMoveEntry.moveNumber - 1)],
+      className: getActorHighlightClass(selectedMoveEntry.actor),
+    })
+  }
 
   const handleRoundDialogAction = useCallback(async () => {
     if (hasNextRound) {
@@ -446,6 +512,14 @@ export function MatchBoard() {
     }
   }, [roundEnded, latestRoundSummary, roundSummaryOpen])
 
+  useEffect(() => {
+    if (!roundDialogOpen) {
+      return
+    }
+    const lastMove = roundMoves.at(-1)
+    setSelectedMoveId(lastMove ? getMoveId(lastMove) : null)
+  }, [roundDialogOpen, roundMoves])
+
   if (!hasConfiguredMatch) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -479,14 +553,18 @@ export function MatchBoard() {
               <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <BoardGrid
-                    board={recapBoard}
-                    boardSize={recapBoard.size}
-                    highlightIndices={recapWinningLine?.indices}
-                    highlightClassName={recapWinningTheme}
+                    board={recapBoardSnapshot}
+                    boardSize={recapBoardSnapshot.size}
+                    highlights={recapHighlights.length ? recapHighlights : undefined}
                     ariaLabel={`${roundLabel} board snapshot`}
                   />
                 </div>
-                <MatchMoveLog variant="recap" />
+                <MatchMoveLog
+                  variant="recap"
+                  moves={roundMoves}
+                  selectedMoveId={selectedMoveId ?? undefined}
+                  onSelectMove={setSelectedMoveId}
+                />
               </div>
             </div>
             <DialogFooter className="mt-4 w-full items-center justify-between gap-3 sm:flex">
@@ -572,8 +650,11 @@ export function MatchBoard() {
           <BoardGrid
             board={board}
             boardSize={boardSize}
-            highlightIndices={winningLine?.indices}
-            highlightClassName={winningCellTheme}
+            highlights={
+              winningLine
+                ? [{ indices: winningLine.indices, className: winningCellTheme }]
+                : undefined
+            }
           />
 
           <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">

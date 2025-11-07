@@ -1,11 +1,10 @@
 import { cn } from '@/lib/utils'
-import type { BoardState, PlayerMark } from '@/lib/game/board-state'
+import type { BoardState } from '@/lib/game/board-state'
 
 type BoardGridProps = {
   board: BoardState
   boardSize: number
-  highlightIndices?: number[]
-  highlightClassName?: string
+  highlights?: Array<{ indices: number[]; className?: string }>
   className?: string
   ariaLabel?: string
 }
@@ -18,13 +17,11 @@ function formatCellLabel(row: number, column: number, boardSize: number): string
 export function BoardGrid({
   board,
   boardSize,
-  highlightIndices,
-  highlightClassName,
+  highlights,
   className,
   ariaLabel = 'Tic tac toe match board',
 }: BoardGridProps) {
   const boardCells = board.getCells()
-  const highlightSet = highlightIndices ? new Set(highlightIndices) : null
 
   const rows = Array.from({ length: boardSize }, (_, rowIndex) =>
     Array.from({ length: boardSize }, (_, columnIndex) => {
@@ -55,12 +52,25 @@ export function BoardGrid({
                 aria-label={`${cell.label} ${
                   cell.mark ? `contains ${cell.mark}` : 'is empty'
                 }`}
+                data-cell-index={cell.index}
                 className={cn(
                   'relative h-24 min-w-[6rem] rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
-                  highlightSet?.has(cell.index)
-                    ? highlightClassName
-                    : 'hover:border-white/25 hover:bg-white/10',
+                  (() => {
+                    if (!highlights?.length) {
+                      return 'hover:border-white/25 hover:bg-white/10'
+                    }
+                    const matchingHighlights = highlights
+                      .filter((highlight) =>
+                        highlight.indices?.includes(cell.index),
+                      )
+                      .map((highlight) => highlight.className)
+                      .filter(Boolean)
+                    if (matchingHighlights.length === 0) {
+                      return 'hover:border-white/25 hover:bg-white/10'
+                    }
+                    return matchingHighlights.join(' ')
+                  })(),
                 )}
               >
                 <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
