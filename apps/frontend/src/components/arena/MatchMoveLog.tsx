@@ -2,14 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { CirclePause, CirclePlay } from 'lucide-react'
 
-import type { MatchListResponse } from '@arena/schema'
-
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
 import { AnimatedList, MyMagicCard, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
-
-type MatchSummary = MatchListResponse['matches'][number]
 
 const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
   modelA: 'X',
@@ -37,11 +33,10 @@ function toCoordinate(moveNumber: number, boardSize: number): string {
 }
 
 type MatchMoveLogProps = {
-  match?: MatchSummary
   variant?: 'default' | 'recap'
 }
 
-export function MatchMoveLog({ match, variant = 'default' }: MatchMoveLogProps) {
+export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
   const [isPaused, setIsPaused] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const { state } = useGameLoop()
@@ -49,9 +44,11 @@ export function MatchMoveLog({ match, variant = 'default' }: MatchMoveLogProps) 
   const moveHistory = state.moveHistory
   const isRecapVariant = variant === 'recap'
 
-  const modelAId = match?.modelAId
-  const modelBId = match?.modelBId
-  const hasMatch = Boolean(match)
+  const modelAId = state.modelAId
+  const modelBId = state.modelBId
+
+  const hasConfiguredMatch =
+    modelAId != null && modelBId != null && state.totalRounds > 0
 
   const modelA = useMemo(() => {
     if (modelAId == null) return undefined
@@ -64,7 +61,6 @@ export function MatchMoveLog({ match, variant = 'default' }: MatchMoveLogProps) 
   }, [modelBId])
 
   const resolvedMoves: ResolvedMove[] = useMemo(() => {
-    if (!match) return []
     return moveHistory.map((entry) => {
       const actorModel =
         entry.actor === 'modelA' ? modelA ?? demoModels[0] : modelB ?? demoModels[1]
@@ -81,7 +77,7 @@ export function MatchMoveLog({ match, variant = 'default' }: MatchMoveLogProps) 
         modelName: actorModel?.name ?? (entry.actor === 'modelA' ? 'Model A' : 'Model B'),
       }
     })
-  }, [match, modelA, modelB, boardSize, moveHistory])
+  }, [modelA, modelB, boardSize, moveHistory])
 
   const latestMoveId = resolvedMoves[resolvedMoves.length - 1]?.id
   const showEmptyState = resolvedMoves.length === 0
@@ -211,7 +207,7 @@ export function MatchMoveLog({ match, variant = 'default' }: MatchMoveLogProps) 
           role="log"
           aria-live={isPaused ? 'off' : 'polite'}
         >
-          {!hasMatch ? (
+          {!hasConfiguredMatch ? (
             <div className="px-2 py-6">
               <StateMessage
                 title="No move history yet"

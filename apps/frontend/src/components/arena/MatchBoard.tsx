@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { MatchListResponse } from '@arena/schema'
-
 import { demoModels } from '@/data/demo.models'
 import type { BoardState, PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
@@ -26,8 +24,6 @@ import {
 import { MatchMoveLog } from '@/components/arena/MatchMoveLog'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { MatchConfig } from '@/lib/game/game-loop'
-
-type MatchSummary = MatchListResponse['matches'][number]
 
 const actorToMark: Record<'modelA' | 'modelB', 'X' | 'O'> = {
   modelA: 'X',
@@ -187,13 +183,16 @@ function StatTicker({ label, value }: { label: string; value: number }) {
   )
 }
 
-export function MatchBoard({ match }: { match?: MatchSummary }) {
+export function MatchBoard() {
   const { state, configure, start, nextRound } = useGameLoop()
   const board = state.board
   const boardSize = board.size
 
-  const modelAId = state.modelAId ?? match?.modelAId ?? null
-  const modelBId = state.modelBId ?? match?.modelBId ?? null
+  const modelAId = state.modelAId
+  const modelBId = state.modelBId
+
+  const hasConfiguredMatch =
+    modelAId != null && modelBId != null && state.totalRounds > 0
 
   const modelA = useMemo(() => {
     if (modelAId == null) return undefined
@@ -205,28 +204,9 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     return demoModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
-  if (!match) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <StateMessage
-          title="No active match"
-          description="Queue a new showdown to populate the arena board. Once a match is running, the grid will animate with live moves."
-          action={
-            <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-              Start a match from the controls
-            </span>
-          }
-        />
-      </div>
-    )
-  }
-
-  const totalRounds = state.totalRounds || match.totalRounds
+  const totalRounds = state.totalRounds
   const boardStatus = `Round ${Math.max(state.currentRound, 1)} of ${totalRounds}`
-  const turnsRemaining = Math.max(
-    0,
-    totalRounds - state.currentRound,
-  )
+  const turnsRemaining = Math.max(0, totalRounds - state.currentRound)
   const boardRows = useMemo(() => {
     const boardCells = board.getCells()
     return Array.from({ length: boardSize }, (_, rowIndex) =>
@@ -302,9 +282,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
   const dialogCtaLabel = hasNextRound ? 'Next Round' : 'Rematch'
   const dialogScoreLine = `${modelA?.name ?? 'Model A'} ${scoreboard.modelA} — ${scoreboard.modelB} ${modelB?.name ?? 'Model B'} • ties ${scoreboard.ties}`
   const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
-  const rematchReady =
-    (state.modelAId ?? match?.modelAId) != null &&
-    (state.modelBId ?? match?.modelBId) != null
+  const rematchReady = modelAId != null && modelBId != null
   const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
 
   const handleRoundDialogAction = useCallback(async () => {
@@ -314,15 +292,14 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
       return
     }
 
-    const rematchModelAId = state.modelAId ?? match?.modelAId ?? null
-    const rematchModelBId = state.modelBId ?? match?.modelBId ?? null
+    const rematchModelAId = modelAId
+    const rematchModelBId = modelBId
 
     if (rematchModelAId == null || rematchModelBId == null) {
       return
     }
 
     const rematchConfig: MatchConfig = {
-      matchId: match?.id,
       modelAId: rematchModelAId,
       modelBId: rematchModelBId,
       boardSize,
@@ -344,9 +321,8 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
   }, [
     hasNextRound,
     nextRound,
-    state.modelAId,
-    state.modelBId,
-    match,
+    modelAId,
+    modelBId,
     boardSize,
     totalRounds,
     configure,
@@ -462,6 +438,22 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     }
   }, [roundEnded, latestRoundSummary, roundSummaryOpen])
 
+  if (!hasConfiguredMatch) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <StateMessage
+          title="No active match"
+          description="Queue a new showdown to populate the arena board. Once a match is running, the grid will animate with live moves."
+          action={
+            <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+              Start a match from the controls
+            </span>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
     <>
       <Dialog open={roundDialogOpen} onOpenChange={setRoundSummaryOpen}>
@@ -476,7 +468,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[65vh] overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-2">
-              <MatchMoveLog match={match} variant="recap" />
+              <MatchMoveLog variant="recap" />
             </div>
             <DialogFooter className="mt-4 w-full items-center justify-between gap-3 sm:flex">
               <span className="text-xs uppercase tracking-[0.3em] text-white/60">

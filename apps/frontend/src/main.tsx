@@ -19,7 +19,7 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL
 if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
-    tunnel: `${backendUrl}/api/sentry`,
+    // tunnel: `${backendUrl}/api/sentry`,
     environment: import.meta.env.VITE_SENTRY_ENV ?? 'development',
     tracesSampleRate: Number(
       import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1,

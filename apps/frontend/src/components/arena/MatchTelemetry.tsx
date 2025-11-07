@@ -1,14 +1,10 @@
 import { useMemo } from 'react'
 
-import type { MatchListResponse } from '@arena/schema'
-
 import { demoModels } from '@/data/demo.models'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { GameLoopState } from '@/lib/game/game-loop'
-
-type MatchSummary = MatchListResponse['matches'][number]
 
 function toCoordinate(moveNumber: number, boardSize: number): string {
   if (boardSize <= 0 || moveNumber <= 0) {
@@ -55,19 +51,25 @@ function computeCurrentStreak(
   return streak
 }
 
-export function MatchTelemetry({ match }: { match?: MatchSummary }) {
+export function MatchTelemetry() {
   const { state } = useGameLoop()
   const boardSize = state.board.size
 
+  const modelAId = state.modelAId
+  const modelBId = state.modelBId
+
+  const hasConfiguredMatch =
+    modelAId != null && modelBId != null && state.totalRounds > 0
+
   const modelA = useMemo(() => {
-    if (!match) return undefined
-    return demoModels.find((model) => model.id === match.modelAId)
-  }, [match])
+    if (modelAId == null) return undefined
+    return demoModels.find((model) => model.id === modelAId)
+  }, [modelAId])
 
   const modelB = useMemo(() => {
-    if (!match) return undefined
-    return demoModels.find((model) => model.id === match.modelBId)
-  }, [match])
+    if (modelBId == null) return undefined
+    return demoModels.find((model) => model.id === modelBId)
+  }, [modelBId])
 
   const moveHistory = state.moveHistory
   const lastMove = moveHistory.at(-1)
@@ -89,7 +91,7 @@ export function MatchTelemetry({ match }: { match?: MatchSummary }) {
         ? modelB
         : undefined
 
-  if (!match) {
+  if (!hasConfiguredMatch) {
     return (
       <MyMagicCard
         className="border-white/15 bg-white/[0.04] px-0 py-0"
