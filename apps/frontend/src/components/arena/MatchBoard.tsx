@@ -148,7 +148,7 @@ function PlayerBadge({
             : 'border-white/10',
         )}
       >
-        <CardHeader className="border-b border-white/10 px-5 pt-3 !pb-2">
+        <CardHeader className="border-b border-white/10 px-5 pt-3 pb-2!">
           <CardTitle className="text-xs uppercase tracking-[0.3em] text-white/60">
             {title}
           </CardTitle>
@@ -496,7 +496,7 @@ export function MatchBoard() {
         </h2>
       </header>
 
-      <MyMagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
+      <MyMagicCard className="border-white/15 bg-white/4" spotlight={false}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -542,7 +542,7 @@ export function MatchBoard() {
             </div>
             <div className="mt-2 h-2 rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
+                className="h-full rounded-full bg-linear-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
                 style={{
                   width: `${progressPercent}%`,
                 }}
@@ -564,8 +564,8 @@ export function MatchBoard() {
                         cell.mark ? `contains ${cell.mark}` : 'is empty'
                       }`}
                       className={cn(
-                        'relative h-24 min-w-[6rem] rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--muted-surface)]',
+                        'relative h-24 min-w-24 rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--muted-surface)',
                         winningCellSet?.has(cell.index)
                           ? winningCellTheme
                           : 'hover:border-white/25 hover:bg-white/10',

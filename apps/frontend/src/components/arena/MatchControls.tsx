@@ -345,7 +345,7 @@ export function MatchControls() {
 
           <BentoCard colSpanClassName="md:col-span-12" className="space-y-4">
             <fieldset
-              className="space-y-4 p-0 outline-none focus-within:outline-none [border:0] [margin:0]"
+              className="space-y-4 p-0 outline-none focus-within:outline-none [border:0] m-0"
               style={{ minInlineSize: 0 }}
             >
               <legend className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
@@ -405,7 +405,7 @@ export function MatchControls() {
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
               Match summary
             </p>
-            <div className="flex flex-col gap-3 rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-4">
+            <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
               <div>
                 <p className="text-base font-medium text-white">
                   {summaryLine}

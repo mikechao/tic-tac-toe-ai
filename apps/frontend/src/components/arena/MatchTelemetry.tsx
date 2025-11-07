@@ -94,7 +94,7 @@ export function MatchTelemetry() {
   if (!hasConfiguredMatch) {
     return (
       <MyMagicCard
-        className="border-white/15 bg-white/[0.04] px-0 py-0"
+        className="border-white/15 bg-white/4 px-0 py-0"
         spotlight={false}
       >
         <div className="flex h-full items-center justify-center rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-8">
@@ -116,7 +116,7 @@ export function MatchTelemetry() {
   return (
     <MyMagicCard
       className={cn(
-        'relative border-white/15 bg-white/[0.04] px-0 py-0',
+        'relative border-white/15 bg-white/4 px-0 py-0',
         'overflow-hidden',
       )}
       spotlight={false}
@@ -124,7 +124,7 @@ export function MatchTelemetry() {
       <div
         aria-hidden="true"
         className={cn(
-          'absolute inset-0 -z-10 bg-gradient-to-br to-[#0b1026] opacity-90 blur-xl transition-opacity duration-300',
+          'absolute inset-0 -z-10 bg-linear-to-br to-[#0b1026] opacity-90 blur-xl transition-opacity duration-300',
           activeAccent,
         )}
       />

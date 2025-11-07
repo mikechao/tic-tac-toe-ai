@@ -164,7 +164,7 @@ export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
 
   return (
     <MyMagicCard
-      className="border-white/15 bg-white/[0.04] px-0 py-0"
+      className="border-white/15 bg-white/4 px-0 py-0"
       spotlight={false}
     >
       <div className="flex h-full flex-col gap-4 rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-6 text-white backdrop-blur">
