@@ -474,7 +474,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     <>
       <Dialog open={roundDialogOpen} onOpenChange={setRoundSummaryOpen}>
         {roundDialogOpen && latestRoundSummary ? (
-          <DialogContent className="max-w-5xl border-white/15 bg-[#040716]/95 text-white">
+          <DialogContent className="max-w-[90vw] sm:max-w-[90vw] border-white/15 bg-[#040716]/95 text-white">
             <DialogHeader className="gap-2">
               <DialogTitle className="font-display text-2xl text-white">
                 {roundSummaryTitle}
