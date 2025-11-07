@@ -476,7 +476,7 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[65vh] overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-2">
-              <MatchMoveLog match={match} />
+              <MatchMoveLog match={match} variant="recap" />
             </div>
             <DialogFooter className="mt-4 w-full items-center justify-between gap-3 sm:flex">
               <span className="text-xs uppercase tracking-[0.3em] text-white/60">

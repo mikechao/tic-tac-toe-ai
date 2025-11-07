@@ -36,12 +36,18 @@ function toCoordinate(moveNumber: number, boardSize: number): string {
   return String(moveNumber)
 }
 
-export function MatchMoveLog({ match }: { match?: MatchSummary }) {
+type MatchMoveLogProps = {
+  match?: MatchSummary
+  variant?: 'default' | 'recap'
+}
+
+export function MatchMoveLog({ match, variant = 'default' }: MatchMoveLogProps) {
   const [isPaused, setIsPaused] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const { state } = useGameLoop()
   const boardSize = state.board.size
   const moveHistory = state.moveHistory
+  const isRecapVariant = variant === 'recap'
 
   const modelAId = match?.modelAId
   const modelBId = match?.modelBId
@@ -82,8 +88,57 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
   const reviewingRound =
     resolvedMoves[resolvedMoves.length - 1]?.round ?? Math.max(state.currentRound, 1)
 
+  const moveListItems = resolvedMoves.map((move) => {
+    const isLatest = move.id === latestMoveId
+    return (
+      <article
+        key={move.id}
+        data-move-id={move.id}
+        className={cn(
+          'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
+          isLatest
+            ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
+            : 'hover:border-white/25 hover:bg-white/10',
+        )}
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={cn(
+              'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
+              move.mark === 'X' ? 'text-[#4ff2c2]' : 'text-[#f15bb5]',
+            )}
+            aria-hidden="true"
+          >
+            {move.mark}
+          </span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+            <p className="font-semibold text-white">
+              {move.modelName}{' '}
+              <span className="text-white/60">
+                · round {move.round}, turn {move.turn}
+              </span>
+            </p>
+            <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+              {new Date(move.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })}
+            </span>
+          </div>
+          <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
+            {move.coordinate} · {move.durationSeconds.toFixed(1)}s
+          </span>
+        </div>
+        <div className="mt-3">
+          <p className="text-white/70">{move.rationale}</p>
+        </div>
+      </article>
+    )
+  })
+
   useEffect(() => {
-    if (isPaused || !listRef.current || resolvedMoves.length === 0) {
+    if (isRecapVariant || isPaused || !listRef.current || resolvedMoves.length === 0) {
       return
     }
     const element = listRef.current
@@ -107,7 +162,7 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
     return () => {
       cancelAnimationFrame(raf)
     }
-  }, [isPaused, latestMoveId, resolvedMoves.length])
+  }, [isRecapVariant, isPaused, latestMoveId, resolvedMoves.length])
 
   return (
     <MyMagicCard
@@ -128,24 +183,26 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
               a turn.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsPaused((previous) => !previous)}
-            className={cn(
-              'inline-flex items-center justify-center rounded-full border border-white/20 p-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
-              isPaused
-                ? 'bg-white/10 text-white hover:bg-white/15 hover:cursor-pointer'
-                : 'bg-[#4ff2c2]/20 text-white hover:bg-[#4ff2c2]/30 hover:cursor-pointer',
-            )}
-            aria-pressed={isPaused}
-            aria-label={isPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
-          >
-            {isPaused ? (
-              <CirclePlay className="h-10 w-10" />
-            ) : (
-              <CirclePause className="h-10 w-10" />
-            )}
-          </button>
+          {!isRecapVariant ? (
+            <button
+              type="button"
+              onClick={() => setIsPaused((previous) => !previous)}
+              className={cn(
+                'inline-flex items-center justify-center rounded-full border border-white/20 p-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
+                isPaused
+                  ? 'bg-white/10 text-white hover:bg-white/15 hover:cursor-pointer'
+                  : 'bg-[#4ff2c2]/20 text-white hover:bg-[#4ff2c2]/30 hover:cursor-pointer',
+              )}
+              aria-pressed={isPaused}
+              aria-label={isPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
+            >
+              {isPaused ? (
+                <CirclePlay className="h-10 w-10" />
+              ) : (
+                <CirclePause className="h-10 w-10" />
+              )}
+            </button>
+          ) : null}
         </header>
 
         <div
@@ -171,58 +228,13 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
               />
             </div>
           ) : (
-            <AnimatedList className="flex flex-col gap-3" delay={600}>
-              {resolvedMoves.map((move) => {
-                const isLatest = move.id === latestMoveId
-                return (
-                  <article
-                    key={move.id}
-                    data-move-id={move.id}
-                    className={cn(
-                      'rounded-2xl border border-white/12 bg-white/5 p-4 text-sm transition',
-                      isLatest
-                        ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
-                        : 'hover:border-white/25 hover:bg-white/10',
-                    )}
-                  >
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span
-                        className={cn(
-                          'flex h-9 min-w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-base font-semibold uppercase',
-                          move.mark === 'X'
-                            ? 'text-[#4ff2c2]'
-                            : 'text-[#f15bb5]',
-                        )}
-                        aria-hidden="true"
-                      >
-                        {move.mark}
-                      </span>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
-                        <p className="font-semibold text-white">
-                          {move.modelName}{' '}
-                          <span className="text-white/60">
-                            · round {move.round}, turn {move.turn}
-                          </span>
-                        </p>
-                        <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-                          {new Date(move.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      <span className="ml-auto text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
-                        {move.coordinate} · {move.durationSeconds.toFixed(1)}s
-                      </span>
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-white/70">{move.rationale}</p>
-                    </div>
-                  </article>
-                )
-              })}
-            </AnimatedList>
+            isRecapVariant ? (
+              <div className="flex flex-col gap-3">{moveListItems}</div>
+            ) : (
+              <AnimatedList className="flex flex-col gap-3" delay={600}>
+                {moveListItems}
+              </AnimatedList>
+            )
           )}
         </div>
       </div>
