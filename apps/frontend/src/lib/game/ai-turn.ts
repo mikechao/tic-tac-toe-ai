@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import type { BoardState, Move, PlayerMark } from './board-state'
 import { ensureGeminiChatModel } from '@/integrations/gemini/model'
+import type { BuiltInAIChatLanguageModel } from '@built-in-ai/core'
 
 const moveResponseSchema = z.object({
   nextMove: z.number().int(),
@@ -143,7 +144,7 @@ export async function requestGeminiMove(
     totalRounds: request.totalRounds,
     actorLabel: request.actorLabel,
   })
-  let model
+  let model: BuiltInAIChatLanguageModel
   try {
     model = await ensureGeminiChatModel()
   } catch (error) {

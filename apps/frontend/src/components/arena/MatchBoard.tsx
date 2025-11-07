@@ -222,7 +222,7 @@ export function MatchBoard() {
     )
   }, [board, boardSize])
 
-  const winningLine = useMemo(() => findWinningLine(board), [board, boardSize])
+  const winningLine = useMemo(() => findWinningLine(board), [board])
   const winningCellSet = useMemo(() => {
     if (!winningLine) {
       return null
