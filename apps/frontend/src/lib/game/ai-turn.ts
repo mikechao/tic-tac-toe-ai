@@ -181,6 +181,11 @@ export async function requestGeminiMove(
         prompt: currentPrompt,
         temperature: request.temperature ?? 0.1,
         abortSignal: controller.signal,
+        experimental_telemetry: {
+          isEnabled: true,
+          recordInputs: true,
+          recordOutputs: true,
+        }
       })
         .finally(() => {
           controller.dispose()

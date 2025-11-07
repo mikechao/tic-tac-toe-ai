@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from '@tanstack/react-router'
 import * as Sentry from '@sentry/react'
-import { tanstackRouterBrowserTracingIntegration } from '@sentry/react'
 
 import { getRouter } from './router'
 
