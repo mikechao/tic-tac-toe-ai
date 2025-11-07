@@ -59,13 +59,6 @@ const mergeAbortSignals = (
   externalSignal: AbortSignal | undefined,
   timeoutMs: number,
 ): MergeController => {
-  if (!externalSignal && typeof AbortController === 'undefined') {
-    return {
-      signal: new AbortController().signal,
-      dispose: () => {},
-    }
-  }
-
   const controller = new AbortController()
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   let timedOut = false
