@@ -16,7 +16,7 @@ function ArenaRoute() {
   const featuredMatch = demoMatches.matches[0]
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:px-8">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-2 py-10 md:px-4">
       <section className="grid gap-6 lg:grid-cols-[2fr_3fr]">
         <GeminiSupportGate>
           <MatchControls />

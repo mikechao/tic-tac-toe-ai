@@ -37,7 +37,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         >
           <div className="min-h-screen bg-slate-950 text-white antialiased">
             <AppHeader />
-            <div className="pb-16 pt-8">{children}</div>
+            <div className="pb-16 pt-0">{children}</div>
           </div>
         </Confetti>
       </ToastProvider>
