@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { MatchMoveLog } from '@/components/arena/MatchMoveLog'
+import { BoardGrid } from '@/components/arena/BoardGrid'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { MatchConfig } from '@/lib/game/game-loop'
 
@@ -86,9 +87,14 @@ function findWinningLine(board: BoardState): WinningLine | null {
   return evaluate(primaryDiagonal) ?? evaluate(secondaryDiagonal)
 }
 
-function formatCellLabel(row: number, column: number, boardSize: number): string {
-  const index = row * boardSize + column + 1
-  return String(index)
+function getWinningCellTheme(mark: PlayerMark | null): string {
+  if (mark === 'X') {
+    return 'border-[#4ff2c2]/70 bg-[#4ff2c2]/15 shadow-[0_0_28px_rgba(79,242,194,0.45)]'
+  }
+  if (mark === 'O') {
+    return 'border-[#f15bb5]/70 bg-[#f15bb5]/12 shadow-[0_0_28px_rgba(241,91,181,0.45)]'
+  }
+  return ''
 }
 
 function getActiveTurnText(
@@ -148,7 +154,7 @@ function PlayerBadge({
             : 'border-white/10',
         )}
       >
-        <CardHeader className="border-b border-white/10 px-5 pt-3 pb-2!">
+        <CardHeader className="border-b border-white/10 px-5 pt-3 pb-2">
           <CardTitle className="text-xs uppercase tracking-[0.3em] text-white/60">
             {title}
           </CardTitle>
@@ -207,33 +213,8 @@ export function MatchBoard() {
   const totalRounds = state.totalRounds
   const boardStatus = `Round ${Math.max(state.currentRound, 1)} of ${totalRounds}`
   const turnsRemaining = Math.max(0, totalRounds - state.currentRound)
-  const boardRows = useMemo(() => {
-    const boardCells = board.getCells()
-    return Array.from({ length: boardSize }, (_, rowIndex) =>
-      Array.from({ length: boardSize }, (_, columnIndex) => {
-        const index = rowIndex * boardSize + columnIndex
-        return {
-          id: `cell-${index}`,
-          label: formatCellLabel(rowIndex, columnIndex, boardSize),
-          mark: boardCells[index],
-          index,
-        }
-      }),
-    )
-  }, [board, boardSize])
-
   const winningLine = useMemo(() => findWinningLine(board), [board])
-  const winningCellSet = useMemo(() => {
-    if (!winningLine) {
-      return null
-    }
-    return new Set(winningLine.indices)
-  }, [winningLine])
-  const winningCellTheme = winningLine
-    ? winningLine.mark === 'X'
-      ? 'border-[#4ff2c2]/70 bg-[#4ff2c2]/15 shadow-[0_0_28px_rgba(79,242,194,0.45)]'
-      : 'border-[#f15bb5]/70 bg-[#f15bb5]/12 shadow-[0_0_28px_rgba(241,91,181,0.45)]'
-    : ''
+  const winningCellTheme = getWinningCellTheme(winningLine?.mark ?? null)
   const confetti = useConfetti()
   const lastCelebrationKey = useRef<string | null>(null)
   const celebrationTypeRef = useRef<'fireworks' | 'sideCannons'>('sideCannons')
@@ -302,6 +283,13 @@ export function MatchBoard() {
   const player2Name = modelB?.name ?? 'Model B'
   const dialogScoreLine = `Player 1 (${player1Name}) W: ${scoreboard.modelA} L: ${scoreboard.modelB} T: ${scoreboard.ties} • Player 2 (${player2Name}) W: ${scoreboard.modelB} L: ${scoreboard.modelA} T: ${scoreboard.ties}`
   const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
+  const latestRoundBoard =
+    latestRoundSummary && latestRoundSummary.round > 0
+      ? state.roundBoards[latestRoundSummary.round - 1] ?? null
+      : null
+  const recapBoard = latestRoundBoard ?? board
+  const recapWinningLine = latestRoundBoard ? findWinningLine(latestRoundBoard) : null
+  const recapWinningTheme = getWinningCellTheme(recapWinningLine?.mark ?? null)
   const rematchReady = modelAId != null && modelBId != null
   const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
 
@@ -488,7 +476,18 @@ export function MatchBoard() {
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[65vh] overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-2">
-              <MatchMoveLog variant="recap" />
+              <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <BoardGrid
+                    board={recapBoard}
+                    boardSize={recapBoard.size}
+                    highlightIndices={recapWinningLine?.indices}
+                    highlightClassName={recapWinningTheme}
+                    ariaLabel={`${roundLabel} board snapshot`}
+                  />
+                </div>
+                <MatchMoveLog variant="recap" />
+              </div>
             </div>
             <DialogFooter className="mt-4 w-full items-center justify-between gap-3 sm:flex">
               <span className="text-xs uppercase tracking-[0.3em] text-white/60">
@@ -516,7 +515,7 @@ export function MatchBoard() {
         </h2>
       </header>
 
-      <MyMagicCard className="border-white/15 bg-white/4" spotlight={false}>
+      <MyMagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -562,7 +561,7 @@ export function MatchBoard() {
             </div>
             <div className="mt-2 h-2 rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-linear-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
+                className="h-full rounded-full bg-gradient-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
                 style={{
                   width: `${progressPercent}%`,
                 }}
@@ -570,46 +569,12 @@ export function MatchBoard() {
             </div>
           </div>
 
-          <table
-            aria-label="Tic tac toe match board"
-            className="w-full border-separate border-spacing-3 sm:border-spacing-4"
-          >
-            <tbody>
-              {boardRows.map((row, rowIndex) => (
-                <tr key={`row-${rowIndex}`} className="align-middle">
-                  {row.map((cell) => (
-                    <td
-                      key={cell.id}
-                      aria-label={`${cell.label} ${
-                        cell.mark ? `contains ${cell.mark}` : 'is empty'
-                      }`}
-                      className={cn(
-                        'relative h-24 min-w-24 rounded-[1.25rem] border border-white/12 bg-white/5 text-center text-3xl font-semibold uppercase transition sm:h-28 sm:text-4xl lg:h-32',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--muted-surface)',
-                        winningCellSet?.has(cell.index)
-                          ? winningCellTheme
-                          : 'hover:border-white/25 hover:bg-white/10',
-                      )}
-                    >
-                      <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
-                        {cell.label}
-                      </span>
-                      <span
-                        className={cn(
-                          'text-4xl font-semibold transition-transform duration-300 sm:text-5xl',
-                          cell.mark ? 'scale-100' : 'scale-90 text-white/30',
-                          cell.mark === 'X' && 'text-[#4ff2c2]',
-                          cell.mark === 'O' && 'text-[#f15bb5]',
-                        )}
-                      >
-                        {cell.mark ?? '·'}
-                      </span>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <BoardGrid
+            board={board}
+            boardSize={boardSize}
+            highlightIndices={winningLine?.indices}
+            highlightClassName={winningCellTheme}
+          />
 
           <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
             <span className="font-semibold uppercase tracking-[0.2em] text-white/60">
