@@ -138,6 +138,9 @@ importers:
       cobe:
         specifier: ^0.6.5
         version: 0.6.5
+      framer-motion:
+        specifier: ^12.23.24
+        version: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       lucide-react:
         specifier: ^0.552.0
         version: 0.552.0(react@19.2.0)
