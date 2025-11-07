@@ -7,10 +7,13 @@ import { cn } from '@/lib/utils'
 import {
   BentoCard,
   BentoGrid,
+  MagicCard,
+  MarkAvatar,
   MyMagicCard,
   RainbowButton,
   useToast,
 } from '@/components/ui'
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -25,7 +28,7 @@ import type { MatchConfig } from '@/lib/game/game-loop'
 type ModelOption = (typeof demoModels)[number]
 
 const modelSelectTriggerClassName =
-  'mt-3 !w-full justify-between rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base font-medium text-white/90 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-inset'
+  'mt-1 !w-full justify-between rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base font-medium text-white/90 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-inset'
 const modelSelectContentClassName =
   'border-white/15 bg-[#0b1026]/95 text-white/80 backdrop-blur-xl max-w-[calc(100vw-3rem)]'
 const modelSelectItemClassName =
@@ -282,55 +285,63 @@ export function MatchControls() {
         </p>
 
         <BentoGrid className="gap-5 md:auto-rows-auto">
-          <BentoCard colSpanClassName="md:col-span-12">
-            <fieldset className="space-y-3">
-              <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                <span>Player 1 Model Selection</span>
-                <span
-                  aria-hidden="true"
-                  className="ml-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#4ff2c2]/50 bg-[#4ff2c2]/30 text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.45)]"
-                >
-                  <span className="font-display leading-none text-center">X</span>
-                </span>
-              </legend>
-              <ModelSelect
-                id="modelA"
-                srLabel="Select model A"
-                value={modelAId}
-                onValueChange={setModelAId}
-                options={availableModels}
-                disabled={isBusyPhase}
-              />
-              {selectedModelA ? (
-                <p className="sr-only">{selectedModelA.variant}</p>
-              ) : null}
-            </fieldset>
-          </BentoCard>
+          <div className="md:col-span-12">
+            <MagicCard
+              gradientFrom="#4ff2c2"
+              gradientTo="rgba(79,242,194,0.25)"
+              gradientColor="#16382f"
+              className="rounded-[1.75rem] border border-white/10 bg-white/5 text-white"
+            >
+              <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-5 pt-4 pb-3">
+                <MarkAvatar mark="X" className="size-11" />
+                <CardTitle className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+                  Player 1 Model Selection
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 py-5">
+                <ModelSelect
+                  id="modelA"
+                  srLabel="Select model A"
+                  value={modelAId}
+                  onValueChange={setModelAId}
+                  options={availableModels}
+                  disabled={isBusyPhase}
+                />
+                {selectedModelA ? (
+                  <p className="sr-only">{selectedModelA.variant}</p>
+                ) : null}
+              </CardContent>
+            </MagicCard>
+          </div>
 
-          <BentoCard colSpanClassName="md:col-span-12">
-            <fieldset className="space-y-3">
-              <legend className="flex items-center justify-between text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                <span>Player 2 Model Selection</span>
-                <span
-                  aria-hidden="true"
-                  className="ml-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#f15bb5]/45 bg-[#f15bb5]/25 text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.45)]"
-                >
-                  <span className="font-display leading-none text-center">O</span>
-                </span>
-              </legend>
-              <ModelSelect
-                id="modelB"
-                srLabel="Select model B"
-                value={modelBId}
-                onValueChange={setModelBId}
-                options={availableModels}
-                disabled={isBusyPhase}
-              />
-              {selectedModelB ? (
-                <p className="sr-only">{selectedModelB.variant}</p>
-              ) : null}
-            </fieldset>
-          </BentoCard>
+          <div className="md:col-span-12">
+            <MagicCard
+              gradientFrom="#f15bb5"
+              gradientTo="rgba(241,91,181,0.25)"
+              gradientColor="#3c1428"
+              className="rounded-[1.75rem] border border-white/10 bg-white/5 text-white"
+            >
+              <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-5 pt-4 pb-3">
+                <MarkAvatar mark="O" className="size-11" />
+                <CardTitle className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+                  Player 2 Model Selection
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 py-5">
+                <ModelSelect
+                  id="modelB"
+                  srLabel="Select model B"
+                  value={modelBId}
+                  onValueChange={setModelBId}
+                  options={availableModels}
+                  disabled={isBusyPhase}
+                />
+                {selectedModelB ? (
+                  <p className="sr-only">{selectedModelB.variant}</p>
+                ) : null}
+              </CardContent>
+            </MagicCard>
+          </div>
 
           <BentoCard colSpanClassName="md:col-span-12" className="space-y-4">
             <fieldset

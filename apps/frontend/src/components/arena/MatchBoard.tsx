@@ -5,7 +5,7 @@ import type { MatchListResponse } from '@arena/schema'
 import { demoModels } from '@/data/demo.models'
 import type { BoardState, PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
-import { MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
+import { MarkAvatar, MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
 import { MagicCard } from '@/components/ui/magic-card'
 import { useConfetti } from '@/components/ui/confetti'
 import {
@@ -159,15 +159,7 @@ function PlayerBadge({
         </CardHeader>
         <CardContent className="px-5 py-5">
           <div className="flex items-center gap-3">
-            <span
-              className={cn(
-                'flex size-12 items-center justify-center rounded-xl text-2xl font-semibold text-white shadow-[0_8px_24px_rgba(11,16,38,0.55)]',
-                accentClass,
-              )}
-              aria-hidden="true"
-            >
-              {mark}
-            </span>
+            <MarkAvatar mark={mark} className={accentClass} />
             <div className="flex flex-col">
               <span className="text-base font-semibold text-white">{name}</span>
               <span className="text-xs text-white/60">{variant}</span>
