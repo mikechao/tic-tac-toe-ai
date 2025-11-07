@@ -176,10 +176,12 @@ export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
             <h3 className="font-display text-xl">
               Reviewing round {reviewingRound}
             </h3>
-            <p className="text-sm text-white/70">
-              Auto-scroll keeps you at the latest move; pause anytime to inspect
-              a turn.
-            </p>
+            {!isRecapVariant ? (
+              <p className="text-sm text-white/70">
+                Auto-scroll keeps you at the latest move; pause anytime to inspect
+                a turn.
+              </p>
+            ) : null}
           </div>
           {!isRecapVariant ? (
             <button
