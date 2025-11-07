@@ -94,9 +94,14 @@ export function MatchMoveLog({ match }: { match?: MatchSummary }) {
       return
     }
     const raf = requestAnimationFrame(() => {
-      lastItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
+      const containerRect = element.getBoundingClientRect()
+      const itemRect = lastItem.getBoundingClientRect()
+      const offsetWithin = itemRect.top - containerRect.top + element.scrollTop
+      const target =
+        offsetWithin - element.clientHeight + itemRect.height + 8
+      element.scrollTo({
+        top: Math.max(0, target),
+        behavior: resolvedMoves.length > 3 ? 'smooth' : 'auto',
       })
     })
     return () => {
