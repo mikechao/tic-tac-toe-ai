@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { CirclePause, CirclePlay } from 'lucide-react'
 
-import { demoModels } from '@/data/demo.models'
+import { localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import { AnimatedList, MyMagicCard, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
@@ -52,18 +52,20 @@ export function MatchMoveLog({ variant = 'default' }: MatchMoveLogProps) {
 
   const modelA = useMemo(() => {
     if (modelAId == null) return undefined
-    return demoModels.find((model) => model.id === modelAId)
+    return localAIModels.find((model) => model.id === modelAId)
   }, [modelAId])
 
   const modelB = useMemo(() => {
     if (modelBId == null) return undefined
-    return demoModels.find((model) => model.id === modelBId)
+    return localAIModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
   const resolvedMoves: ResolvedMove[] = useMemo(() => {
     return moveHistory.map((entry) => {
       const actorModel =
-        entry.actor === 'modelA' ? modelA ?? demoModels[0] : modelB ?? demoModels[1]
+        entry.actor === 'modelA'
+          ? modelA ?? localAIModels[0]
+          : modelB ?? localAIModels[1]
       return {
         id: `${entry.round}-${entry.turn}`,
         actor: entry.actor,

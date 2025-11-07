@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { demoModels } from '@/data/demo.models'
+import { localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
@@ -63,12 +63,12 @@ export function MatchTelemetry() {
 
   const modelA = useMemo(() => {
     if (modelAId == null) return undefined
-    return demoModels.find((model) => model.id === modelAId)
+    return localAIModels.find((model) => model.id === modelAId)
   }, [modelAId])
 
   const modelB = useMemo(() => {
     if (modelBId == null) return undefined
-    return demoModels.find((model) => model.id === modelBId)
+    return localAIModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
   const moveHistory = state.moveHistory

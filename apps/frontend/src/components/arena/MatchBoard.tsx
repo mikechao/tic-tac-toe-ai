@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { demoModels } from '@/data/demo.models'
+import { localAIModels } from '@/data/models'
 import type { BoardState, PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
 import { MarkAvatar, MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
@@ -196,12 +196,12 @@ export function MatchBoard() {
 
   const modelA = useMemo(() => {
     if (modelAId == null) return undefined
-    return demoModels.find((model) => model.id === modelAId)
+    return localAIModels.find((model) => model.id === modelAId)
   }, [modelAId])
 
   const modelB = useMemo(() => {
     if (modelBId == null) return undefined
-    return demoModels.find((model) => model.id === modelBId)
+    return localAIModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
   const totalRounds = state.totalRounds

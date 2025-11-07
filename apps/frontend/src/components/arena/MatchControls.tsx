@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ModelId } from '@arena/schema'
 
-import { demoModels } from '@/data/demo.models'
+import { localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import {
   BentoCard,
@@ -25,7 +25,7 @@ import { useGeminiContext } from '@/integrations/gemini/context'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { MatchConfig } from '@/lib/game/game-loop'
 
-type ModelOption = (typeof demoModels)[number]
+type ModelOption = (typeof localAIModels)[number]
 
 const modelSelectTriggerClassName =
   'mt-1 !w-full justify-between rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base font-medium text-white/90 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-inset'
@@ -108,10 +108,10 @@ export function MatchControls() {
   const { showToast } = useToast()
 
   const availableModels = useMemo(
-    () => demoModels.filter((model) => model.provider === 'Google DeepMind'),
+    () => localAIModels.filter((model) => model.provider === 'Google DeepMind'),
     [],
   )
-  const defaultModelId = availableModels[0]?.id ?? demoModels[0]?.id ?? 1
+  const defaultModelId = availableModels[0]?.id ?? localAIModels[0]?.id ?? 1
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
   const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
@@ -166,11 +166,11 @@ export function MatchControls() {
   }, [configure, matchConfig, state.phase])
 
   const selectedModelA = useMemo(
-    () => demoModels.find((model) => model.id === modelAId),
+    () => localAIModels.find((model) => model.id === modelAId),
     [modelAId],
   )
   const selectedModelB = useMemo(
-    () => demoModels.find((model) => model.id === modelBId),
+    () => localAIModels.find((model) => model.id === modelBId),
     [modelBId],
   )
 

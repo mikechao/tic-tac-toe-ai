@@ -1,6 +1,6 @@
 import type { ModelId } from '@arena/schema'
 
-import { demoModels } from './demo.models'
+import { localAIModels } from './models'
 
 export type RecentResult = 'W' | 'L' | 'T'
 
@@ -116,15 +116,15 @@ const leaderboardEntries: DemoLeaderboardEntry[] = [
 ]
 
 export type DemoLeaderboardViewEntry = DemoLeaderboardEntry & {
-  model: (typeof demoModels)[number] | undefined
-  opponent: (typeof demoModels)[number] | undefined
+  model: (typeof localAIModels)[number] | undefined
+  opponent: (typeof localAIModels)[number] | undefined
   recentForm: RecentResult[]
 }
 
 export const demoLeaderboardEntries: DemoLeaderboardViewEntry[] =
   leaderboardEntries.map((entry) => {
-    const model = demoModels.find((candidate) => candidate.id === entry.modelId)
-    const opponent = demoModels.find(
+    const model = localAIModels.find((candidate) => candidate.id === entry.modelId)
+    const opponent = localAIModels.find(
       (candidate) => candidate.id === entry.lastMatchup.opponentId,
     )
 
