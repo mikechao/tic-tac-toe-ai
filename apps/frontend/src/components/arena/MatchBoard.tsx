@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { MatchListResponse } from '@arena/schema'
 
 import { demoModels } from '@/data/demo.models'
 import type { BoardState, PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
-import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
+import { MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
 import { MagicCard } from '@/components/ui/magic-card'
 import { useConfetti } from '@/components/ui/confetti'
 import {
@@ -15,7 +15,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { MatchMoveLog } from '@/components/arena/MatchMoveLog'
 import { useGameLoop } from '@/integrations/game-loop/context'
+import type { MatchConfig } from '@/lib/game/game-loop'
 
 type MatchSummary = MatchListResponse['matches'][number]
 
@@ -186,7 +196,7 @@ function StatTicker({ label, value }: { label: string; value: number }) {
 }
 
 export function MatchBoard({ match }: { match?: MatchSummary }) {
-  const { state } = useGameLoop()
+  const { state, configure, start, nextRound } = useGameLoop()
   const board = state.board
   const boardSize = board.size
 
@@ -255,6 +265,11 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
   const confetti = useConfetti()
   const lastCelebrationKey = useRef<string | null>(null)
   const celebrationTypeRef = useRef<'fireworks' | 'sideCannons'>('sideCannons')
+  const [roundSummaryOpen, setRoundSummaryOpen] = useState(false)
+  const [dialogActionPending, setDialogActionPending] = useState(false)
+  const lastDialogRoundRef = useRef<number | null>(null)
+  const latestRoundSummary = state.roundSummaries.at(-1)
+  const roundEnded = state.phase === 'betweenRounds' || state.phase === 'completed'
 
   const scoreboard = state.score
   const progressPercent =
@@ -271,6 +286,80 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     ? actorToMark[state.activePlayer]
     : null
   const activeTurnText = getActiveTurnText(state.phase, activePlayerName)
+  const latestWinner = latestRoundSummary?.winner
+  const winningModel =
+    latestWinner === 'modelA'
+      ? modelA
+      : latestWinner === 'modelB'
+        ? modelB
+        : undefined
+  const roundLabel = latestRoundSummary ? `Round ${latestRoundSummary.round}` : 'Round complete'
+  const roundSummaryTitle =
+    latestWinner === 'tie'
+      ? `${roundLabel} ends in a tie`
+      : latestWinner
+        ? `${winningModel?.name ?? (latestWinner === 'modelA' ? 'Model A' : 'Model B')} wins ${roundLabel}`
+        : 'Round complete'
+  const roundSummarySubtitle =
+    latestWinner === 'tie'
+      ? 'Neither contender could break through. Review the full log before the next duel.'
+      : winningModel
+        ? `${winningModel.name}${winningModel.variant ? ` • ${winningModel.variant}` : ''} secured the board.`
+        : 'Review the move log for the latest round.'
+  const hasNextRound = state.currentRound < totalRounds
+  const dialogCtaLabel = hasNextRound ? 'Next Round' : 'Rematch'
+  const dialogScoreLine = `${modelA?.name ?? 'Model A'} ${scoreboard.modelA} — ${scoreboard.modelB} ${modelB?.name ?? 'Model B'} • ties ${scoreboard.ties}`
+  const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
+  const rematchReady =
+    (state.modelAId ?? match?.modelAId) != null &&
+    (state.modelBId ?? match?.modelBId) != null
+  const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
+
+  const handleRoundDialogAction = useCallback(async () => {
+    if (hasNextRound) {
+      setRoundSummaryOpen(false)
+      nextRound()
+      return
+    }
+
+    const rematchModelAId = state.modelAId ?? match?.modelAId ?? null
+    const rematchModelBId = state.modelBId ?? match?.modelBId ?? null
+
+    if (rematchModelAId == null || rematchModelBId == null) {
+      return
+    }
+
+    const rematchConfig: MatchConfig = {
+      matchId: match?.id,
+      modelAId: rematchModelAId,
+      modelBId: rematchModelBId,
+      boardSize,
+      totalRounds,
+      startingPlayer: 'alternate',
+    }
+
+    try {
+      setDialogActionPending(true)
+      setRoundSummaryOpen(false)
+      configure(rematchConfig)
+      await start()
+      lastDialogRoundRef.current = null
+    } catch (error) {
+      console.error('[MatchBoard] Rematch start failed', error)
+    } finally {
+      setDialogActionPending(false)
+    }
+  }, [
+    hasNextRound,
+    nextRound,
+    state.modelAId,
+    state.modelBId,
+    match,
+    boardSize,
+    totalRounds,
+    configure,
+    start,
+  ])
 
   const runFireworks = useCallback(() => {
     if (typeof window === 'undefined' || !confetti) {
@@ -364,8 +453,56 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
     }
   }, [winningLine, state.currentRound, runFireworks, runSideCannons, confetti])
 
+  useEffect(() => {
+    if (!roundEnded || !latestRoundSummary) {
+      return
+    }
+    if (lastDialogRoundRef.current === latestRoundSummary.round) {
+      return
+    }
+    lastDialogRoundRef.current = latestRoundSummary.round
+    setRoundSummaryOpen(true)
+  }, [roundEnded, latestRoundSummary])
+
+  useEffect(() => {
+    if ((!roundEnded || !latestRoundSummary) && roundSummaryOpen) {
+      setRoundSummaryOpen(false)
+    }
+  }, [roundEnded, latestRoundSummary, roundSummaryOpen])
+
   return (
-    <div className="flex flex-col gap-6 text-white">
+    <>
+      <Dialog open={roundDialogOpen} onOpenChange={setRoundSummaryOpen}>
+        {roundDialogOpen && latestRoundSummary ? (
+          <DialogContent className="max-w-5xl border-white/15 bg-[#040716]/95 text-white">
+            <DialogHeader className="gap-2">
+              <DialogTitle className="font-display text-2xl text-white">
+                {roundSummaryTitle}
+              </DialogTitle>
+              <DialogDescription className="text-white/70">
+                {roundSummarySubtitle}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[65vh] overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-2">
+              <MatchMoveLog match={match} />
+            </div>
+            <DialogFooter className="mt-4 w-full items-center justify-between gap-3 sm:flex">
+              <span className="text-xs uppercase tracking-[0.3em] text-white/60">
+                {dialogScoreLine}
+              </span>
+              <RainbowButton
+                onClick={() => {
+                  void handleRoundDialogAction()
+                }}
+                disabled={dialogActionDisabled}
+              >
+                {dialogCtaLabel}
+              </RainbowButton>
+            </DialogFooter>
+          </DialogContent>
+        ) : null}
+      </Dialog>
+      <div className="flex flex-col gap-6 text-white">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-white/60">
           Match Arena Board
@@ -488,5 +625,6 @@ export function MatchBoard({ match }: { match?: MatchSummary }) {
         </div>
       </MyMagicCard>
     </div>
+    </>
   )
 }
