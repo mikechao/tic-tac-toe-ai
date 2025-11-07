@@ -266,21 +266,41 @@ export function MatchBoard() {
         ? modelB
         : undefined
   const roundLabel = latestRoundSummary ? `Round ${latestRoundSummary.round}` : 'Round complete'
+  const winnerPlayerLabel =
+    latestWinner === 'modelA'
+      ? 'Player 1'
+      : latestWinner === 'modelB'
+        ? 'Player 2'
+        : null
+  const winnerName =
+    latestWinner === 'modelA'
+      ? modelA?.name ?? 'Model A'
+      : latestWinner === 'modelB'
+        ? modelB?.name ?? 'Model B'
+        : null
+  const winnerVariant =
+    latestWinner === 'modelA'
+      ? modelA?.variant
+      : latestWinner === 'modelB'
+        ? modelB?.variant
+        : null
   const roundSummaryTitle =
     latestWinner === 'tie'
       ? `${roundLabel} ends in a tie`
       : latestWinner
-        ? `${winningModel?.name ?? (latestWinner === 'modelA' ? 'Model A' : 'Model B')} wins ${roundLabel}`
+        ? `${roundLabel} Winner ${winnerPlayerLabel ?? ''} ${winnerName ?? ''}`.trim()
         : 'Round complete'
   const roundSummarySubtitle =
     latestWinner === 'tie'
       ? 'Neither contender could break through. Review the full log before the next duel.'
-      : winningModel
-        ? `${winningModel.name}${winningModel.variant ? ` • ${winningModel.variant}` : ''} secured the board.`
+      : winnerName
+        ? `${winnerName}${winnerVariant ? ` - ${winnerVariant}` : ''}`
         : 'Review the move log for the latest round.'
   const hasNextRound = state.currentRound < totalRounds
   const dialogCtaLabel = hasNextRound ? 'Next Round' : 'Rematch'
-  const dialogScoreLine = `${modelA?.name ?? 'Model A'} ${scoreboard.modelA} — ${scoreboard.modelB} ${modelB?.name ?? 'Model B'} • ties ${scoreboard.ties}`
+  const player1Name = modelA?.name ?? 'Model A'
+  const player2Name = modelB?.name ?? 'Model B'
+  const dialogScoreLine = `Player 1 (${player1Name}) W: ${scoreboard.modelA} L: ${scoreboard.modelB} T: ${scoreboard.ties} • Player 2 (${player2Name}) W: ${scoreboard.modelB} L: ${scoreboard.modelA} T: ${scoreboard.ties}`
   const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
   const rematchReady = modelAId != null && modelBId != null
   const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
