@@ -15,7 +15,7 @@ export function registerRoutes(
   const api = new Hono<{
     Bindings: WorkerEnv
     Variables: AppVariables
-  }>().basePath('/api')
+  }>()
   registerApiRoutes(api)
   app.route('/api', api)
 }

@@ -17,6 +17,7 @@ import {
   getLeaderboard,
 } from '../../services/leaderboard-repository'
 import type { LoggerVariables } from '../../services/logger'
+import { postSentry } from './handlers/sentry'
 import {
   countGamesForMatch,
   createMatchRecord,
@@ -231,6 +232,8 @@ export function registerApiRoutes(
     c.var.logger.info('version endpoint invoked')
     return c.json({ version: 'v0' })
   })
+
+  app.post('/sentry', postSentry)
 
   app.get('/leaderboard', async (c) => {
     const { runtimeEnv } = c.var
