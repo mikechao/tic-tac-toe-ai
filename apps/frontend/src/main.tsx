@@ -30,9 +30,10 @@ if (sentryDsn) {
       import.meta.env.VITE_SENTRY_REPLAYS_ERROR_SAMPLE_RATE ?? 1.0,
     ),
     integrations: [
-      tanstackRouterBrowserTracingIntegration({
-        router,
-      }),
+      // disable for now, causeing some issues
+      // tanstackRouterBrowserTracingIntegration({
+      //   router,
+      // }),
       Sentry.replayIntegration(),
     ],
   })
