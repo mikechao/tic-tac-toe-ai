@@ -85,6 +85,19 @@ function buildProgress(
   }
 }
 
+function hasActiveUserGesture(): boolean {
+  if (typeof navigator === 'undefined') {
+    return true
+  }
+  const activation = (navigator as Navigator & {
+    userActivation?: { isActive: boolean }
+  }).userActivation
+  if (!activation) {
+    return true
+  }
+  return activation.isActive
+}
+
 function availabilityToState(
   availability: GeminiAvailability,
 ): BuiltInAIState {
@@ -284,6 +297,22 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
 
   const startDownload = useCallback(async () => {
     if (status === 'downloading' || status === 'ready') {
+      return
+    }
+
+    if (!hasActiveUserGesture()) {
+      console.debug('[GeminiProvider] user gesture required before download')
+      const permissionError = new GeminiPermissionError(
+        'Activate the download with a click or tap.',
+      )
+      setStatus('downloadable')
+      setProgress(null)
+      setError(permissionError)
+      updateModelStates(managedModelIds, {
+        status: 'downloadable',
+        progress: null,
+        error: permissionError,
+      })
       return
     }
 

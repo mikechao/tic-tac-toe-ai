@@ -11,7 +11,7 @@
 - [x] Create `useLocalModelAvailability(modelId, options)` as a thin wrapper around the extended `useGeminiContext()` to avoid duplicating status/progress/startDownload/retry logic.
 - [x] Implement feature detection (`typeof window !== 'undefined' && 'LanguageModel' in window`) and return `NotSupported` when missing.
 - [x] Wrap `LanguageModel.availability()` and store the status in state keyed by `ModelId`.
-- [ ] Wire `LanguageModel.create({ monitor })` behind a user-gesture guard (`navigator.userActivation.isActive`) and expose a `startDownload()` callback.
+- [x] Wire `LanguageModel.create({ monitor })` behind a user-gesture guard (`navigator.userActivation.isActive`) and expose a `startDownload()` callback.
 - [ ] Capture `downloadprogress` events into `{ receivedBytes, totalBytes, percent, phase }` and surface them through the hook.
 - [ ] Emit a final `Ready` status once `availability()` reports `available`, with optional re-check polling.
 - [ ] Audit the existing `GeminiSupportGate` component (referenced in `GeminiSupportGate.tsx`) and either reuse it as a wrapper for the models page or refactor it to consume the new hook so unsupported browsers get consistent messaging.
