@@ -1,5 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { Github } from 'lucide-react'
+import { SiGithub } from "react-icons/si";
 
 import { AuroraText, WarpBackground } from '@/components/ui'
 import { RainbowButton } from '@/components/ui/rainbow-button'
@@ -47,7 +47,7 @@ export function AppHeader() {
                   rel="noreferrer noopener"
                   aria-label="Visit Mike Chao on GitHub"
                 >
-                  <Github className="h-5 w-5" aria-hidden="true" />
+                  <SiGithub className="h-8 w-8" aria-hidden="true" />
                 </a>
               </RainbowButton>
             </div>
