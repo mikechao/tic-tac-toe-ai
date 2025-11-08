@@ -53,6 +53,9 @@ const managedModelIds: ModelId[] = localAIModels
 
 const defaultModelId: ModelId =
   managedModelIds[0] ?? localAIModels[0]?.id ?? 1
+const fallbackManagedIds: ModelId[] = managedModelIds.length
+  ? managedModelIds
+  : [defaultModelId]
 
 type GeminiModelState = {
   status: BuiltInAIState
@@ -147,24 +150,56 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
   )
 
   const resetManagedModelStates = useCallback(() => {
-    updateModelStates(managedModelIds, {
+    updateModelStates(fallbackManagedIds, {
       status: 'checking',
       progress: null,
       error: null,
     })
   }, [updateModelStates])
 
+  const applyAvailabilityState = useCallback(
+    (availability: GeminiAvailability, progressOverride: number | null = null) => {
+      const builtInState = availabilityToState(availability)
+      const targetIds = fallbackManagedIds
+      const progressPayload =
+        builtInState === 'ready'
+          ? buildProgress('completed', 1)
+          : builtInState === 'downloading'
+            ? buildProgress('downloading', progressOverride ?? progress ?? 0)
+            : null
+
+      updateModelStates(targetIds, {
+        status: builtInState,
+        progress: progressPayload,
+        error: null,
+      })
+
+      if (builtInState === 'ready') {
+        setStatus('ready')
+        setProgress(1)
+      } else if (builtInState === 'downloadable') {
+        setStatus('downloadable')
+        setProgress(null)
+      } else if (builtInState === 'downloading') {
+        setStatus('downloading')
+      } else if (builtInState === 'not-supported') {
+        setStatus('unsupported')
+        setProgress(null)
+        setModel(null)
+      }
+    },
+    [progress, updateModelStates],
+  )
+
   useEffect(() => {
     console.debug('[GeminiProvider] effect start', { attempt })
     let isMounted = true
-    const managedIds = managedModelIds.length ? managedModelIds : [defaultModelId]
-
     if (!isBuiltInAISupported()) {
       setStatus('unsupported')
       setModel(null)
       setProgress(null)
       setError(null)
-      updateModelStates(managedIds, {
+      updateModelStates(fallbackManagedIds, {
         status: 'not-supported',
         progress: null,
         error: null,
@@ -186,26 +221,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) {
           return
         }
-        const builtInState = availabilityToState(availability)
-        if (builtInState === 'ready') {
-          setStatus('ready')
-          setProgress(1)
-        } else if (builtInState === 'downloadable') {
-          setStatus('downloadable')
-        } else if (builtInState === 'downloading') {
-          setStatus('downloading')
-        } else if (builtInState === 'not-supported') {
-          setStatus('unsupported')
-        }
-        updateModelStates(managedIds, {
-          status: builtInState,
-          progress:
-            builtInState === 'ready'
-              ? buildProgress('completed', 1)
-              : builtInState === 'downloading'
-                ? buildProgress('downloading', progress ?? 0)
-                : null,
-        })
+        applyAvailabilityState(availability)
       })
       .catch((err) => {
         if (!isMounted) {
@@ -219,7 +235,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) return
         setStatus('downloading')
         setProgress(progressValue)
-        updateModelStates(managedModelIds, {
+        updateModelStates(fallbackManagedIds, {
           status: 'downloading',
           progress: buildProgress('downloading', progressValue),
         })
@@ -231,10 +247,14 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         setModel(loadedModel)
         setStatus('ready')
         setProgress(1)
-        updateModelStates(managedModelIds, {
+        updateModelStates(fallbackManagedIds, {
           status: 'ready',
           progress: buildProgress('completed', 1),
           error: null,
+        })
+        void getGeminiAvailability().then((availability) => {
+          if (!isMounted) return
+          applyAvailabilityState(availability)
         })
       })
       .catch((err) => {
@@ -244,7 +264,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           setStatus('downloadable')
           setProgress(null)
           setError(null)
-          updateModelStates(managedModelIds, {
+          updateModelStates(fallbackManagedIds, {
             status: 'downloadable',
             progress: null,
             error: null,
@@ -257,7 +277,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           setModel(null)
           setProgress(null)
           setError(err)
-          updateModelStates(managedModelIds, {
+          updateModelStates(fallbackManagedIds, {
             status: 'not-supported',
             progress: null,
             error: err,
@@ -268,7 +288,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           console.error('[GeminiProvider] initialization failed', err)
           setStatus('error')
           setError(err)
-          updateModelStates(managedModelIds, {
+          updateModelStates(fallbackManagedIds, {
             status: 'error',
             error: err,
           })
@@ -277,7 +297,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         console.error('[GeminiProvider] unexpected error', err)
         setStatus('error')
         setError(err as Error)
-        updateModelStates(managedModelIds, {
+        updateModelStates(fallbackManagedIds, {
           status: 'error',
           error: err as Error,
         })
@@ -287,7 +307,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       console.debug('[GeminiProvider] effect cleanup', { attempt })
       isMounted = false
     }
-  }, [attempt])
+  }, [attempt, applyAvailabilityState])
 
   const retry = useCallback(() => {
     resetGeminiModelCache()
@@ -308,7 +328,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       setStatus('downloadable')
       setProgress(null)
       setError(permissionError)
-      updateModelStates(managedModelIds, {
+      updateModelStates(fallbackManagedIds, {
         status: 'downloadable',
         progress: null,
         error: permissionError,
@@ -320,7 +340,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     setStatus('downloading')
     setProgress(0)
     setError(null)
-    updateModelStates(managedModelIds, {
+    updateModelStates(fallbackManagedIds, {
       status: 'downloading',
       progress: buildProgress('starting', 0),
       error: null,
@@ -332,7 +352,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       const loadedModel = await ensureGeminiChatModel({
         onDownloadProgress: (progressValue) => {
           setProgress(progressValue)
-          updateModelStates(managedModelIds, {
+          updateModelStates(fallbackManagedIds, {
             status: 'downloading',
             progress: buildProgress('downloading', progressValue),
           })
@@ -342,10 +362,13 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       setModel(loadedModel)
       setStatus('ready')
       setProgress(1)
-      updateModelStates(managedModelIds, {
+      updateModelStates(fallbackManagedIds, {
         status: 'ready',
         progress: buildProgress('completed', 1),
         error: null,
+      })
+      void getGeminiAvailability().then((availability) => {
+        applyAvailabilityState(availability)
       })
     } catch (err) {
       if (err instanceof GeminiPermissionError) {
@@ -353,7 +376,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         setStatus('downloadable')
         setProgress(null)
         setError(null)
-        updateModelStates(managedModelIds, {
+        updateModelStates(fallbackManagedIds, {
           status: 'downloadable',
           progress: null,
           error: null,
@@ -366,7 +389,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         setModel(null)
         setProgress(null)
         setError(err)
-        updateModelStates(managedModelIds, {
+        updateModelStates(fallbackManagedIds, {
           status: 'not-supported',
           progress: null,
           error: err,
@@ -377,7 +400,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         console.error('[GeminiProvider] download failed', err)
         setStatus('error')
         setError(err)
-        updateModelStates(managedModelIds, {
+        updateModelStates(fallbackManagedIds, {
           status: 'error',
           error: err,
         })
@@ -386,12 +409,12 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       console.error('[GeminiProvider] unexpected download error', err)
       setStatus('error')
       setError(err as Error)
-      updateModelStates(managedModelIds, {
+      updateModelStates(fallbackManagedIds, {
         status: 'error',
         error: err as Error,
       })
     }
-  }, [status, updateModelStates])
+  }, [status, updateModelStates, applyAvailabilityState])
 
   const getModelState = useCallback(
     (modelId: ModelId): GeminiModelState | undefined => modelStates[modelId],
