@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import { GradientBars } from '@/components/ui/gradient-bars'
+
 export const Route = createFileRoute('/models')({
   component: ModelsRoute,
 })
@@ -7,7 +9,7 @@ export const Route = createFileRoute('/models')({
 function ModelsRoute() {
   return (
     <main className="flex min-h-[60vh] items-center justify-center px-4 py-10 text-white">
-      <h1 className="font-display text-4xl">Models</h1>
+      <GradientBars />
     </main>
   )
 }
