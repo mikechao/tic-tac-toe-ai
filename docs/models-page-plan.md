@@ -7,7 +7,7 @@
 - [x] Define a `ModelProvider` interface that abstracts provider-specific detection, availability checking, and download orchestration so adding new built-in AI sources (Edge, Firefox, etc.) only requires implementing this interface.
 
 ## 2. Built-in AI Detection Hook
-- [ ] Extend `GeminiProvider` to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.
+- [x] Extend `GeminiProvider` to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.
 - [ ] Create `useLocalModelAvailability(modelId, options)` as a thin wrapper around the extended `useGeminiContext()` to avoid duplicating status/progress/startDownload/retry logic.
 - [ ] Implement feature detection (`typeof window !== 'undefined' && 'LanguageModel' in window`) and return `NotSupported` when missing.
 - [ ] Wrap `LanguageModel.availability()` and store the status in state keyed by `ModelId`.
