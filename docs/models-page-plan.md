@@ -4,7 +4,7 @@
 - [x] Add a `provider` discriminator field (currently `'chrome-builtin'`) to `apps/frontend/src/data/models.ts` so models can declare which built-in AI provider handles them; keep additional metadata (size, release notes, docs link) on the backlog.
 - [x] Define `BuiltInAIState`, `DownloadPhase`, and `ModelDownloadProgress` types in a shared module (e.g., `apps/frontend/src/lib/models/types.ts`).
 - [x] Export a helper to normalize provider-specific capability flags for future model additions.
-- [ ] Define a `ModelProvider` interface that abstracts provider-specific detection, availability checking, and download orchestration so adding new built-in AI sources (Edge, Firefox, etc.) only requires implementing this interface.
+- [x] Define a `ModelProvider` interface that abstracts provider-specific detection, availability checking, and download orchestration so adding new built-in AI sources (Edge, Firefox, etc.) only requires implementing this interface.
 
 ## 2. Built-in AI Detection Hook
 - [ ] Extend `GeminiProvider` to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.

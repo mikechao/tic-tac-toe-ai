@@ -22,3 +22,13 @@ export interface ModelDownloadProgress {
   totalBytes: number | null
   lastUpdatedAt: number
 }
+
+export interface ModelProvider {
+  id: string
+  detectSupport: () => boolean
+  checkAvailability: () => Promise<BuiltInAIState>
+  startDownload: (options?: {
+    onProgress?: (progress: ModelDownloadProgress) => void
+  }) => Promise<void>
+  reset?: () => Promise<void> | void
+}
