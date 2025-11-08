@@ -7,7 +7,7 @@
 
 ## Current Coupling In `MatchControls`
 - The control card imports `localAIModels` and filters them inline, keeping provider metadata, selection components, and Gemini readiness messaging tightly bound to match orchestration.
-- Gemini readiness is inferred indirectly via `useGeminiContext().status === 'ready'`, which conflates “model downloaded” with “match can start.”
+- Gemini readiness is inferred indirectly via `useBuiltInAI().status === 'ready'`, which conflates “model downloaded” with “match can start.”
 - Model-specific UI (select dropdown, availability text) lives in the same component as round/timeout inputs, making it hard to reuse when we need richer model management tools on a new page.
 
 ## Proposed `models.tsx` Responsibilities

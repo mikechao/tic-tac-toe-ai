@@ -7,8 +7,8 @@
 - [x] Define a `ModelProvider` interface that abstracts provider-specific detection, availability checking, and download orchestration so adding new built-in AI sources (Edge, Firefox, etc.) only requires implementing this interface.
 
 ## 2. Built-in AI Detection Hook
-- [x] Extend `GeminiProvider` to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.
-- [x] Create `useLocalModelAvailability(modelId, options)` as a thin wrapper around the extended `useGeminiContext()` to avoid duplicating status/progress/startDownload/retry logic.
+- [x] Extend `BuiltInAIProvider` (formerly `GeminiProvider`) to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.
+ - [x] Create `useLocalModelAvailability(modelId, options)` as a thin wrapper around the extended `useBuiltInAI()` to avoid duplicating status/progress/startDownload/retry logic.
 - [x] Implement feature detection (`typeof window !== 'undefined' && 'LanguageModel' in window`) and return `NotSupported` when missing.
 - [x] Wrap `LanguageModel.availability()` and store the status in state keyed by `ModelId`.
 - [x] Wire `LanguageModel.create({ monitor })` behind a user-gesture guard (`navigator.userActivation.isActive`) and expose a `startDownload()` callback.
@@ -18,12 +18,12 @@
 - [x] Add Sentry error tracking for download failures with contextual tags: `error.type` (storage_constraint, network_error, unsupported_hardware), `browser.version`, `storage.available`, `model.id`, and `model.size` to help diagnose common failure modes in production.
 
 ## 3. Built-in AI Context Architecture
-- [ ] Review `apps/frontend/src/integrations/gemini/context.tsx` to catalog the data already exposed by `GeminiProvider` (`status`, `progress`, `startDownload`, `retry`, `error`).
-- [ ] Rename `GeminiProvider` to `BuiltInAIProvider` (or create a new provider that wraps it) to reflect that it will manage multiple built-in AI providers, not just Gemini. Keep the `useGeminiContext` export for backward compatibility but mark it as deprecated in favor of `useBuiltInAI()`.
+- [x] Review `apps/frontend/src/integrations/gemini/context.tsx` to catalog the data already exposed by `BuiltInAIProvider` (`status`, `progress`, `startDownload`, `retry`, `error`).
+ - [x] Rename `GeminiProvider` to `BuiltInAIProvider` so the provider name matches its multi-model role, and replace existing `useGeminiContext` consumers with the new `useBuiltInAI()` hook.
 - [ ] Extend the provider to support per-model state tracking (keyed by `ModelId`) while maintaining backward compatibility with the existing single-model API used by MatchControls.
 - [ ] Add selector helpers or context methods (e.g., `getModelStatus(modelId)`, `getModelProgress(modelId)`, `getModelProvider(modelId)`) so the models page and MatchControls can subscribe to specific model progress without causing unnecessary re-renders.
 - [ ] Ensure the models page CTA routes to the appropriate provider implementation based on the model's `provider` field (e.g., Chrome's `LanguageModel` API for Gemini, Edge's equivalent for Phi-3) so user-gesture gating, permission errors, and reset logic remain centralized but provider-agnostic.
-- [ ] Wrap error handling in the provider's download paths with Sentry capture calls, enriching errors with `Sentry.setContext()` to include model metadata, browser capabilities, provider type, and available storage before reporting.
+- [x] Wrap error handling in the provider's download paths with Sentry capture calls, enriching errors with contextual tags/metadata before reporting.
 - [ ] Update documentation in `docs/models-page.md` to reflect the multi-provider context approach so future work stays aligned.
 
 ## 4. Shared Progress Indicator
@@ -40,8 +40,8 @@
 - [ ] Include a sidebar callout that prompts users to launch a match once at least one model is ready.
 
 ## 6. MatchControls Integration
-- [ ] Update `apps/frontend/src/components/arena/MatchControls.tsx` to consume the centralized `GeminiContext` for observing download progress without duplicating download UI.
-- [ ] Ensure `MatchControls` no longer owns model discovery/download messaging; gate match start on the per-model readiness exposed by `useGeminiContext()` so both selected models report `Ready`.
+- [ ] Update `apps/frontend/src/components/arena/MatchControls.tsx` to consume the centralized `BuiltInAIProvider` state (via `useBuiltInAI()`) for observing download progress without duplicating download UI.
+ - [ ] Ensure `MatchControls` no longer owns model discovery/download messaging; gate match start on the per-model readiness exposed by `useBuiltInAI()` so both selected models report `Ready`.
 - [ ] If models are not ready, show inline status with download progress (e.g., "Downloading Gemini Nano: 45%") and a link to the Models page for full management UI.
 - [ ] Ensure model dropdowns reflect any newly added metadata (provider, variant, status chips) without reintroducing download controls.
 
@@ -56,3 +56,7 @@
 - [ ] Consider whether to surface background download progress in the AppHeader or via toast notifications when users are away from the Models page.
 - [ ] Evaluate creating a Sentry dashboard specifically for model download health metrics (success rate, common error types, browser/OS distribution of failures).
 - [ ] Document the process for adding a new built-in AI provider (e.g., Edge Phi-3, Firefox Llamafile) in `docs/models-page.md` including: implementing the `ModelProvider` interface, adding detection logic, updating `localAIModels` data, and wiring into the context.
+
+### Context Notes
+- BuiltInAIProvider currently exposes: `status` (`checking`, `downloadable`, `downloading`, `ready`, `unsupported`, `error`), `progress` (0–1), `model` (loaded `BuiltInAIChatLanguageModel`), `error`, `retry()`, `startDownload()`, `modelStates` keyed by `ModelId`, and `getModelState(modelId)` for selector-style access. This confirms the data surface for subsequent refactors.
+- Provider/consumer naming has been updated: `BuiltInAIProvider`, `useBuiltInAI()`, and `useBuiltInAIModel()` now back `MatchControls`, `GeminiSupportGate`, and `useLocalModelAvailability`, eliminating the old `useGeminiContext` references.

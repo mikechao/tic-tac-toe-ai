@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useGeminiContext } from '@/integrations/gemini/context'
+import { useBuiltInAI } from '@/integrations/gemini/context'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { MatchConfig } from '@/lib/game/game-loop'
 
@@ -103,7 +103,7 @@ function ModelSelect({
 }
 
 export function MatchControls() {
-  const { status } = useGeminiContext()
+  const { status } = useBuiltInAI()
   const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
 

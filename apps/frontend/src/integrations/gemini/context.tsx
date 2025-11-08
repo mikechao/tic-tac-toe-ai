@@ -35,7 +35,7 @@ type GeminiStatus =
   | 'unsupported'
   | 'error'
 
-interface GeminiContextValue {
+interface BuiltInAIContextValue {
   status: GeminiStatus
   progress: number | null
   model: BuiltInAIChatLanguageModel | null
@@ -46,7 +46,7 @@ interface GeminiContextValue {
   getModelState: (modelId: ModelId) => GeminiModelState | undefined
 }
 
-const GeminiContext = createContext<GeminiContextValue | undefined>(undefined)
+const BuiltInAIContext = createContext<BuiltInAIContextValue | undefined>(undefined)
 
 const managedModelIds: ModelId[] = localAIModels
   .filter((model) => model.provider === 'chrome-builtin')
@@ -119,7 +119,7 @@ function availabilityToState(
   }
 }
 
-export function GeminiProvider({ children }: { children: React.ReactNode }) {
+export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<GeminiStatus>('checking')
   const [progress, setProgress] = useState<number | null>(null)
   const [model, setModel] = useState<BuiltInAIChatLanguageModel | null>(null)
@@ -208,7 +208,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
             storageAvailable = estimate.quota - estimate.usage
           }
         } catch (storageError) {
-          console.warn('[GeminiProvider] storage estimate failed', storageError)
+          console.warn('[BuiltInAIProvider] storage estimate failed', storageError)
         }
       }
 
@@ -246,7 +246,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
   )
 
   useEffect(() => {
-    console.debug('[GeminiProvider] effect start', { attempt })
+    console.debug('[BuiltInAIProvider] effect start', { attempt })
     let isMounted = true
     if (!isBuiltInAISupported()) {
       setStatus('unsupported')
@@ -259,7 +259,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         error: null,
       })
       return () => {
-        console.debug('[GeminiProvider] effect cleanup unsupported', {
+        console.debug('[BuiltInAIProvider] effect cleanup unsupported', {
           attempt,
         })
       }
@@ -281,7 +281,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) {
           return
         }
-        console.warn('[GeminiProvider] availability check failed', err)
+        console.warn('[BuiltInAIProvider] availability check failed', err)
         void captureDownloadError(err, 'availability_check_failed')
       })
 
@@ -298,7 +298,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     })
       .then((loadedModel) => {
         if (!isMounted) return
-        console.debug('[GeminiProvider] model initialized')
+        console.debug('[BuiltInAIProvider] model initialized')
         setModel(loadedModel)
         setStatus('ready')
         setProgress(1)
@@ -315,7 +315,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       .catch((err) => {
         if (!isMounted) return
         if (err instanceof GeminiPermissionError) {
-          console.debug('[GeminiProvider] download requires user gesture')
+          console.debug('[BuiltInAIProvider] download requires user gesture')
           setStatus('downloadable')
           setProgress(null)
           setError(null)
@@ -328,7 +328,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           return
         }
         if (err instanceof GeminiUnavailableError) {
-          console.warn('[GeminiProvider] unsupported environment', err)
+          console.warn('[BuiltInAIProvider] unsupported environment', err)
           setStatus('unsupported')
           setModel(null)
           setProgress(null)
@@ -342,7 +342,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           return
         }
         if (err instanceof GeminiInitializationError) {
-          console.error('[GeminiProvider] initialization failed', err)
+          console.error('[BuiltInAIProvider] initialization failed', err)
           setStatus('error')
           setError(err)
           updateModelStates(fallbackManagedIds, {
@@ -352,7 +352,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           void captureDownloadError(err, 'download_failed')
           return
         }
-        console.error('[GeminiProvider] unexpected error', err)
+        console.error('[BuiltInAIProvider] unexpected error', err)
         setStatus('error')
         setError(err as Error)
         updateModelStates(fallbackManagedIds, {
@@ -363,7 +363,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       })
 
     return () => {
-      console.debug('[GeminiProvider] effect cleanup', { attempt })
+      console.debug('[BuiltInAIProvider] effect cleanup', { attempt })
       isMounted = false
     }
   }, [attempt, applyAvailabilityState, captureDownloadError])
@@ -380,7 +380,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!hasActiveUserGesture()) {
-      console.debug('[GeminiProvider] user gesture required before download')
+      console.debug('[BuiltInAIProvider] user gesture required before download')
       const permissionError = new GeminiPermissionError(
         'Activate the download with a click or tap.',
       )
@@ -395,7 +395,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    console.debug('[GeminiProvider] manual download start')
+    console.debug('[BuiltInAIProvider] manual download start')
     setStatus('downloading')
     setProgress(0)
     setError(null)
@@ -417,7 +417,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           })
         },
       })
-      console.debug('[GeminiProvider] manual download complete')
+      console.debug('[BuiltInAIProvider] manual download complete')
       setModel(loadedModel)
       setStatus('ready')
       setProgress(1)
@@ -431,7 +431,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       })
     } catch (err) {
       if (err instanceof GeminiPermissionError) {
-        console.debug('[GeminiProvider] user gesture still required')
+        console.debug('[BuiltInAIProvider] user gesture still required')
         setStatus('downloadable')
         setProgress(null)
         setError(null)
@@ -444,7 +444,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         return
       }
       if (err instanceof GeminiUnavailableError) {
-        console.warn('[GeminiProvider] unsupported during manual download', err)
+        console.warn('[BuiltInAIProvider] unsupported during manual download', err)
         setStatus('unsupported')
         setModel(null)
         setProgress(null)
@@ -458,7 +458,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         return
       }
       if (err instanceof GeminiInitializationError) {
-        console.error('[GeminiProvider] download failed', err)
+        console.error('[BuiltInAIProvider] download failed', err)
         setStatus('error')
         setError(err)
         updateModelStates(fallbackManagedIds, {
@@ -468,7 +468,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         void captureDownloadError(err, 'download_failed')
         return
       }
-      console.error('[GeminiProvider] unexpected download error', err)
+      console.error('[BuiltInAIProvider] unexpected download error', err)
       setStatus('error')
       setError(err as Error)
       updateModelStates(fallbackManagedIds, {
@@ -484,7 +484,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     [modelStates],
   )
 
-  const contextValue = useMemo<GeminiContextValue>(
+  const contextValue = useMemo<BuiltInAIContextValue>(
     () => ({
       status,
       progress,
@@ -499,21 +499,21 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <GeminiContext.Provider value={contextValue}>
+    <BuiltInAIContext.Provider value={contextValue}>
       {children}
-    </GeminiContext.Provider>
+    </BuiltInAIContext.Provider>
   )
 }
 
-export function useGeminiContext(): GeminiContextValue {
-  const context = useContext(GeminiContext)
+export function useBuiltInAI(): BuiltInAIContextValue {
+  const context = useContext(BuiltInAIContext)
   if (!context) {
-    throw new Error('useGeminiContext must be used within a GeminiProvider')
+    throw new Error('useBuiltInAI must be used within a BuiltInAIProvider')
   }
   return context
 }
 
-export function useGeminiModel(): BuiltInAIChatLanguageModel | null {
-  const { model } = useGeminiContext()
+export function useBuiltInAIModel(): BuiltInAIChatLanguageModel | null {
+  const { model } = useBuiltInAI()
   return model
 }

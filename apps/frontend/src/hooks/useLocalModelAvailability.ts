@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ModelId } from '@arena/schema'
 
-import { useGeminiContext } from '@/integrations/gemini/context'
+import { useBuiltInAI } from '@/integrations/gemini/context'
 import type {
   BuiltInAIState,
   ModelDownloadProgress,
@@ -18,7 +18,7 @@ type AvailabilityResult = {
 export function useLocalModelAvailability(
   modelId: ModelId,
 ): AvailabilityResult {
-  const { modelStates, getModelState, startDownload, retry } = useGeminiContext()
+  const { modelStates, getModelState, startDownload, retry } = useBuiltInAI()
 
   const modelState = getModelState(modelId) ?? modelStates[modelId]
 

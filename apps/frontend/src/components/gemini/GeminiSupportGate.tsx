@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { localAIModels } from '@/data/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { MyMagicCard, RainbowButton } from '@/components/ui'
-import { GeminiProvider } from '@/integrations/gemini/context'
+import { BuiltInAIProvider } from '@/integrations/gemini/context'
 
 interface GeminiSupportGateProps {
   children: React.ReactNode
@@ -11,9 +11,9 @@ interface GeminiSupportGateProps {
 
 export function GeminiSupportGate({ children }: GeminiSupportGateProps) {
   return (
-    <GeminiProvider>
+    <BuiltInAIProvider>
       <GeminiBoundary>{children}</GeminiBoundary>
-    </GeminiProvider>
+    </BuiltInAIProvider>
   )
 }
 
