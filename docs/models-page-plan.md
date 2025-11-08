@@ -14,7 +14,7 @@
 - [x] Wire `LanguageModel.create({ monitor })` behind a user-gesture guard (`navigator.userActivation.isActive`) and expose a `startDownload()` callback.
 - [x] Capture `downloadprogress` events into `{ receivedBytes, totalBytes, percent, phase }` and surface them through the hook (populate bytes as `null` until providers expose them).
 - [x] Emit a final `Ready` status once `availability()` reports `available`, with optional re-check polling.
-- [ ] Audit the existing `GeminiSupportGate` component (referenced in `GeminiSupportGate.tsx`) and either reuse it as a wrapper for the models page or refactor it to consume the new hook so unsupported browsers get consistent messaging.
+- [x] Audit and refactor `GeminiSupportGate.tsx` to consume `useLocalModelAvailability`, exporting the unsupported-browser notice so the models page can reuse the same messaging without blocking the entire route.
 - [ ] Add Sentry error tracking for download failures with contextual tags: `error.type` (storage_constraint, network_error, unsupported_hardware), `browser.version`, `storage.available`, `model.id`, and `model.size` to help diagnose common failure modes in production.
 
 ## 3. Built-in AI Context Architecture
