@@ -9,8 +9,8 @@
 ## 2. Built-in AI Detection Hook
 - [x] Extend `GeminiProvider` to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.
 - [x] Create `useLocalModelAvailability(modelId, options)` as a thin wrapper around the extended `useGeminiContext()` to avoid duplicating status/progress/startDownload/retry logic.
-- [ ] Implement feature detection (`typeof window !== 'undefined' && 'LanguageModel' in window`) and return `NotSupported` when missing.
-- [ ] Wrap `LanguageModel.availability()` and store the status in state keyed by `ModelId`.
+- [x] Implement feature detection (`typeof window !== 'undefined' && 'LanguageModel' in window`) and return `NotSupported` when missing.
+- [x] Wrap `LanguageModel.availability()` and store the status in state keyed by `ModelId`.
 - [ ] Wire `LanguageModel.create({ monitor })` behind a user-gesture guard (`navigator.userActivation.isActive`) and expose a `startDownload()` callback.
 - [ ] Capture `downloadprogress` events into `{ receivedBytes, totalBytes, percent, phase }` and surface them through the hook.
 - [ ] Emit a final `Ready` status once `availability()` reports `available`, with optional re-check polling.

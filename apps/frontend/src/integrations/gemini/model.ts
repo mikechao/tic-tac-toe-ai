@@ -34,7 +34,7 @@ export interface GeminiModelInitOptions {
   onDownloadProgress?: (progress: number) => void
 }
 
-type GeminiAvailability =
+export type GeminiAvailability =
   | 'unavailable'
   | 'available'
   | 'available-after-download'
@@ -59,6 +59,26 @@ function ensureClientEnvironment(): void {
 
 function isDownloadRequired(status: GeminiAvailability): boolean {
   return status !== 'available' && status !== 'unavailable'
+}
+
+export async function getGeminiAvailability(): Promise<GeminiAvailability> {
+  ensureClientEnvironment()
+
+  if (!isBuiltInAISupported()) {
+    return 'unavailable'
+  }
+
+  const model = builtInAI()
+  try {
+    const availability = (await model.availability()) as GeminiAvailability
+    console.debug('[GeminiModel] availability check', availability)
+    return availability
+  } catch (error) {
+    throw new GeminiInitializationError(
+      'Failed to read Gemini Nano availability.',
+      { cause: error },
+    )
+  }
 }
 
 async function initializeModel(
@@ -150,16 +170,4 @@ export async function ensureGeminiChatModel(
   }
 
   return pendingInitialization
-}
-
-export async function getGeminiAvailability(): Promise<GeminiAvailability> {
-  ensureClientEnvironment()
-
-  if (!isBuiltInAISupported()) {
-    return 'unavailable'
-  }
-
-  const model = builtInAI()
-  const availability = (await model.availability()) as GeminiAvailability
-  return availability
 }

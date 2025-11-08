@@ -21,7 +21,9 @@ import {
   GeminiInitializationError,
   GeminiPermissionError,
   GeminiUnavailableError,
+  getGeminiAvailability,
   resetGeminiModelCache,
+  type GeminiAvailability,
 } from './model'
 
 type GeminiStatus =
@@ -83,6 +85,23 @@ function buildProgress(
   }
 }
 
+function availabilityToState(
+  availability: GeminiAvailability,
+): BuiltInAIState {
+  switch (availability) {
+    case 'available':
+    case 'available-after-download':
+      return 'ready'
+    case 'downloadable':
+      return 'downloadable'
+    case 'downloading':
+      return 'downloading'
+    case 'unavailable':
+    default:
+      return 'not-supported'
+  }
+}
+
 export function GeminiProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<GeminiStatus>('checking')
   const [progress, setProgress] = useState<number | null>(null)
@@ -125,13 +144,14 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.debug('[GeminiProvider] effect start', { attempt })
     let isMounted = true
+    const managedIds = managedModelIds.length ? managedModelIds : [defaultModelId]
 
     if (!isBuiltInAISupported()) {
       setStatus('unsupported')
       setModel(null)
       setProgress(null)
       setError(null)
-      updateModelStates(managedModelIds, {
+      updateModelStates(managedIds, {
         status: 'not-supported',
         progress: null,
         error: null,
@@ -147,6 +167,39 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     setProgress(null)
     setError(null)
     resetManagedModelStates()
+
+    getGeminiAvailability()
+      .then((availability) => {
+        if (!isMounted) {
+          return
+        }
+        const builtInState = availabilityToState(availability)
+        if (builtInState === 'ready') {
+          setStatus('ready')
+          setProgress(1)
+        } else if (builtInState === 'downloadable') {
+          setStatus('downloadable')
+        } else if (builtInState === 'downloading') {
+          setStatus('downloading')
+        } else if (builtInState === 'not-supported') {
+          setStatus('unsupported')
+        }
+        updateModelStates(managedIds, {
+          status: builtInState,
+          progress:
+            builtInState === 'ready'
+              ? buildProgress('completed', 1)
+              : builtInState === 'downloading'
+                ? buildProgress('downloading', progress ?? 0)
+                : null,
+        })
+      })
+      .catch((err) => {
+        if (!isMounted) {
+          return
+        }
+        console.warn('[GeminiProvider] availability check failed', err)
+      })
 
     ensureGeminiChatModel({
       onDownloadProgress: (progressValue) => {
