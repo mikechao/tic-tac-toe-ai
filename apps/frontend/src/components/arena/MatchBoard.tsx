@@ -181,13 +181,13 @@ function PlayerBadge({
             : 'border-white/10',
         )}
       >
-        <CardHeader className="border-b border-white/10 px-5 pt-3 pb-2">
+        <CardHeader className="border-b border-white/10 px-5 pt-3 pb-1!">
           <CardTitle className="text-xs uppercase tracking-[0.3em] text-white/60">
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-5 py-5">
-          <div className="flex items-center gap-3">
+        <CardContent className="px-2 py-2">
+          <div className="flex items-center gap-2.5">
             <MarkAvatar mark={mark} className={accentClass} />
             <div className="flex flex-col">
               <span className="text-base font-semibold text-white">{name}</span>
@@ -195,7 +195,7 @@ function PlayerBadge({
             </div>
           </div>
         </CardContent>
-        <CardFooter className="border-t border-white/10 px-5 pt-0 pb-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
+        <CardFooter className="border-t border-white/10 px-5 pt-1! pb-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
           <div className="flex flex-wrap gap-4">
             <StatTicker label="Wins" value={wins} />
             <StatTicker label="Losses" value={losses} />
@@ -276,12 +276,6 @@ export function MatchBoard() {
     : null
   const activeTurnText = getActiveTurnText(state.phase, activePlayerName)
   const latestWinner = latestRoundSummary?.winner
-  const winningModel =
-    latestWinner === 'modelA'
-      ? modelA
-      : latestWinner === 'modelB'
-        ? modelB
-        : undefined
   const roundLabel = latestRoundSummary ? `Round ${latestRoundSummary.round}` : 'Round complete'
   const winnerPlayerLabel =
     latestWinner === 'modelA'
@@ -593,7 +587,7 @@ export function MatchBoard() {
         </h2>
       </header>
 
-      <MyMagicCard className="border-white/15 bg-white/[0.04]" spotlight={false}>
+      <MyMagicCard className="border-white/15 bg-white/4" spotlight={false}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -639,7 +633,7 @@ export function MatchBoard() {
             </div>
             <div className="mt-2 h-2 rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
+                className="h-full rounded-full bbg-linear-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
                 style={{
                   width: `${progressPercent}%`,
                 }}
