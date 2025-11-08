@@ -4,7 +4,9 @@ export interface LocalAIModel {
   id: ModelId
   name: string
   provider: string
-  variant: string}
+  variant: string
+  website: string
+}
 
 export const localAIModels: LocalAIModel[] = [
   {
@@ -12,5 +14,6 @@ export const localAIModels: LocalAIModel[] = [
     name: 'Gemini Nano',
     provider: 'Google DeepMind',
     variant: 'Built into your browser',
+    website: 'https://developer.chrome.com/docs/ai/built-in',
   },
 ]
