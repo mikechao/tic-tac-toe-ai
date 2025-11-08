@@ -2,7 +2,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { Github } from 'lucide-react'
 
 import { AuroraText, WarpBackground } from '@/components/ui'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { RainbowButton } from '@/components/ui/rainbow-button'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -21,7 +21,7 @@ export function AppHeader() {
             <div className="flex items-center gap-4 lg:flex-1">
               <Link to="/arena" className="flex items-center gap-3">
                 <AuroraText className="text-2xl font-semibold md:text-3xl">
-                  AI Arena
+                  Browser AI Arena
                 </AuroraText>
                 <span className="text-xs uppercase tracking-[0.3em] text-white/60">
                   LLM Match Lab
@@ -52,23 +52,20 @@ export function AppHeader() {
               })}
             </nav>
             <div className="hidden items-center justify-end gap-3 lg:flex lg:flex-1">
-              <a
-                href="https://github.com/mikechao/"
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="Visit Mike Chao on GitHub"
-                className="rounded-full border border-white/15 p-1 transition hover:border-white/40"
-              >
-                <Avatar className="size-10 border border-white/10 bg-white/5">
-                  <AvatarFallback className="bg-transparent text-white">
-                    <Github className="h-5 w-5" aria-hidden="true" />
-                  </AvatarFallback>
-                </Avatar>
-              </a>
+              <RainbowButton asChild size="icon" variant="default">
+                <a
+                  href="https://github.com/mikechao/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Visit Mike Chao on GitHub"
+                >
+                  <Github className="h-5 w-5" aria-hidden="true" />
+                </a>
+              </RainbowButton>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-4 rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3 text-[0.65rem] uppercase tracking-[0.3em] text-white/60 lg:hidden">
+          <div className="flex items-center justify-end gap-4 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-[0.65rem] uppercase tracking-[0.3em] text-white/60 lg:hidden">
             <span className="font-semibold text-white/70">Arena live</span>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 const rainbowButtonVariants = cva(
   cn(
-    'group relative inline-flex items-center justify-center gap-2 shrink-0 cursor-pointer hover:cursor-pointer',
+    'group relative inline-flex items-center justify-center gap-2 shrink-0 cursor-pointer hover:cursor-pointer overflow-hidden',
     'rounded-full px-7 py-3 text-sm font-semibold uppercase tracking-[0.25em]',
     'animate-rainbow transition-all duration-300',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4ff2c2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
@@ -34,7 +34,7 @@ const rainbowButtonVariants = cva(
         default: 'h-11',
         sm: 'h-10 px-5 text-xs',
         lg: 'h-12 px-9 text-base',
-        icon: 'h-11 w-11',
+        icon: 'h-11 w-11 px-0 py-0',
       },
     },
     defaultVariants: {
