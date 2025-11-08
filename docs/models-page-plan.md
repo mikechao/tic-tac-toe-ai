@@ -2,7 +2,7 @@
 
 ## 1. Shared Data & Types
 - [x] Add a `provider` discriminator field (currently `'chrome-builtin'`) to `apps/frontend/src/data/models.ts` so models can declare which built-in AI provider handles them; keep additional metadata (size, release notes, docs link) on the backlog.
-- [ ] Define `BuiltInAIState`, `DownloadPhase`, and `ModelDownloadProgress` types in a shared module (e.g., `apps/frontend/src/lib/models/types.ts`).
+- [x] Define `BuiltInAIState`, `DownloadPhase`, and `ModelDownloadProgress` types in a shared module (e.g., `apps/frontend/src/lib/models/types.ts`).
 - [ ] Export a helper to normalize provider-specific capability flags for future model additions.
 - [ ] Define a `ModelProvider` interface that abstracts provider-specific detection, availability checking, and download orchestration so adding new built-in AI sources (Edge, Firefox, etc.) only requires implementing this interface.
 
