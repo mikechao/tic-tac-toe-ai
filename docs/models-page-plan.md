@@ -1,43 +1,58 @@
 # Models Page Implementation Plan
 
 ## 1. Shared Data & Types
-- [ ] Extend `apps/frontend/src/data/models.ts` with any additional metadata needed (size, release notes, docs link).
+- [ ] Extend `apps/frontend/src/data/models.ts` with any additional metadata needed (size, release notes, docs link) and add a `provider` discriminator field to support multiple built-in AI providers (e.g., `'chrome-builtin'`, `'edge-builtin'`).
 - [ ] Define `BuiltInAIState`, `DownloadPhase`, and `ModelDownloadProgress` types in a shared module (e.g., `apps/frontend/src/lib/models/types.ts`).
 - [ ] Export a helper to normalize provider-specific capability flags for future model additions.
+- [ ] Define a `ModelProvider` interface that abstracts provider-specific detection, availability checking, and download orchestration so adding new built-in AI sources (Edge, Firefox, etc.) only requires implementing this interface.
 
 ## 2. Built-in AI Detection Hook
-- [ ] Scaffold `useLocalModelAvailability(modelId, options)` (likely under `apps/frontend/src/routes/models/` or `src/lib/hooks/`).
+- [ ] Extend `GeminiProvider` to expose per-model state so download progress is centralized and accessible to both the models page and Arena components without requiring users to visit the models page first.
+- [ ] Create `useLocalModelAvailability(modelId, options)` as a thin wrapper around the extended `useGeminiContext()` to avoid duplicating status/progress/startDownload/retry logic.
 - [ ] Implement feature detection (`typeof window !== 'undefined' && 'LanguageModel' in window`) and return `NotSupported` when missing.
 - [ ] Wrap `LanguageModel.availability()` and store the status in state keyed by `ModelId`.
 - [ ] Wire `LanguageModel.create({ monitor })` behind a user-gesture guard (`navigator.userActivation.isActive`) and expose a `startDownload()` callback.
 - [ ] Capture `downloadprogress` events into `{ receivedBytes, totalBytes, percent, phase }` and surface them through the hook.
 - [ ] Emit a final `Ready` status once `availability()` reports `available`, with optional re-check polling.
+- [ ] Audit the existing `GeminiSupportGate` component (referenced in `GeminiSupportGate.tsx`) and either reuse it as a wrapper for the models page or refactor it to consume the new hook so unsupported browsers get consistent messaging.
+- [ ] Add Sentry error tracking for download failures with contextual tags: `error.type` (storage_constraint, network_error, unsupported_hardware), `browser.version`, `storage.available`, `model.id`, and `model.size` to help diagnose common failure modes in production.
 
-## 3. Shared Progress Indicator
-- [ ] Extract the round progress bar markup from `apps/frontend/src/components/arena/MatchBoard.tsx` into a reusable `RoundProgressBar` component.
-- [ ] Accept props for `value`, `isIndeterminate`, and optional accent classes so both MatchBoard and the models page can reuse it.
-- [ ] Replace the inlined MatchBoard markup with the new component to keep visuals consistent.
+## 3. Built-in AI Context Architecture
+- [ ] Review `apps/frontend/src/integrations/gemini/context.tsx` to catalog the data already exposed by `GeminiProvider` (`status`, `progress`, `startDownload`, `retry`, `error`).
+- [ ] Rename `GeminiProvider` to `BuiltInAIProvider` (or create a new provider that wraps it) to reflect that it will manage multiple built-in AI providers, not just Gemini. Keep the `useGeminiContext` export for backward compatibility but mark it as deprecated in favor of `useBuiltInAI()`.
+- [ ] Extend the provider to support per-model state tracking (keyed by `ModelId`) while maintaining backward compatibility with the existing single-model API used by MatchControls.
+- [ ] Add selector helpers or context methods (e.g., `getModelStatus(modelId)`, `getModelProgress(modelId)`, `getModelProvider(modelId)`) so the models page and MatchControls can subscribe to specific model progress without causing unnecessary re-renders.
+- [ ] Ensure the models page CTA routes to the appropriate provider implementation based on the model's `provider` field (e.g., Chrome's `LanguageModel` API for Gemini, Edge's equivalent for Phi-3) so user-gesture gating, permission errors, and reset logic remain centralized but provider-agnostic.
+- [ ] Wrap error handling in the provider's download paths with Sentry capture calls, enriching errors with `Sentry.setContext()` to include model metadata, browser capabilities, provider type, and available storage before reporting.
+- [ ] Update documentation in `docs/models-page.md` to reflect the multi-provider context approach so future work stays aligned.
 
-## 4. `models.tsx` Route UI
+## 4. Shared Progress Indicator
+- [ ] Extract the MatchBoard round progress markup into a reusable `RoundProgressBar` component while preserving the same gradient styling (match the request that download progress reuses this look).
+- [ ] Accept props for `value`, `isIndeterminate`, and optional accent classes so the component can render both match-round and download states without duplicating logic.
+- [ ] Replace the inlined MatchBoard markup with the new component and use the same component in the models page download cards to keep visual parity.
+
+## 5. `models.tsx` Route UI
 - [ ] Create a hero section that explains on-device Gemini benefits and links back to Arena.
 - [ ] Render a grid of `ModelCard`s sourced from `localAIModels`, each consuming the availability hook.
 - [ ] Add CTA button states (`Download`, `Downloading…`, `Installing…`, `Ready`, `Not Supported`) based on hook outputs.
 - [ ] Show the `RoundProgressBar` under each card while `phase` is downloading or finalizing.
-- [ ] Provide status messaging for unsupported browsers (e.g., Magic UI `StateMessage` with docs link) when the hook reports `NotSupported` or `Unavailable`.
+- [ ] Provide status messaging for unsupported browsers (e.g., Magic UI `StateMessage`) when the hook reports `NotSupported` or `Unavailable`, including the explicit `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` link called out in `docs/models-page.md`.
 - [ ] Include a sidebar callout that prompts users to launch a match once at least one model is ready.
 
-## 5. MatchControls Integration
-- [ ] Update `apps/frontend/src/components/arena/MatchControls.tsx` to consume the shared availability hook/context instead of directly inferring readiness from `useGeminiContext`.
-- [ ] Keep the Start Match button disabled until the selected models report `Ready`.
-- [ ] Ensure model dropdowns reflect any newly added metadata (provider, variant, status chips).
+## 6. MatchControls Integration
+- [ ] Update `apps/frontend/src/components/arena/MatchControls.tsx` to consume the centralized `GeminiContext` for observing download progress without duplicating download UI.
+- [ ] Ensure `MatchControls` no longer owns model discovery/download messaging; gate match start on the per-model readiness exposed by `useGeminiContext()` so both selected models report `Ready`.
+- [ ] If models are not ready, show inline status with download progress (e.g., "Downloading Gemini Nano: 45%") and a link to the Models page for full management UI.
+- [ ] Ensure model dropdowns reflect any newly added metadata (provider, variant, status chips) without reintroducing download controls.
 
-## 6. Testing & QA
+## 7. Testing & QA
 - [ ] Write Vitest specs for the availability hook, mocking `window.LanguageModel` to cover each status transition.
 - [ ] Add component tests (or Storybook stories if available) for `ModelCard` covering unsupported, downloadable, downloading, and ready states.
+- [ ] Test Sentry error capture by simulating download failures (mock storage quota exceeded, network timeout, unsupported hardware) and verify errors appear in Sentry with correct tags and context.
 - [ ] Document manual QA steps in `docs/models-page.md` (fresh Chrome profile, observe download progress, confirm UI parity with MatchBoard).
 - [ ] Verify lint/format (`pnpm lint`, `pnpm format`) and run `pnpm test` before merging.
 
-## 7. Follow-up Questions
-- [ ] Decide whether to centralize download progress in a context so Arena components can observe it without visiting the models page.
-- [ ] Evaluate telemetry hooks to capture when users fail to download because of storage constraints.
-- [ ] Plan for future non-Chrome models (Edge/Firefox) by abstracting capability detection logic.
+## 8. Follow-up Questions
+- [ ] Consider whether to surface background download progress in the AppHeader or via toast notifications when users are away from the Models page.
+- [ ] Evaluate creating a Sentry dashboard specifically for model download health metrics (success rate, common error types, browser/OS distribution of failures).
+- [ ] Document the process for adding a new built-in AI provider (e.g., Edge Phi-3, Firefox Llamafile) in `docs/models-page.md` including: implementing the `ModelProvider` interface, adding detection logic, updating `localAIModels` data, and wiring into the context.
