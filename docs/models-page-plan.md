@@ -15,7 +15,7 @@
 - [x] Capture `downloadprogress` events into `{ receivedBytes, totalBytes, percent, phase }` and surface them through the hook (populate bytes as `null` until providers expose them).
 - [x] Emit a final `Ready` status once `availability()` reports `available`, with optional re-check polling.
 - [x] Audit and refactor `GeminiSupportGate.tsx` to consume `useLocalModelAvailability`, exporting the unsupported-browser notice so the models page can reuse the same messaging without blocking the entire route.
-- [ ] Add Sentry error tracking for download failures with contextual tags: `error.type` (storage_constraint, network_error, unsupported_hardware), `browser.version`, `storage.available`, `model.id`, and `model.size` to help diagnose common failure modes in production.
+- [x] Add Sentry error tracking for download failures with contextual tags: `error.type` (storage_constraint, network_error, unsupported_hardware), `browser.version`, `storage.available`, `model.id`, and `model.size` to help diagnose common failure modes in production.
 
 ## 3. Built-in AI Context Architecture
 - [ ] Review `apps/frontend/src/integrations/gemini/context.tsx` to catalog the data already exposed by `GeminiProvider` (`status`, `progress`, `startDownload`, `retry`, `error`).

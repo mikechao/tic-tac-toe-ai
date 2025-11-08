@@ -16,6 +16,7 @@ import type {
 } from '@/lib/models/types'
 
 import { isBuiltInAISupported } from './capabilities'
+import * as Sentry from '@sentry/react'
 import {
   ensureGeminiChatModel,
   GeminiInitializationError,
@@ -191,6 +192,59 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     [progress, updateModelStates],
   )
 
+  const captureDownloadError = useCallback(
+    async (error: unknown, type: string) => {
+      const browserVersion =
+        typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      let storageAvailable: number | null = null
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.storage &&
+        typeof navigator.storage.estimate === 'function'
+      ) {
+        try {
+          const estimate = await navigator.storage.estimate()
+          if (estimate.quota != null && estimate.usage != null) {
+            storageAvailable = estimate.quota - estimate.usage
+          }
+        } catch (storageError) {
+          console.warn('[GeminiProvider] storage estimate failed', storageError)
+        }
+      }
+
+      const modelMeta = localAIModels.find(
+        (model) => model.id === defaultModelId,
+      )
+      const modelSize = (modelMeta as { size?: number } | undefined)?.size ?? null
+
+      Sentry.withScope((scope) => {
+        scope.setTag('error.type', type)
+        scope.setTag('model.id', String(defaultModelId))
+        scope.setTag('model.provider', modelMeta?.provider ?? 'unknown')
+        scope.setTag('browser.version', browserVersion)
+        if (storageAvailable != null) {
+          scope.setExtra('storage.available', storageAvailable)
+        }
+        scope.setContext('model', {
+          id: defaultModelId,
+          provider: modelMeta?.provider ?? 'unknown',
+          size: modelSize,
+          vendor: modelMeta?.vendor ?? 'Unknown',
+        })
+        const normalizedError =
+          error instanceof Error
+            ? error
+            : new Error(
+                typeof error === 'string'
+                  ? error
+                  : 'Unknown Gemini download error',
+              )
+        Sentry.captureException(normalizedError)
+      })
+    },
+    [],
+  )
+
   useEffect(() => {
     console.debug('[GeminiProvider] effect start', { attempt })
     let isMounted = true
@@ -228,6 +282,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           return
         }
         console.warn('[GeminiProvider] availability check failed', err)
+        void captureDownloadError(err, 'availability_check_failed')
       })
 
     ensureGeminiChatModel({
@@ -269,6 +324,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
             progress: null,
             error: null,
           })
+          void captureDownloadError(err, 'permission_required')
           return
         }
         if (err instanceof GeminiUnavailableError) {
@@ -282,6 +338,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
             progress: null,
             error: err,
           })
+          void captureDownloadError(err, 'unsupported_hardware')
           return
         }
         if (err instanceof GeminiInitializationError) {
@@ -292,6 +349,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
             status: 'error',
             error: err,
           })
+          void captureDownloadError(err, 'download_failed')
           return
         }
         console.error('[GeminiProvider] unexpected error', err)
@@ -301,13 +359,14 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           status: 'error',
           error: err as Error,
         })
+        void captureDownloadError(err, 'unexpected')
       })
 
     return () => {
       console.debug('[GeminiProvider] effect cleanup', { attempt })
       isMounted = false
     }
-  }, [attempt, applyAvailabilityState])
+  }, [attempt, applyAvailabilityState, captureDownloadError])
 
   const retry = useCallback(() => {
     resetGeminiModelCache()
@@ -381,6 +440,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           progress: null,
           error: null,
         })
+        void captureDownloadError(err, 'permission_required')
         return
       }
       if (err instanceof GeminiUnavailableError) {
@@ -394,6 +454,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           progress: null,
           error: err,
         })
+        void captureDownloadError(err, 'unsupported_hardware')
         return
       }
       if (err instanceof GeminiInitializationError) {
@@ -404,6 +465,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
           status: 'error',
           error: err,
         })
+        void captureDownloadError(err, 'download_failed')
         return
       }
       console.error('[GeminiProvider] unexpected download error', err)
@@ -413,8 +475,9 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
         status: 'error',
         error: err as Error,
       })
+      void captureDownloadError(err, 'unexpected')
     }
-  }, [status, updateModelStates, applyAvailabilityState])
+  }, [status, updateModelStates, applyAvailabilityState, captureDownloadError])
 
   const getModelState = useCallback(
     (modelId: ModelId): GeminiModelState | undefined => modelStates[modelId],
