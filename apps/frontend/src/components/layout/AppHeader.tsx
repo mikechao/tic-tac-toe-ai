@@ -3,7 +3,7 @@ import { Github } from 'lucide-react'
 
 import { AuroraText, WarpBackground } from '@/components/ui'
 import { RainbowButton } from '@/components/ui/rainbow-button'
-import { cn } from '@/lib/utils'
+import { MenuFluid } from '@/components/ui'
 
 const navItems = [
   { label: 'Arena', to: '/arena' },
@@ -25,7 +25,7 @@ export function AppHeader() {
                   Browser AI Arena
                 </AuroraText>
                 <span className="text-xs uppercase tracking-[0.3em] text-white/60">
-                  LLM Match Lab
+                  SLM Match Lab
                 </span>
               </Link>
             </div>
@@ -33,24 +33,11 @@ export function AppHeader() {
               aria-label="Primary"
               className="flex w-full items-center justify-center gap-3 lg:flex-1"
             >
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.to
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={cn(
-                      'rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition',
-                      isActive
-                        ? 'border-[#4ff2c2]/60 bg-[#4ff2c2]/20 text-white shadow-[0_0_24px_rgba(79,242,194,0.25)]'
-                        : 'border-white/15 bg-white/5 text-white/70 hover:border-white/30 hover:text-white',
-                    )}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              })}
+              <MenuFluid
+                menuItems={navItems}
+                currentPath={location.pathname}
+                indicatorClassName="bg-[#4ff2c2]/30 border border-[#4ff2c2]/40 shadow-[0_0_24px_rgba(79,242,194,0.35)]"
+              />
             </nav>
             <div className="hidden items-center justify-end gap-3 lg:flex lg:flex-1">
               <RainbowButton asChild size="icon" variant="default">
