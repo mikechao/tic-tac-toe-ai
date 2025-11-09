@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import type { ModelId } from '@arena/schema'
@@ -249,6 +250,16 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
     [],
   )
 
+  const applyAvailabilityStateRef = useRef(applyAvailabilityState)
+  useEffect(() => {
+    applyAvailabilityStateRef.current = applyAvailabilityState
+  }, [applyAvailabilityState])
+
+  const captureDownloadErrorRef = useRef(captureDownloadError)
+  useEffect(() => {
+    captureDownloadErrorRef.current = captureDownloadError
+  }, [captureDownloadError])
+
   useEffect(() => {
     console.debug('[BuiltInAIProvider] effect start', { attempt })
     let isMounted = true
@@ -279,14 +290,14 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) {
           return
         }
-        applyAvailabilityState(availability)
+        applyAvailabilityStateRef.current(availability)
       })
       .catch((err) => {
         if (!isMounted) {
           return
         }
         console.warn('[BuiltInAIProvider] availability check failed', err)
-        void captureDownloadError(err, 'availability_check_failed')
+        void captureDownloadErrorRef.current(err, 'availability_check_failed')
       })
 
     ensureGeminiChatModel({
@@ -313,7 +324,7 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
         })
         void getGeminiAvailability().then((availability) => {
           if (!isMounted) return
-          applyAvailabilityState(availability)
+          applyAvailabilityStateRef.current(availability)
         })
       })
       .catch((err) => {
@@ -328,7 +339,7 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
             progress: null,
             error: null,
           })
-          void captureDownloadError(err, 'permission_required')
+          void captureDownloadErrorRef.current(err, 'permission_required')
           return
         }
         if (err instanceof GeminiUnavailableError) {
@@ -342,7 +353,7 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
             progress: null,
             error: err,
           })
-          void captureDownloadError(err, 'unsupported_hardware')
+          void captureDownloadErrorRef.current(err, 'unsupported_hardware')
           return
         }
         if (err instanceof GeminiInitializationError) {
@@ -353,7 +364,7 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
             status: 'error',
             error: err,
           })
-          void captureDownloadError(err, 'download_failed')
+          void captureDownloadErrorRef.current(err, 'download_failed')
           return
         }
         console.error('[BuiltInAIProvider] unexpected error', err)
@@ -363,14 +374,14 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
           status: 'error',
           error: err as Error,
         })
-        void captureDownloadError(err, 'unexpected')
+        void captureDownloadErrorRef.current(err, 'unexpected')
       })
 
     return () => {
       console.debug('[BuiltInAIProvider] effect cleanup', { attempt })
       isMounted = false
     }
-  }, [attempt, applyAvailabilityState, captureDownloadError])
+  }, [attempt])
 
   const retry = useCallback(() => {
     resetGeminiModelCache()
