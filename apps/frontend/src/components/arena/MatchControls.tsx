@@ -103,7 +103,7 @@ function ModelSelect({
 }
 
 export function MatchControls() {
-  const { status } = useBuiltInAI()
+  const { getModelState } = useBuiltInAI()
   const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
 
@@ -174,6 +174,12 @@ export function MatchControls() {
     [modelBId],
   )
 
+  const modelAState = getModelState(modelAId)
+  const modelBState = getModelState(modelBId)
+
+  const isModelAReady = modelAState?.status === 'ready'
+  const isModelBReady = modelBState?.status === 'ready'
+
   const isRoundCountValid = totalRounds >= 1 && totalRounds <= 100
   const isConfigurationValid = isRoundCountValid
 
@@ -182,10 +188,10 @@ export function MatchControls() {
   }`
   const summaryDetails = `${totalRounds} ${totalRounds === 1 ? 'round' : 'rounds'}`
 
-  const isGeminiReady = status === 'ready'
-  const statusMessage = isGeminiReady
-    ? 'Gemini Nano ready for local inference'
-    : 'Preparing Gemini models…'
+  const statusMessage =
+    !isModelAReady || !isModelBReady
+      ? 'Download models from the Models page before starting'
+      : 'Gemini Nano ready for local inference'
   const isBusyPhase = state.phase === 'initializing' || state.phase === 'running'
   const [isStarting, setIsStarting] = useState(false)
   const busyLabel =
@@ -193,7 +199,7 @@ export function MatchControls() {
       ? 'Match preparing…'
       : 'Match running…'
   const isStartDisabled =
-    !isConfigurationValid || isBusyPhase || !isGeminiReady || isStarting
+    !isConfigurationValid || isBusyPhase || isStarting || !isModelAReady || !isModelBReady
 
   const handleRoundCountChange = (value: number) => {
     setRoundCount(clamp(Math.round(value || 1), 1, 100))
@@ -212,11 +218,10 @@ export function MatchControls() {
       })
       return
     }
-    if (!isGeminiReady) {
+    if (!isModelAReady || !isModelBReady) {
       showToast({
-        title: 'Models still preparing',
-        description:
-          'Wait for Gemini Nano to finish downloading before starting the match.',
+        title: 'Models still downloading',
+        description: 'Finish preparing models on the Models page before starting the match.',
         variant: 'warning',
       })
       return
@@ -427,10 +432,9 @@ export function MatchControls() {
               <p className="text-sm font-medium text-amber-300/80">
                 Adjust the matchup to start—keep the round count between 1 and 100.
               </p>
-            ) : !isGeminiReady ? (
+            ) : !isModelAReady || !isModelBReady ? (
               <p className="text-sm font-medium text-white/70">
-                Gemini models are still initializing—start will unlock once the
-                download finishes.
+                Download models on the Models page to enable the Start button.
               </p>
             ) : (
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">
