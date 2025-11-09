@@ -33,7 +33,7 @@
 
 ## 5. `models.tsx` Route UI
 - [x] Create a hero section that explains on-device Gemini benefits (privacy, latency, rematch readiness) without forcing navigation away from the page.
-- [ ] Render a grid of `ModelCard`s sourced from `localAIModels`, each consuming the availability hook.
+- [x] Render a stacked list of `ModelCard`s sourced from `localAIModels`, each consuming the availability hook.
 - [ ] Add CTA button states (`Download`, `Downloading…`, `Installing…`, `Ready`, `Not Supported`) based on hook outputs.
 - [ ] Show the `RoundProgressBar` under each card while `phase` is downloading or finalizing.
 - [ ] Provide status messaging for unsupported browsers (e.g., Magic UI `StateMessage`) when the hook reports `NotSupported` or `Unavailable`, including the explicit `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` link called out in `docs/models-page.md`.

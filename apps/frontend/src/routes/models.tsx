@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { GridBackground } from '@/components/ui/grid-background'
+import { RainbowButton } from '@/components/ui'
+import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
+import { localAIModels } from '@/data/models'
+import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 
 export const Route = createFileRoute('/models')({
   component: ModelsRoute,
@@ -45,9 +49,85 @@ function ModelsRoute() {
           </ul>
         </header>
         <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-6">
-          <p className="text-white/80">Models</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-white/50">
+            Local Models
+          </p>
+          <div className="mt-4 flex flex-col gap-4">
+            {localAIModels.map((model) => (
+              <ModelCard key={model.id} modelId={model.id} />
+            ))}
+          </div>
         </div>
       </main>
     </GridBackground>
+  )
+}
+
+function ModelCard({ modelId }: { modelId: number }) {
+  const model = localAIModels.find((entry) => entry.id === modelId)
+  const { status, progress, startDownload, retry } = useLocalModelAvailability(modelId)
+
+  if (!model) {
+    return null
+  }
+
+  const progressPercent = progress?.percent ? Math.round(progress.percent * 100) : 0
+  const isDownloading = status === 'downloading' || status === 'installing'
+
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-white">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.4em] text-white/60">
+            {model.vendor}
+          </p>
+          <h2 className="text-2xl font-semibold">{model.name}</h2>
+          <p className="text-sm text-white/70">{model.variant}</p>
+        </div>
+        <div className="text-right text-sm text-white/70">
+          <p>Provider: {model.provider}</p>
+          <button
+            type="button"
+            className="text-emerald-300 transition hover:text-emerald-200"
+            onClick={() => {
+              window?.open?.(model.website, '_blank', 'noopener')
+            }}
+          >
+            Docs ↗
+          </button>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="text-sm text-white/80">
+          Status: <span className="font-semibold capitalize">{status}</span>
+        </div>
+        <RainbowButton
+          type="button"
+          onClick={() => {
+            if (status === 'downloadable') {
+              void startDownload()
+            } else {
+              retry()
+            }
+          }}
+        >
+          {status === 'ready'
+            ? 'Ready'
+            : status === 'downloadable'
+              ? 'Download'
+              : status === 'downloading'
+                ? 'Downloading…'
+                : 'Check again'}
+        </RainbowButton>
+      </div>
+      <div className="mt-4">
+        <RoundProgressBar value={progressPercent} isIndeterminate={isDownloading && progressPercent === 0} />
+        {isDownloading && (
+          <p className="mt-2 text-sm text-white/60">
+            Downloading… {progressPercent}%
+          </p>
+        )}
+      </div>
+    </div>
   )
 }
