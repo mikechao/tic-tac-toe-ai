@@ -5,13 +5,21 @@ import { RainbowButton } from '@/components/ui'
 import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
 import { localAIModels } from '@/data/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
-import { useBuiltInAI } from '@/integrations/gemini/context'
+import { BuiltInAIProvider, useBuiltInAI } from '@/integrations/gemini/context'
 
 export const Route = createFileRoute('/models')({
   component: ModelsRoute,
 })
 
 function ModelsRoute() {
+  return (
+    <BuiltInAIProvider>
+      <ModelsPage />
+    </BuiltInAIProvider>
+  )
+}
+
+function ModelsPage() {
   const { modelStates } = useBuiltInAI()
   const readyCount = localAIModels.filter((model) => {
     const state = modelStates[model.id]
