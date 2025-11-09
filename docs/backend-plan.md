@@ -42,6 +42,7 @@
 type RoundResult = {
   playerOneModel: string | null // e.g., 'human', 'gemini-nano-2'
   playerTwoModel: string | null // e.g., 'gemini-nano-2'
+  matchId?: string // present after the first round of a multi-round session
   roundId?: string // optional client hint; backend overwrites with its own UUID
   boardSize: 3 | 4 | 5
   currentRound: number // 1-indexed round number within the match series
@@ -70,11 +71,39 @@ type RoundResultResponse = {
 }
 ```
 
+### `/api/matches/complete` endpoint spec
+
+- **Method**: `POST`
+- **Path**: `/api/matches/complete`
+- **Headers**:
+  - `Content-Type: application/json`
+  - `X-App-Version` (optional) for rollout tracking
+- **Auth**: none required yet; future JWT/bearer tokens can be added without changing the payload
+- **Request body**: `RoundResult` JSON described above. `matchId` is omitted for the first round; once the backend returns it, clients must include `matchId` in subsequent submissions for the same match.
+- **Response 200**: `RoundResultResponse` plus an `idempotent: boolean` flag indicating whether this save was newly persisted or deduped. Example:
+
+```json
+{
+  "matchId": "9e2c1c07-7c6d-4c8e-a8b8-3d9ee8b1d8c1",
+  "roundId": "1a2b3c4d-5678-90ab-cdef-1234567890ab",
+  "moveCount": 7,
+  "persistedAt": "2025-11-09T21:14:05.123Z",
+  "idempotent": false
+}
+```
+
+- **Response 400**: validation failure (missing fields, invalid enums, inconsistent winner/outcome). Body includes `message` and `fieldErrors` arrays from Zod.
+- **Response 409**: reserved for future conflict scenarios (e.g., attempting to attach a round to a closed match); today duplicates simply return 200 with `idempotent: true`.
+- **Idempotency**: backend hashes the server-minted `roundId`, `playerOneModel`, `startedAt`, board size, and ordered moves. Replays with the same combination short-circuit and return the original `matchId`/`roundId` without writing new rows.
+- **Rate limiting**: handled by Cloudflare Worker defaults; add per-IP throttling later if abused.
+- **Observability**: log `roundId`, `matchId`, board size, and `idempotent` flag for troubleshooting; send the same metadata to Sentry breadcrumbs when errors occur.
+
 **Validation rules**
 
 - `moves` array must be non-empty, ordered by `turnIndex`, and alternate symbols (unless outcome is `draw` due to full board)
 - `finishedAt` must be >= `startedAt` and within 10 minutes of server receipt to avoid clock skew issues; otherwise server overwrites with Worker timestamp
 - `currentRound` must be between 1 and `totalRounds`; `totalRounds` must be >= 1, otherwise the backend rejects the payload
+- `matchId`, when provided, must be a UUID and correspond to an open match record; omit it for the first round so the backend can mint one
 - Server mints UUID v4 identifiers for the match and each move; client payloads must not include IDs
 - Server derives idempotency keys from the server-minted `roundId`, `playerOneModel`, `startedAt`, board size, and ordered moves; duplicates short-circuit with HTTP 200 and the original response payload
 - `winner` must be `player1`, `player2`, or `draw`; backend cross-checks that it aligns with the `outcome` field for the reported perspective
@@ -87,6 +116,7 @@ type RoundResultResponse = {
 - Frontend must include `playerOneModel`/`playerTwoModel` strings and `totalRounds` so the backend can persist match context (board variant + participant models); the backend infers matchup type purely from those identifiers
 - Frontend supplies `currentRound` and `winner` so the backend can store leaderboard-friendly metadata without inferring from move order
 - Backend always returns its own `roundId` so the UI can correlate retries; client-provided `roundId` values are treated as advisory only
+- Backend returns a `matchId` on the first submission; the UI must persist it locally and include it in subsequent rounds so all recaps for a multi-round session stay linked
 
 ### Local Docker workflow (optional)
 
@@ -99,7 +129,7 @@ type RoundResultResponse = {
 
 ### 0. Gameplay ingestion API
 
-- [ ] Design the `/api/matches/complete` endpoint contract emitted by the round recap dialog
+- [x] Design the `/api/matches/complete` endpoint contract emitted by the round recap dialog
 - [ ] Implement request validators + Drizzle repositories so the payload persists to `matches` + `moves`
 - [ ] Add Vitest coverage for idempotent writes and failure modes (validation, DB errors)
 - [ ] Document the frontend SDK helper that calls this endpoint and the retry/backoff rules
