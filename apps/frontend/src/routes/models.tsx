@@ -6,6 +6,7 @@ import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
 import { localAIModels } from '@/data/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { BuiltInAIProvider, useBuiltInAI } from '@/integrations/gemini/context'
+import { BuiltInAINotSupported } from '@/components/gemini/BuiltInAINotSupported'
 
 export const Route = createFileRoute('/models')({
   component: ModelsRoute,
@@ -28,40 +29,33 @@ function ModelsPage() {
 
   return (
     <GridBackground className="min-h-screen" gridSize="6:6">
-      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-2 py-10 text-white md:px-4">
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md md:p-10">
-          <span className="text-xs uppercase tracking-[0.4em] text-emerald-300/80">
-            On-Device Gemini
-          </span>
-          <h1 className="mt-3 font-display text-4xl md:text-5xl">
-            Download local models, play private matches
-          </h1>
-          <p className="mt-4 text-base text-white/80 md:text-lg">
-            Keep your Tic-Tac-Toe Arena duels fast and private by running Gemini Nano
-            directly in your browser. This page helps you confirm hardware support,
-            monitor downloads, and prep models before you queue the next match.
-          </p>
-          <ul className="mt-6 grid gap-4 text-sm text-white/75 md:grid-cols-3">
-            <li className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="font-semibold text-white">Low-latency turns</p>
-              <p className="mt-1 text-white/70">
-                Responses stream without a network round-trip once Gemini Nano is ready.
+      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-2 py-8 text-white md:px-4">
+        <header className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-md md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3">
+              <span className="text-xs uppercase tracking-[0.4em] text-emerald-300/80">
+                On-Device Gemini
+              </span>
+              <h1 className="font-display text-3xl md:text-4xl">
+                Download local models, play private matches
+              </h1>
+              <p className="text-sm text-white/80 md:text-base">
+                Keep your Tic-Tac-Toe Arena duels fast and private by running Gemini Nano directly
+                in your browser. This page confirms hardware support and tracks downloads before you
+                queue the next match.
               </p>
-            </li>
-            <li className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="font-semibold text-white">Privacy preserved</p>
-              <p className="mt-1 text-white/70">
-                Moves stay on your device
-              </p>
-            </li>
-            <li className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="font-semibold text-white">Ready for rematches</p>
-              <p className="mt-1 text-white/70">
-                Once downloads finish here, Arena automatically detects and enables the
-                models the next time you open Match Controls.
-              </p>
-            </li>
-          </ul>
+            </div>
+            <ul className="grid gap-3 text-sm text-white/75 md:w-[320px]">
+              <li className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="font-semibold text-white">Low-latency turns</p>
+                <p className="mt-1 text-white/70">Moves stream instantly once Gemini Nano is ready.</p>
+              </li>
+              <li className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="font-semibold text-white">Privacy preserved</p>
+                <p className="mt-1 text-white/70">All prompts stay on your device.</p>
+              </li>
+            </ul>
+          </div>
         </header>
         <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-6">
           <p className="text-sm uppercase tracking-[0.3em] text-white/50">
@@ -106,6 +100,10 @@ function ModelCard({ modelId }: { modelId: number }) {
 
   if (!model) {
     return null
+  }
+
+  if (status === 'not-supported') {
+    return <BuiltInAINotSupported onRetry={retry} />
   }
 
   const progressPercent = progress?.percent ? Math.round(progress.percent * 100) : 0
