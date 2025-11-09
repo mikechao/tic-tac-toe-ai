@@ -31,4 +31,5 @@ export interface ModelProvider {
     onProgress?: (progress: ModelDownloadProgress) => void
   }) => Promise<void>
   reset?: () => Promise<void> | void
+  getPrimaryModelId?: () => ModelId | null
 }

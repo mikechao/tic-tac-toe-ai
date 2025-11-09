@@ -6,6 +6,7 @@ import type {
   BuiltInAIState,
   ModelDownloadProgress,
 } from '@/lib/models/types'
+import { getProviderForModel } from '@/lib/models/providers'
 
 type AvailabilityResult = {
   status: BuiltInAIState
@@ -18,7 +19,7 @@ type AvailabilityResult = {
 export function useLocalModelAvailability(
   modelId: ModelId,
 ): AvailabilityResult {
-  const { modelStates, getModelState, startDownload, retry } = useBuiltInAI()
+  const { modelStates, getModelState, retry, model, startDownload } = useBuiltInAI()
 
   const modelState = getModelState(modelId) ?? modelStates[modelId]
 
@@ -31,9 +32,15 @@ export function useLocalModelAvailability(
       status,
       progress,
       error,
-      startDownload,
+      startDownload: async () => {
+        const provider = getProviderForModel(modelId)
+        if (!provider) {
+          throw new Error(`No provider registered for model ${modelId}`)
+        }
+        await provider.startDownload()
+      },
       retry,
     }),
-    [status, progress, error, startDownload, retry],
+    [status, progress, error, modelId, retry, startDownload],
   )
 }

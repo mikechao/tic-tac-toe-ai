@@ -10,6 +10,7 @@ import type { ModelId } from '@arena/schema'
 import type { BuiltInAIChatLanguageModel } from '@built-in-ai/core'
 
 import { localAIModels } from '@/data/models'
+import { registerModelProvider } from '@/lib/models/providers'
 import type {
   BuiltInAIState,
   ModelDownloadProgress,
@@ -44,6 +45,9 @@ interface BuiltInAIContextValue {
   startDownload: () => Promise<void>
   modelStates: Record<ModelId, GeminiModelState>
   getModelState: (modelId: ModelId) => GeminiModelState | undefined
+  getModelStatus: (modelId: ModelId) => BuiltInAIState
+  getModelProgress: (modelId: ModelId) => ModelDownloadProgress | null
+  primaryModelId: ModelId
 }
 
 const BuiltInAIContext = createContext<BuiltInAIContextValue | undefined>(undefined)
@@ -484,6 +488,49 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
     [modelStates],
   )
 
+  const getModelStatus = useCallback(
+    (modelId: ModelId): BuiltInAIState => {
+      const state = modelStates[modelId]
+      return state?.status ?? 'checking'
+    },
+    [modelStates],
+  )
+
+  const getModelProgress = useCallback(
+    (modelId: ModelId): ModelDownloadProgress | null => {
+      const state = modelStates[modelId]
+      return state?.progress ?? null
+    },
+    [modelStates],
+  )
+  useEffect(() => {
+    registerModelProvider({
+      id: 'chrome-builtin',
+      detectSupport: isBuiltInAISupported,
+      checkAvailability: async () => {
+        const availability = await getGeminiAvailability()
+        return availabilityToState(availability)
+      },
+      startDownload: async (options) => {
+        await ensureGeminiChatModel({
+          onDownloadProgress: (progressValue) => {
+            options?.onProgress?.({
+              phase: 'downloading',
+              percent: progressValue,
+              receivedBytes: null,
+              totalBytes: null,
+              lastUpdatedAt: Date.now(),
+            })
+          },
+        })
+      },
+      reset: () => {
+        resetGeminiModelCache()
+      },
+      getPrimaryModelId: () => defaultModelId,
+    })
+  }, [])
+
   const contextValue = useMemo<BuiltInAIContextValue>(
     () => ({
       status,
@@ -494,8 +541,22 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
       startDownload,
       modelStates,
       getModelState,
+      getModelStatus,
+      getModelProgress,
+      primaryModelId: defaultModelId,
     }),
-    [status, progress, model, error, retry, startDownload, modelStates, getModelState],
+    [
+      status,
+      progress,
+      model,
+      error,
+      retry,
+      startDownload,
+      modelStates,
+      getModelState,
+      getModelStatus,
+      getModelProgress,
+    ],
   )
 
   return (

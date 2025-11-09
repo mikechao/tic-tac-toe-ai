@@ -20,9 +20,9 @@
 ## 3. Built-in AI Context Architecture
 - [x] Review `apps/frontend/src/integrations/gemini/context.tsx` to catalog the data already exposed by `BuiltInAIProvider` (`status`, `progress`, `startDownload`, `retry`, `error`).
  - [x] Rename `GeminiProvider` to `BuiltInAIProvider` so the provider name matches its multi-model role, and replace existing `useGeminiContext` consumers with the new `useBuiltInAI()` hook.
-- [ ] Extend the provider to support per-model state tracking (keyed by `ModelId`) while maintaining backward compatibility with the existing single-model API used by MatchControls.
-- [ ] Add selector helpers or context methods (e.g., `getModelStatus(modelId)`, `getModelProgress(modelId)`, `getModelProvider(modelId)`) so the models page and MatchControls can subscribe to specific model progress without causing unnecessary re-renders.
-- [ ] Ensure the models page CTA routes to the appropriate provider implementation based on the model's `provider` field (e.g., Chrome's `LanguageModel` API for Gemini, Edge's equivalent for Phi-3) so user-gesture gating, permission errors, and reset logic remain centralized but provider-agnostic.
+- [x] Extend the provider to support per-model state tracking (keyed by `ModelId`) while maintaining backward compatibility with the existing single-model API used by MatchControls.
+- [x] Add selector helpers or context methods (e.g., `getModelStatus(modelId)`, `getModelProgress(modelId)`, `getModelProvider(modelId)`) so the models page and MatchControls can subscribe to specific model progress without causing unnecessary re-renders.
+- [x] Ensure the models page CTA routes to the appropriate provider implementation based on the model's `provider` field (e.g., Chrome's `LanguageModel` API for Gemini, Edge's equivalent for Phi-3) so user-gesture gating, permission errors, and reset logic remain centralized but provider-agnostic.
 - [x] Wrap error handling in the provider's download paths with Sentry capture calls, enriching errors with contextual tags/metadata before reporting.
 - [ ] Update documentation in `docs/models-page.md` to reflect the multi-provider context approach so future work stays aligned.
 
@@ -58,5 +58,5 @@
 - [ ] Document the process for adding a new built-in AI provider (e.g., Edge Phi-3, Firefox Llamafile) in `docs/models-page.md` including: implementing the `ModelProvider` interface, adding detection logic, updating `localAIModels` data, and wiring into the context.
 
 ### Context Notes
-- BuiltInAIProvider currently exposes: `status` (`checking`, `downloadable`, `downloading`, `ready`, `unsupported`, `error`), `progress` (0–1), `model` (loaded `BuiltInAIChatLanguageModel`), `error`, `retry()`, `startDownload()`, `modelStates` keyed by `ModelId`, and `getModelState(modelId)` for selector-style access. This confirms the data surface for subsequent refactors.
+- BuiltInAIProvider currently exposes: `status` (`checking`, `downloadable`, `downloading`, `ready`, `unsupported`, `error`), `progress` (0–1), `model` (loaded `BuiltInAIChatLanguageModel`), `error`, `retry()`, `startDownload()`, `modelStates` keyed by `ModelId`, and selector helpers (`getModelState`, `getModelStatus`, `getModelProgress`) plus the `primaryModelId`. This confirms the data surface for subsequent refactors.
 - Provider/consumer naming has been updated: `BuiltInAIProvider`, `useBuiltInAI()`, and `useBuiltInAIModel()` now back `MatchControls`, `GeminiSupportGate`, and `useLocalModelAvailability`, eliminating the old `useGeminiContext` references.
