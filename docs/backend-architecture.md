@@ -98,13 +98,8 @@ pnpm --filter backend wrangler secret put DATABASE_URL --env production
 
 ### Cloudflare Hyperdrive
 
-- Backend leverages a Cloudflare Hyperdrive binding (declared as `DATABASE` in
-  `wrangler.toml`). Provision Hyperdrive pointing at the upstream Postgres
-  provider (PlanetScale as chosen in the project plan).
-- Record the Hyperdrive connection string (HTTP endpoint) in the respective
-  `DATABASE_URL` secret for each environment.
-- Choose the region closest to primary users (e.g., `WAS`/`IAD` on PlanetScale)
-  to minimize latency between Workers and Hyperdrive.
+- Once we finish local development against Docker Postgres, provision a Cloudflare Hyperdrive binding (declared as `DATABASE` in `wrangler.toml`). Point it at the upstream Postgres provider we settle on (likely Xata) and copy the generated HTTP endpoint into environment-specific secrets (`DATABASE_URL`).
+- Hyperdrive regions should be chosen based on real player latency once usage data arrives; until then we can leave the binding unconfigured locally and rely solely on the Docker Postgres instance.
 
 ## Development Workflow
 
@@ -143,8 +138,7 @@ pnpm --filter backend build         # dry run deploy, validates Worker bundle
 pnpm --filter backend wrangler publish --env production
 ```
 
-> During publish, Wrangler reads secrets/bindings previously stored via
-> `wrangler secret put` and `wrangler d1 binding` commands.
+> During publish, Wrangler reads secrets previously stored via `wrangler secret put`. Hyperdrive bindings are managed via `wrangler hyperdrive create` rather than the old `wrangler d1 binding` flow.
 
 ## Future Steps
 
