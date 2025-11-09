@@ -19,6 +19,26 @@ export function BuiltInAINotSupported({
             </code>
             Then download the model from the Models page.
           </p>
+          <div className="mt-3 space-y-1 text-xs text-amber-100/70">
+            <p className="text-amber-100/90">Hardware requirements</p>
+            <p>
+              <span className="font-semibold text-amber-100">OS:</span> Windows 10/11, macOS 13+, Linux, or
+              ChromeOS 16389+ on Chromebook Plus. Chrome for Android, iOS, and non-Chromebook Plus
+              devices aren’t supported yet.
+            </p>
+            <p>
+              <span className="font-semibold text-amber-100">Storage:</span> Ensure at least 22&nbsp;GB of free space on
+              the drive that hosts your Chrome profile (model downloads can slightly vary in size).
+            </p>
+            <p>
+              <span className="font-semibold text-amber-100">Memory / Compute:</span> GPU with &gt;4&nbsp;GB VRAM or CPU with
+              16&nbsp;GB RAM and ≥4 cores. Built-in models can run on either GPU or CPU.
+            </p>
+            <p>
+              <span className="font-semibold text-amber-100">Network:</span> Use an unmetered or unlimited connection for the
+              initial download.
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <RainbowButton
