@@ -142,19 +142,6 @@ function ModelCard({ modelId }: { modelId: number }) {
       <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="text-sm text-white/80">
           Status: <span className="font-semibold capitalize">{status}</span>
-          {status === 'not-supported' && (
-            <p className="mt-2 text-xs text-amber-200">
-              Built-in AI isn’t available in this browser. Make sure you’re on Chrome 127+ and that the
-              <button
-                type="button"
-                className="ml-1 underline"
-                onClick={() => window?.open?.('chrome://flags/#prompt-api-for-gemini-nano-multimodal-input', '_blank')}
-              >
-                chrome://flags/#prompt-api-for-gemini-nano-multimodal-input
-              </button>
-              flag is enabled.
-            </p>
-          )}
         </div>
         <RainbowButton
           type="button"
@@ -175,9 +162,7 @@ function ModelCard({ modelId }: { modelId: number }) {
               ? 'Download'
               : status === 'downloading'
                 ? 'Downloading…'
-                : status === 'not-supported'
-                  ? 'Not supported'
-                  : 'Retry'}
+                : 'Retry'}
         </RainbowButton>
       </div>
       {(isDownloading || status === 'downloadable') && (
