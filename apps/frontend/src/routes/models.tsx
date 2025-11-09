@@ -103,10 +103,13 @@ function ModelCard({ modelId }: { modelId: number }) {
         </div>
         <RainbowButton
           type="button"
+          disabled={status === 'ready' || status === 'downloading'}
           onClick={() => {
             if (status === 'downloadable') {
               void startDownload()
-            } else {
+              return
+            }
+            if (status === 'error') {
               retry()
             }
           }}
@@ -117,7 +120,9 @@ function ModelCard({ modelId }: { modelId: number }) {
               ? 'Download'
               : status === 'downloading'
                 ? 'Downloading…'
-                : 'Check again'}
+                : status === 'not-supported'
+                  ? 'Not supported'
+                  : 'Retry'}
         </RainbowButton>
       </div>
       <div className="mt-4">
