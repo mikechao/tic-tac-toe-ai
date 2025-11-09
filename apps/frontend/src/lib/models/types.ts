@@ -1,4 +1,4 @@
-import { ModelId } from "@arena/schema"
+import type { ModelId } from "@arena/schema"
 
 export type BuiltInAIState =
   | 'not-supported'
