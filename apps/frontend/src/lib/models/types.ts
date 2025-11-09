@@ -1,3 +1,5 @@
+import { ModelId } from "@arena/schema"
+
 export type BuiltInAIState =
   | 'not-supported'
   | 'checking'
