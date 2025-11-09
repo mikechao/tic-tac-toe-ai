@@ -36,7 +36,7 @@
 - [x] Render a stacked list of `ModelCard`s sourced from `localAIModels`, each consuming the availability hook.
 - [x] Add CTA button states (`Download`, `Downloading…`, `Installing…`, `Ready`, `Not Supported`) based on hook outputs.
 - [x] Show the `RoundProgressBar` under each card while `phase` is downloading or finalizing.
-- [ ] Provide status messaging for unsupported browsers (e.g., Magic UI `StateMessage`) when the hook reports `NotSupported` or `Unavailable`, including the explicit `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` link called out in `docs/models-page.md`.
+- [x] Provide status messaging for unsupported browsers (e.g., Magic UI `StateMessage`) when the hook reports `NotSupported` or `Unavailable`, including the explicit `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` link called out in `docs/models-page.md`.
 - [ ] Include a sidebar callout that prompts users to launch a match once at least one model is ready.
 
 ## 6. MatchControls Integration
