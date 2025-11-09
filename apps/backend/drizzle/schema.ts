@@ -14,6 +14,7 @@ export const matches = pgTable(
   'matches',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    matchId: uuid('match_id').notNull(),
     roundId: uuid('round_id').notNull().defaultRandom(),
     playerOneModel: text('player_one_model').notNull(),
     playerTwoModel: text('player_two_model').notNull(),
@@ -35,6 +36,10 @@ export const matches = pgTable(
   (table) => [
     uniqueIndex('matches_round_id_unique').on(table.roundId),
     uniqueIndex('matches_recap_hash_unique').on(table.recapHash),
+    uniqueIndex('matches_match_round_unique').on(
+      table.matchId,
+      table.currentRound,
+    ),
   ],
 )
 
@@ -42,9 +47,6 @@ export const moves = pgTable(
   'moves',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    matchId: uuid('match_id')
-      .notNull()
-      .references(() => matches.id, { onDelete: 'cascade' }),
     roundId: uuid('round_id')
       .notNull()
       .references(() => matches.roundId, { onDelete: 'cascade' }),
@@ -55,6 +57,6 @@ export const moves = pgTable(
     createdAt: timestamptz('created_at').defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex('moves_match_turn_unique').on(table.matchId, table.turnIndex),
+    uniqueIndex('moves_round_turn_unique').on(table.roundId, table.turnIndex),
   ],
 )
