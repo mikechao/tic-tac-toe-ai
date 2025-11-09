@@ -1,46 +1,35 @@
-CREATE TABLE IF NOT EXISTS "models" (
-  "id" serial PRIMARY KEY,
-  "name" text NOT NULL,
-  "description" text,
-  "provider" text NOT NULL,
-  "created_at" timestamp DEFAULT now() NOT NULL
-);
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS "matches" (
-  "id" serial PRIMARY KEY,
-  "model_a_id" integer NOT NULL REFERENCES "models"("id"),
-  "model_b_id" integer NOT NULL REFERENCES "models"("id"),
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "round_id" uuid NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+  "player_one_model" text NOT NULL,
+  "player_two_model" text NOT NULL,
+  "opponent_type" text NOT NULL,
+  "difficulty" text,
+  "board_size" integer NOT NULL,
+  "current_round" integer NOT NULL,
   "total_rounds" integer NOT NULL,
-  "created_at" timestamp DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "games" (
-  "id" serial PRIMARY KEY,
-  "match_id" integer NOT NULL REFERENCES "matches"("id"),
-  "round" integer NOT NULL,
-  "winner" text,
-  "created_at" timestamp DEFAULT now() NOT NULL
+  "started_at" timestamptz NOT NULL,
+  "finished_at" timestamptz NOT NULL,
+  "rematch_requested" boolean NOT NULL,
+  "ai_model_version" text,
+  "outcome" text NOT NULL,
+  "winner_slot" text NOT NULL,
+  "duration_ms" integer NOT NULL,
+  "recap_hash" text NOT NULL UNIQUE,
+  "created_at" timestamptz DEFAULT now() NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "moves" (
-  "id" serial PRIMARY KEY,
-  "game_id" integer NOT NULL REFERENCES "games"("id"),
-  "move_index" integer NOT NULL,
-  "position" integer NOT NULL,
-  "actor" text NOT NULL,
-  "reasoning" text,
-  "created_at" timestamp DEFAULT now() NOT NULL
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "match_id" uuid NOT NULL REFERENCES "matches"("id") ON DELETE CASCADE,
+  "round_id" uuid NOT NULL REFERENCES "matches"("round_id") ON DELETE CASCADE,
+  "turn_index" integer NOT NULL,
+  "cell" integer NOT NULL,
+  "symbol" text NOT NULL,
+  "elapsed_ms" integer NOT NULL,
+  "created_at" timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS "leaderboard_stats" (
-  "id" serial PRIMARY KEY,
-  "model_id" integer NOT NULL UNIQUE REFERENCES "models"("id"),
-  "wins" integer DEFAULT 0 NOT NULL,
-  "losses" integer DEFAULT 0 NOT NULL,
-  "ties" integer DEFAULT 0 NOT NULL,
-  "updated_at" timestamp DEFAULT now() NOT NULL
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS "matches_models_unique" ON "matches" ("model_a_id", "model_b_id", "created_at");
-CREATE UNIQUE INDEX IF NOT EXISTS "games_match_round_unique" ON "games" ("match_id", "round");
-CREATE UNIQUE INDEX IF NOT EXISTS "moves_game_move_idx_unique" ON "moves" ("game_id", "move_index");
+CREATE UNIQUE INDEX IF NOT EXISTS "moves_match_turn_unique" ON "moves" ("match_id", "turn_index");

@@ -158,7 +158,7 @@ type RoundResultResponse = {
 
 ### 4. Schema + migrations
 
-- [ ] Translate Xata tables into Drizzle schema files under `apps/backend/src/services/schemas.ts` (or equivalent)
+- [x] Translate Xata tables into Drizzle schema files under `apps/backend/src/services/schemas.ts` (or equivalent)
 - [ ] Run `pnpm --filter backend db:generate` to sync SQL migrations; commit generated files for traceability
 - [ ] Seed reference data (AI models, starter accounts) via `db:seed` hitting Xata dev branch
 - [ ] Establish migration workflow: only promote via CI (Turbo task) after tests + lint pass
