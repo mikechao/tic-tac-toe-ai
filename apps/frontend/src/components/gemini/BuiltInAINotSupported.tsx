@@ -3,6 +3,7 @@ import { ClipboardCopy, ExternalLink } from 'lucide-react'
 import { MyMagicCard, RainbowButton, useToast } from '@/components/ui'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { MagicCard } from '@/components/ui/magic-card'
+import { TriangleAlert } from 'lucide-react';
 
 export function BuiltInAINotSupported({
   onRetry,
@@ -16,10 +17,16 @@ export function BuiltInAINotSupported({
         <div>
           <h2 className="font-display text-lg">Browser Built-in AI not supported</h2>
           <div className="space-y-2 text-sm text-white/80">
-            <p>Enable Browser Built-in AI in 2 steps:</p>
+            <p>Enable Browser Built-in AI in 3 steps:</p>
             <ol className="list-decimal ml-4">
               <li>Check the hardware requirements</li>
               <li>Enable the Prompt API flag</li>
+              <li>
+                <span className="flex items-center gap-2">
+                  Restart your browser
+                  <TriangleAlert className="h-4 w-4 text-red-500" />
+                </span>
+              </li>
             </ol>
             <p>
               Learn more about{' '}

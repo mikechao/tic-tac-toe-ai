@@ -108,7 +108,7 @@ export function MatchControls() {
   const { showToast } = useToast()
 
   const availableModels = useMemo(
-    () => localAIModels.filter((model) => model.provider === 'Google DeepMind'),
+    () => localAIModels.filter((model) => model.vendor === 'Google DeepMind'),
     [],
   )
   const defaultModelId = availableModels[0]?.id ?? localAIModels[0]?.id ?? 1
