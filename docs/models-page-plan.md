@@ -41,8 +41,8 @@
 
 ## 6. MatchControls Integration
 - [x] Update `apps/frontend/src/components/arena/MatchControls.tsx` to consume the centralized `BuiltInAIProvider` state (via `useBuiltInAI()`) for observing download progress without duplicating download UI.
- - [ ] Ensure `MatchControls` no longer owns model discovery/download messaging; gate match start on the per-model readiness exposed by `useBuiltInAI()` so both selected models report `Ready`.
-- [ ] If models are not ready, show inline status with download progress (e.g., "Downloading Gemini Nano: 45%") and a link to the Models page for full management UI.
+- [x] Ensure `MatchControls` no longer owns model discovery/download messaging; gate match start on the per-model readiness exposed by `useBuiltInAI()` so both selected models report `Ready`.
+- [x] If models are not ready, show inline status with download progress (e.g., "Downloading Gemini Nano: 45%") and a link to the Models page for full management UI.
 - [ ] Ensure model dropdowns reflect any newly added metadata (provider, variant, status chips) without reintroducing download controls.
 
 ## 7. Testing & QA

@@ -179,6 +179,8 @@ export function MatchControls() {
 
   const isModelAReady = modelAState?.status === 'ready'
   const isModelBReady = modelBState?.status === 'ready'
+  const modelAProgress = Math.round((modelAState?.progress?.percent ?? 0) * 100)
+  const modelBProgress = Math.round((modelBState?.progress?.percent ?? 0) * 100)
 
   const isRoundCountValid = totalRounds >= 1 && totalRounds <= 100
   const isConfigurationValid = isRoundCountValid
@@ -433,9 +435,21 @@ export function MatchControls() {
                 Adjust the matchup to start—keep the round count between 1 and 100.
               </p>
             ) : !isModelAReady || !isModelBReady ? (
-              <p className="text-sm font-medium text-white/70">
-                Download models on the Models page to enable the Start button.
-              </p>
+              <div className="text-sm font-medium text-white/70">
+                <p>
+                  Download models on the Models page to enable the Start button.
+                </p>
+                {!isModelAReady && (
+                  <p className="text-xs text-white/60">
+                    {selectedModelA?.name ?? 'Model A'} downloading… {modelAProgress}%
+                  </p>
+                )}
+                {!isModelBReady && (
+                  <p className="text-xs text-white/60">
+                    {selectedModelB?.name ?? 'Model B'} downloading… {modelBProgress}%
+                  </p>
+                )}
+              </div>
             ) : (
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">
                 Ready when you are — launch the battle when the arena looks
