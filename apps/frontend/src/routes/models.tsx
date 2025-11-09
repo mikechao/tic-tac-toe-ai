@@ -125,14 +125,19 @@ function ModelCard({ modelId }: { modelId: number }) {
                   : 'Retry'}
         </RainbowButton>
       </div>
-      <div className="mt-4">
-        <RoundProgressBar value={progressPercent} isIndeterminate={isDownloading && progressPercent === 0} />
-        {isDownloading && (
-          <p className="mt-2 text-sm text-white/60">
-            Downloading… {progressPercent}%
-          </p>
-        )}
-      </div>
+      {(isDownloading || status === 'downloadable') && (
+        <div className="mt-4">
+          <RoundProgressBar
+            value={progressPercent}
+            isIndeterminate={isDownloading && progressPercent === 0}
+          />
+          {isDownloading && (
+            <p className="mt-2 text-sm text-white/60">
+              Downloading… {progressPercent}%
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
