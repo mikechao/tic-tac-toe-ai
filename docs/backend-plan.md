@@ -118,6 +118,15 @@ type RoundResultResponse = {
 - Backend always returns its own `roundId` so the UI can correlate retries; client-provided `roundId` values are treated as advisory only
 - Backend returns a `matchId` on the first submission; the UI must persist it locally and include it in subsequent rounds so all recaps for a multi-round session stay linked
 
+### Frontend SDK helper expectations
+
+- Provide a wrapper like `submitRoundResult(round: RoundResult)` that POSTs to `/api/matches/complete` and handles all bookkeeping (storing `matchId`, interpreting `idempotent`, retries)
+- First submission omits `matchId`; once the response returns `matchId`, persist it in memory + `localStorage` (`tic-tac-toe:matchId`) and include it on every subsequent call until the session finishes or the server returns `MATCH_NOT_FOUND`
+- Implement retry logic with exponential backoff (250ms, 1s, 4s) and abort after three attempts; if a retry receives `idempotent: true`, stop retrying and treat it as success
+- Bubble `ROUND_CONFLICT` errors to the UI with a friendly message (“This round was already recorded”) and clear the cached `roundId` so the recap dialog can refetch status
+- `MATCH_NOT_FOUND` should clear the cached `matchId` and force the next submission to start a new match session
+- Helper returns the parsed response so the UI can show `moveCount` and `persistedAt` immediately without another fetch
+
 ### Local Docker workflow (optional)
 
 - Spin up Postgres via `docker compose up db` (or add a dedicated service in `docker-compose.yml` with exposed port 5432 and persistent volume)
@@ -132,7 +141,7 @@ type RoundResultResponse = {
 - [x] Design the `/api/matches/complete` endpoint contract emitted by the round recap dialog
 - [x] Implement the `/api/matches/complete` Hono route (Zod validation, ID generation, persistence to `matches` + `moves`, idempotency hash)
 - [ ] Add repository + route tests covering idempotent writes, validation failures, and duplicate payload handling
-- [ ] Document the frontend SDK helper that wraps this endpoint (when to send/omit `matchId`, retry/backoff rules, how to use the `idempotent` flag)
+- [x] Document the frontend SDK helper that wraps this endpoint (when to send/omit `matchId`, retry/backoff rules, how to use the `idempotent` flag)
 
 ### 1. Xata provisioning
 
