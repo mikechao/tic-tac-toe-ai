@@ -5,12 +5,19 @@ import { RainbowButton } from '@/components/ui'
 import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
 import { localAIModels } from '@/data/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
+import { useBuiltInAI } from '@/integrations/gemini/context'
 
 export const Route = createFileRoute('/models')({
   component: ModelsRoute,
 })
 
 function ModelsRoute() {
+  const { modelStates } = useBuiltInAI()
+  const readyCount = localAIModels.filter((model) => {
+    const state = modelStates[model.id]
+    return state?.status === 'ready'
+  }).length
+
   return (
     <GridBackground className="min-h-screen" gridSize="6:6">
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-2 py-10 text-white md:px-4">
@@ -58,6 +65,28 @@ function ModelsRoute() {
             ))}
           </div>
         </div>
+        <aside className="rounded-3xl border border-emerald-400/30 bg-emerald-500/10 p-6 text-emerald-50">
+          <p className="text-xs uppercase tracking-[0.4em] text-emerald-200">
+            Arena readiness
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold">
+            {readyCount > 0
+              ? `${readyCount} model${readyCount === 1 ? '' : 's'} ready for play`
+              : 'Finish downloads to unlock on-device matches'}
+          </h2>
+          <p className="mt-3 text-sm text-emerald-50/80">
+            Once a model shows “Ready” above, reopen Match Controls and it will be available for
+            low-latency duels. If you switch browsers or Chrome profiles, come back here to recheck
+            support and resume downloads.
+          </p>
+          <p className="mt-4 text-xs uppercase tracking-[0.3em] text-emerald-200">
+            Tip
+          </p>
+          <p className="text-sm text-emerald-50/80">
+            Need to restart from scratch? Use the Retry action on any card to clear cached models and
+            trigger a fresh availability check before heading back to Arena.
+          </p>
+        </aside>
       </main>
     </GridBackground>
   )

@@ -37,7 +37,7 @@
 - [x] Add CTA button states (`Download`, `Downloading…`, `Installing…`, `Ready`, `Not Supported`) based on hook outputs.
 - [x] Show the `RoundProgressBar` under each card while `phase` is downloading or finalizing.
 - [x] Provide status messaging for unsupported browsers (e.g., Magic UI `StateMessage`) when the hook reports `NotSupported` or `Unavailable`, including the explicit `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` link called out in `docs/models-page.md`.
-- [ ] Include a sidebar callout that prompts users to launch a match once at least one model is ready.
+- [x] Include a sidebar callout that prompts users to launch a match once at least one model is ready.
 
 ## 6. MatchControls Integration
 - [ ] Update `apps/frontend/src/components/arena/MatchControls.tsx` to consume the centralized `BuiltInAIProvider` state (via `useBuiltInAI()`) for observing download progress without duplicating download UI.
