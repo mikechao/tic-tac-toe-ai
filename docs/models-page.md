@@ -17,11 +17,12 @@
 2. **Built-in AI detection**
    - Feature-detect with `const hasBuiltInAI = typeof window !== 'undefined' && 'LanguageModel' in window`.
    - On mount, call `await LanguageModel.availability(options)` to retrieve `"unavailable" | "downloadable" | "downloading" | "available"`.citeturn0search0turn0search3
-   - Cache availability per `ModelId` (even though Chrome currently exposes a single Gemini Nano download) so the UI can evolve if more models arrive.
+   - Cache availability per `ModelId` (even though Chrome currently exposes a single Gemini Nano download) so the UI can evolve if more models arrive. Leverage the shared `BuiltInAIProvider` context to store these per-model states so Arena can reuse them without visiting the models page first.
 3. **Download orchestration**
    - Require an explicit user gesture (click/tap) before invoking `LanguageModel.create({ monitor })`. Check `navigator.userActivation.isActive` before calling to satisfy Chrome’s user-activation requirement.citeturn0search0
    - Wire the `monitor` callback’s `downloadprogress` events into local state shaped as `{ receivedBytes, totalBytes, percent, phase }`.citeturn0search1
-   - When `availability` transitions to `"available"`, flip the CTA label to “Ready” and disable the button unless we need a “Reset” affordance.
+   - Route the CTA through the provider registry (`ModelProvider` implementations). For `chrome-builtin`, this calls into the shared `BuiltInAIProvider.startDownload()`—future providers (Edge, Firefox) only need to register themselves to participate without touching the models page UI.
+   - When a provider reports `"available"`, flip the CTA label to “Ready” and disable the button unless we need a “Reset” affordance.
 4. **Progress indicator parity**
    - Reuse the styling from the MatchBoard round bar (`h-2 rounded-full bg-white/10` container + gradient inner bar) to visualize download percent for each model card.
    - Provide an indeterminate shimmer after 100% while the browser extracts/loads the model (per Chrome guidance).citeturn0search1

@@ -24,7 +24,7 @@
 - [x] Add selector helpers or context methods (e.g., `getModelStatus(modelId)`, `getModelProgress(modelId)`, `getModelProvider(modelId)`) so the models page and MatchControls can subscribe to specific model progress without causing unnecessary re-renders.
 - [x] Ensure the models page CTA routes to the appropriate provider implementation based on the model's `provider` field (e.g., Chrome's `LanguageModel` API for Gemini, Edge's equivalent for Phi-3) so user-gesture gating, permission errors, and reset logic remain centralized but provider-agnostic.
 - [x] Wrap error handling in the provider's download paths with Sentry capture calls, enriching errors with contextual tags/metadata before reporting.
-- [ ] Update documentation in `docs/models-page.md` to reflect the multi-provider context approach so future work stays aligned.
+- [x] Update documentation in `docs/models-page.md` to reflect the multi-provider context approach so future work stays aligned.
 
 ## 4. Shared Progress Indicator
 - [ ] Extract the MatchBoard round progress markup into a reusable `RoundProgressBar` component while preserving the same gradient styling (match the request that download progress reuses this look).
