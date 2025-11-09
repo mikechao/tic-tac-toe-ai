@@ -4,6 +4,7 @@ import { localAIModels } from '@/data/models'
 import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { cn } from '@/lib/utils'
 import { MarkAvatar, MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
+import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
 import { MagicCard } from '@/components/ui/magic-card'
 import { useConfetti } from '@/components/ui/confetti'
 import {
@@ -631,14 +632,7 @@ export function MatchBoard() {
                     } remaining`}
               </span>
             </div>
-            <div className="mt-2 h-2 rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bbg-linear-to-r from-[#4ff2c2] via-[#f15bb5] to-[#ffb547]"
-                style={{
-                  width: `${progressPercent}%`,
-                }}
-              />
-            </div>
+            <RoundProgressBar value={progressPercent} />
           </div>
 
           <BoardGrid

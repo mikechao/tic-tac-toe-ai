@@ -27,9 +27,9 @@
 - [x] Update documentation in `docs/models-page.md` to reflect the multi-provider context approach so future work stays aligned.
 
 ## 4. Shared Progress Indicator
-- [ ] Extract the MatchBoard round progress markup into a reusable `RoundProgressBar` component while preserving the same gradient styling (match the request that download progress reuses this look).
-- [ ] Accept props for `value`, `isIndeterminate`, and optional accent classes so the component can render both match-round and download states without duplicating logic.
-- [ ] Replace the inlined MatchBoard markup with the new component and use the same component in the models page download cards to keep visual parity.
+- [x] Extract the MatchBoard round progress markup into a reusable `RoundProgressBar` component while preserving the same gradient styling (match the request that download progress reuses this look).
+- [x] Accept props for `value`, `isIndeterminate`, and optional accent classes so the component can render both match-round and download states without duplicating logic.
+- [x] Replace the inlined MatchBoard markup with the new component and use the same component in the models page download cards to keep visual parity.
 
 ## 5. `models.tsx` Route UI
 - [ ] Create a hero section that explains on-device Gemini benefits and links back to Arena.
