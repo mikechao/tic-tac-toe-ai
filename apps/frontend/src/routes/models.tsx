@@ -26,6 +26,10 @@ function ModelsPage() {
     const state = modelStates[model.id]
     return state?.status === 'ready'
   }).length
+  const hasUnsupported = localAIModels.some((model) => {
+    const state = modelStates[model.id]
+    return state?.status === 'not-supported'
+  })
 
   return (
     <GridBackground className="min-h-screen" gridSize="6:6">
@@ -57,6 +61,9 @@ function ModelsPage() {
             </ul>
           </div>
         </header>
+        {hasUnsupported ? (
+          <BuiltInAINotSupported />
+        ) : null}
         <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-6">
           <p className="text-sm uppercase tracking-[0.3em] text-white/50">
             Local Models
@@ -103,7 +110,7 @@ function ModelCard({ modelId }: { modelId: number }) {
   }
 
   if (status === 'not-supported') {
-    return <BuiltInAINotSupported onRetry={retry} />
+    return null
   }
 
   const progressPercent = progress?.percent ? Math.round(progress.percent * 100) : 0
