@@ -32,7 +32,7 @@
 - [x] Replace the inlined MatchBoard markup with the new component and use the same component in the models page download cards to keep visual parity.
 
 ## 5. `models.tsx` Route UI
-- [ ] Create a hero section that explains on-device Gemini benefits and links back to Arena.
+- [x] Create a hero section that explains on-device Gemini benefits (privacy, latency, rematch readiness) without forcing navigation away from the page.
 - [ ] Render a grid of `ModelCard`s sourced from `localAIModels`, each consuming the availability hook.
 - [ ] Add CTA button states (`Download`, `Downloading…`, `Installing…`, `Ready`, `Not Supported`) based on hook outputs.
 - [ ] Show the `RoundProgressBar` under each card while `phase` is downloading or finalizing.
