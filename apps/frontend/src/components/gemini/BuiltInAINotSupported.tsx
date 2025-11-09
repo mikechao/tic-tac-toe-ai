@@ -1,7 +1,7 @@
 import { ClipboardCopy, ExternalLink } from 'lucide-react'
 
 import { MyMagicCard, RainbowButton, useToast } from '@/components/ui'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { MagicCard } from '@/components/ui/magic-card'
 
 export function BuiltInAINotSupported({

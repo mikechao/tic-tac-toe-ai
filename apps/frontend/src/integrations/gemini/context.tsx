@@ -263,125 +263,64 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.debug('[BuiltInAIProvider] effect start', { attempt })
     let isMounted = true
-    if (!isBuiltInAISupported()) {
-      setStatus('unsupported')
-      setModel(null)
+
+    const bootstrap = async () => {
+      if (!isBuiltInAISupported()) {
+        setStatus('unsupported')
+        setModel(null)
+        setProgress(null)
+        setError(null)
+        updateModelStates(fallbackManagedIds, {
+          status: 'not-supported',
+          progress: null,
+          error: null,
+        })
+        return
+      }
+
+      setStatus('checking')
       setProgress(null)
       setError(null)
-      updateModelStates(fallbackManagedIds, {
-        status: 'not-supported',
-        progress: null,
-        error: null,
-      })
-      return () => {
-        console.debug('[BuiltInAIProvider] effect cleanup unsupported', {
-          attempt,
-        })
-      }
-    }
+      resetManagedModelStates()
 
-    setStatus('checking')
-    setProgress(null)
-    setError(null)
-    resetManagedModelStates()
-
-    getGeminiAvailability()
-      .then((availability) => {
+      try {
+        const availability = await getGeminiAvailability()
         if (!isMounted) {
           return
         }
         applyAvailabilityStateRef.current(availability)
-      })
-      .catch((err) => {
+
+        if (availability === 'available' || availability === 'available-after-download') {
+          const loadedModel = await ensureGeminiChatModel()
+          if (!isMounted) {
+            return
+          }
+          console.debug('[BuiltInAIProvider] model initialized')
+          setModel(loadedModel)
+          setStatus('ready')
+          setProgress(1)
+          updateModelStates(fallbackManagedIds, {
+            status: 'ready',
+            progress: buildProgress('completed', 1),
+            error: null,
+          })
+        }
+      } catch (err) {
         if (!isMounted) {
           return
         }
         console.warn('[BuiltInAIProvider] availability check failed', err)
         void captureDownloadErrorRef.current(err, 'availability_check_failed')
-      })
+      }
+    }
 
-    ensureGeminiChatModel({
-      onDownloadProgress: (progressValue) => {
-        if (!isMounted) return
-        setStatus('downloading')
-        setProgress(progressValue)
-        updateModelStates(fallbackManagedIds, {
-          status: 'downloading',
-          progress: buildProgress('downloading', progressValue),
-        })
-      },
-    })
-      .then((loadedModel) => {
-        if (!isMounted) return
-        console.debug('[BuiltInAIProvider] model initialized')
-        setModel(loadedModel)
-        setStatus('ready')
-        setProgress(1)
-        updateModelStates(fallbackManagedIds, {
-          status: 'ready',
-          progress: buildProgress('completed', 1),
-          error: null,
-        })
-        void getGeminiAvailability().then((availability) => {
-          if (!isMounted) return
-          applyAvailabilityStateRef.current(availability)
-        })
-      })
-      .catch((err) => {
-        if (!isMounted) return
-        if (err instanceof GeminiPermissionError) {
-          console.debug('[BuiltInAIProvider] download requires user gesture')
-          setStatus('downloadable')
-          setProgress(null)
-          setError(null)
-          updateModelStates(fallbackManagedIds, {
-            status: 'downloadable',
-            progress: null,
-            error: null,
-          })
-          void captureDownloadErrorRef.current(err, 'permission_required')
-          return
-        }
-        if (err instanceof GeminiUnavailableError) {
-          console.warn('[BuiltInAIProvider] unsupported environment', err)
-          setStatus('unsupported')
-          setModel(null)
-          setProgress(null)
-          setError(err)
-          updateModelStates(fallbackManagedIds, {
-            status: 'not-supported',
-            progress: null,
-            error: err,
-          })
-          void captureDownloadErrorRef.current(err, 'unsupported_hardware')
-          return
-        }
-        if (err instanceof GeminiInitializationError) {
-          console.error('[BuiltInAIProvider] initialization failed', err)
-          setStatus('error')
-          setError(err)
-          updateModelStates(fallbackManagedIds, {
-            status: 'error',
-            error: err,
-          })
-          void captureDownloadErrorRef.current(err, 'download_failed')
-          return
-        }
-        console.error('[BuiltInAIProvider] unexpected error', err)
-        setStatus('error')
-        setError(err as Error)
-        updateModelStates(fallbackManagedIds, {
-          status: 'error',
-          error: err as Error,
-        })
-        void captureDownloadErrorRef.current(err, 'unexpected')
-      })
+    void bootstrap()
 
     return () => {
       console.debug('[BuiltInAIProvider] effect cleanup', { attempt })
       isMounted = false
     }
-  }, [attempt])
+  }, [attempt, resetManagedModelStates])
 
   const retry = useCallback(() => {
     resetGeminiModelCache()

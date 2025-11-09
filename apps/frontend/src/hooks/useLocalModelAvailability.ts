@@ -19,7 +19,7 @@ type AvailabilityResult = {
 export function useLocalModelAvailability(
   modelId: ModelId,
 ): AvailabilityResult {
-  const { modelStates, getModelState, retry, model, startDownload } = useBuiltInAI()
+  const { modelStates, getModelState, retry, startDownload } = useBuiltInAI()
 
   const modelState = getModelState(modelId) ?? modelStates[modelId]
 
@@ -36,6 +36,10 @@ export function useLocalModelAvailability(
         const provider = getProviderForModel(modelId)
         if (!provider) {
           throw new Error(`No provider registered for model ${modelId}`)
+        }
+        if (provider.id === 'chrome-builtin') {
+          await startDownload()
+          return
         }
         await provider.startDownload()
       },
