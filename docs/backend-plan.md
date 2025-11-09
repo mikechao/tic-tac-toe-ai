@@ -150,7 +150,7 @@ type RoundResultResponse = {
 
 ### 3. Legacy cleanup
 
-- [ ] Remove obsolete D1/PlanetScale wiring from `wrangler.toml`, Terraform (if any), and docs so only Hyperdrive/Xata remain referenced
+- [x] Remove obsolete D1/PlanetScale wiring from `wrangler.toml`, Terraform (if any), and docs so only Hyperdrive/Xata remain referenced
 - [ ] Delete unused D1 scripts (`pnpm db:*` pointing at PlanetScale) or rewrite them to target Xata/Hyperdrive
 - [ ] Sweep `docs/`, `README.md`, and onboarding notes for stale instructions (e.g., D1 bindings, PlanetScale secrets) and update them to the new flow
 - [ ] Archive or migrate legacy data: export existing D1 tables, import them into Xata, and decommission the old database once verified
