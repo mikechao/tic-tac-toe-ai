@@ -6,6 +6,18 @@ import { ApiError, apiClient } from '@/lib/api-client'
 
 const COMPLETE_MATCH_PATH = '/api/matches/complete'
 const MATCH_ID_STORAGE_KEY = 'tic-tac-toe:matchId'
+export const ROUND_CONFLICT_EVENT = 'round-result:round-conflict'
+export const MATCH_NOT_FOUND_EVENT = 'round-result:match-not-found'
+export const ROUND_RESULT_ERROR_EVENT = 'round-result:submission-error'
+export const ROUND_RESULT_RETRY_REQUEST_EVENT = 'round-result:retry-requested'
+export type RoundConflictEventDetail = { matchId?: string }
+export type MatchNotFoundEventDetail = { matchId?: string }
+export type RoundResultErrorEventDetail = {
+  message: string
+  code?: string
+  status?: number
+  retryable: boolean
+}
 const BACKOFF_DELAYS_MS = [250, 1000, 4000]
 const MAX_ATTEMPTS = BACKOFF_DELAYS_MS.length + 1
 
@@ -88,11 +100,36 @@ async function postRoundResultWithRetry(
       }
       return { result: parsed }
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'MATCH_NOT_FOUND') {
-        clearMatchId()
+      if (error instanceof ApiError) {
+        if (error.code === 'MATCH_NOT_FOUND') {
+          const staleMatchId = activeMatchId
+          clearMatchId()
+          emitMatchNotFoundEvent({ matchId: staleMatchId })
+          throw error
+        }
+        if (error.code === 'ROUND_CONFLICT') {
+          emitRoundConflictEvent({ matchId: activeMatchId })
+          throw error
+        }
+
+        if (isClientError(error.status)) {
+          emitRoundResultErrorEvent({
+            message: error.message,
+            code: error.code,
+            status: error.status,
+            retryable: false,
+          })
+          throw error
+        }
       }
 
       if (attempt >= MAX_ATTEMPTS) {
+        emitRoundResultErrorEvent({
+          message: getErrorMessage(error),
+          code: error instanceof ApiError ? error.code : undefined,
+          status: error instanceof ApiError ? error.status : undefined,
+          retryable: true,
+        })
         captureRetriesExhausted(error, attempt)
         throw error
       }
@@ -173,4 +210,57 @@ function captureRetriesExhausted(error: unknown, attempts: number): void {
           })
     Sentry.captureException(normalizedError)
   })
+}
+
+function emitRoundConflictEvent(detail: RoundConflictEventDetail): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const event = new CustomEvent<RoundConflictEventDetail>(
+    ROUND_CONFLICT_EVENT,
+    {
+      detail,
+    },
+  )
+  window.dispatchEvent(event)
+}
+
+function emitMatchNotFoundEvent(detail: MatchNotFoundEventDetail): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const event = new CustomEvent<MatchNotFoundEventDetail>(
+    MATCH_NOT_FOUND_EVENT,
+    {
+      detail,
+    },
+  )
+  window.dispatchEvent(event)
+}
+
+function emitRoundResultErrorEvent(detail: RoundResultErrorEventDetail): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const event = new CustomEvent<RoundResultErrorEventDetail>(
+    ROUND_RESULT_ERROR_EVENT,
+    {
+      detail,
+    },
+  )
+  window.dispatchEvent(event)
+}
+
+function isClientError(status?: number): boolean {
+  return typeof status === 'number' && status >= 400 && status < 500
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  if (typeof error === 'string') {
+    return error
+  }
+  return 'Unexpected error while saving your round'
 }

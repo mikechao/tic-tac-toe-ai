@@ -8,6 +8,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import appCss from '../styles.css?url'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { ToastProvider } from '@/components/ui'
+import { RoundResultToastListener } from '@/components/round-results/RoundResultToastListener'
 import { Confetti } from '@/components/ui/confetti'
 
 interface RouterContext {
@@ -31,6 +32,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <>
       <HeadContent />
       <ToastProvider>
+        <RoundResultToastListener />
         <Confetti
           manualstart
           className="pointer-events-none fixed inset-0 z-50 h-screen w-screen"

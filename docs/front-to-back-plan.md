@@ -20,9 +20,9 @@
 
 ## 4. Surface backend errors to the UI
 
-4.1 [ ] Show a user-friendly toast when `ROUND_CONFLICT` is returned (“This round was already recorded”).
-4.2 [ ] For `MATCH_NOT_FOUND`, clear cached IDs and prompt the user to restart the match.
-4.3 [ ] Bubble any other 4xx/5xx errors to the UI with fallback messaging and optional retry CTA.
+4.1 [x] Show a user-friendly toast when `ROUND_CONFLICT` is returned (“This round was already recorded”).
+4.2 [x] For `MATCH_NOT_FOUND`, clear cached IDs and prompt the user to restart the match.
+4.3 [x] Bubble any other 4xx/5xx errors to the UI with fallback messaging and optional retry CTA.
 
 ## 5. Wire the recap dialog/workflow
 
