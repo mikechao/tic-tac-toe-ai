@@ -16,6 +16,7 @@ The Hugging Face model card confirms the Apache-2.0 license and 360M-parameter f
 - Transformers.js downloads weights from the Hub on first use, then stores them in the browser cache (Cache API/IndexedDB) so subsequent sessions reuse the bytes without bundling them in our repo. citeturn2search1
 - The environment module keeps `env.useBrowserCache` enabled by default, meaning our app-side integration can rely on local Cache API writes while still honoring repo rules against committing large binaries. If stricter storage is required, we can override `env.cacheDir` or `env.allowRemoteModels`, but no change is needed for default client-side caching. citeturn2search2
 - Because weights stay in per-user storage (Cache API/IndexedDB or `.cache` when running Node tooling), we avoid shipping proprietary artifacts while still guaranteeing offline reuse once downloaded. Documenting this behavior here gives product and compliance reviewers a single reference when auditing new local models.
+- `apps/frontend/src/integrations/transformers/storage.ts` now centralizes cache clearing. It deletes browser Cache API buckets with names like `@huggingface/transformers`/`transformers-js-cache` and issues `indexedDB.deleteDatabase('@huggingface/transformers')`. The provider's `reset()` method awaits this helper so retry flows start from a clean slate.
 
 ## Frontend bundler readiness (Vite)
 

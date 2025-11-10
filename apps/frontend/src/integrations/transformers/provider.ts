@@ -10,6 +10,8 @@ import type {
   ModelDownloadProgress,
 } from '@/lib/models/types'
 
+import { clearTransformersStorage } from './storage'
+
 export const TRANSFORMERS_PROVIDER_ID = 'transformers-js'
 export const TRANSFORMERS_MODEL_ID = 2 as ModelId
 export const TRANSFORMERS_MODEL_SLUG = 'HuggingFaceTB/SmolLM2-360M-Instruct'
@@ -117,6 +119,7 @@ export async function resetTransformersModel(): Promise<void> {
     workerInstance.terminate()
     workerInstance = null
   }
+  await clearTransformersStorage()
 }
 
 export function registerTransformersProvider(): void {
