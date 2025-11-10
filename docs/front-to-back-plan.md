@@ -8,9 +8,9 @@
 
 ## 2. Persist identifiers between rounds
 
-2.1 [ ] Store the first `matchId` returned by the backend in both memory and `localStorage` (e.g., key `tic-tac-toe:matchId`).
-2.2 [ ] On every subsequent helper call, read the cached `matchId`; if present, include it in the payload, otherwise treat the request as the first round.
-2.3 [ ] When the backend returns `MATCH_NOT_FOUND`, clear the cached `matchId` so the next submission restarts the session.
+2.1 [x] Store the first `matchId` returned by the backend in both memory and `localStorage` (e.g., key `tic-tac-toe:matchId`).
+2.2 [x] On every subsequent helper call, read the cached `matchId`; if present, include it in the payload, otherwise treat the request as the first round.
+2.3 [x] When the backend returns `MATCH_NOT_FOUND`, clear the cached `matchId` so the next submission restarts the session.
 
 ## 3. Implement retry & idempotency handling
 
