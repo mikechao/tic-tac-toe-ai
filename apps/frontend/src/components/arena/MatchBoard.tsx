@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { RoundResultResponse } from '@arena/schema'
 
 import { localAIModels } from '@/data/models'
 import { BoardState, type PlayerMark } from '@/lib/game/board-state'
+import { submitRoundResult } from '@/lib/round-results'
+import { buildRoundResultPayload } from '@/lib/round-results/build-round-result-payload'
 import { cn } from '@/lib/utils'
 import { MarkAvatar, MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
 import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
@@ -238,6 +241,9 @@ export function MatchBoard() {
     return localAIModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
+  const playerOneModelName = modelA?.name
+  const playerTwoModelName = modelB?.name
+
   const totalRounds = state.totalRounds
   const boardStatus = `Round ${Math.max(state.currentRound, 1)} of ${totalRounds}`
   const turnsRemaining = Math.max(0, totalRounds - state.currentRound)
@@ -250,6 +256,11 @@ export function MatchBoard() {
   const [dialogActionPending, setDialogActionPending] = useState(false)
   const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null)
   const lastDialogRoundRef = useRef<number | null>(null)
+  const lastSubmittedRoundRef = useRef<number | null>(null)
+  const roundSubmissionRef = useRef<{
+    round: number
+    promise: Promise<RoundResultResponse>
+  } | null>(null)
   const latestRoundSummary = state.roundSummaries.at(-1)
   const roundEnded = state.phase === 'betweenRounds' || state.phase === 'completed'
   const roundMoves = useMemo<MoveLogEntry[]>(() => {
@@ -354,10 +365,85 @@ export function MatchBoard() {
     })
   }
 
+  const ensureRoundResultSubmitted = useCallback(
+    async ({ rematchRequested }: { rematchRequested: boolean }) => {
+      if (!latestRoundSummary) {
+        return
+      }
+
+      const roundNumber = latestRoundSummary.round
+
+      if (lastSubmittedRoundRef.current === roundNumber) {
+        return
+      }
+
+      if (roundSubmissionRef.current?.round === roundNumber) {
+        return roundSubmissionRef.current.promise
+      }
+
+      const payload = buildRoundResultPayload({
+        summary: latestRoundSummary,
+        moves: roundMoves,
+        boardSize,
+        totalRounds,
+        playerOneModel: playerOneModelName,
+        playerTwoModel: playerTwoModelName,
+        rematchRequested,
+      })
+
+      if (!payload) {
+        console.warn('[MatchBoard] Missing round payload, skipping submission', {
+          round: roundNumber,
+        })
+        return
+      }
+
+      const submissionPromise = submitRoundResult(payload)
+        .then((result) => {
+          lastSubmittedRoundRef.current = roundNumber
+          return result
+        })
+        .finally(() => {
+          if (roundSubmissionRef.current?.round === roundNumber) {
+            roundSubmissionRef.current = null
+          }
+        })
+
+      roundSubmissionRef.current = { round: roundNumber, promise: submissionPromise }
+      return submissionPromise
+    },
+    [
+      latestRoundSummary,
+      roundMoves,
+      boardSize,
+      totalRounds,
+      playerOneModelName,
+      playerTwoModelName,
+    ],
+  )
+
+  const handleRoundDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        void ensureRoundResultSubmitted({ rematchRequested: false })
+      }
+      setRoundSummaryOpen(nextOpen)
+    },
+    [ensureRoundResultSubmitted],
+  )
+
   const handleRoundDialogAction = useCallback(async () => {
     if (hasNextRound) {
-      setRoundSummaryOpen(false)
-      nextRound()
+      setDialogActionPending(true)
+      try {
+        await ensureRoundResultSubmitted({ rematchRequested: false })
+        setRoundSummaryOpen(false)
+        nextRound()
+      } catch (error) {
+        console.error('[MatchBoard] Failed to submit round result', error)
+      } finally {
+        setDialogActionPending(false)
+      }
       return
     }
 
@@ -378,6 +464,7 @@ export function MatchBoard() {
 
     try {
       setDialogActionPending(true)
+      await ensureRoundResultSubmitted({ rematchRequested: true })
       setRoundSummaryOpen(false)
       configure(rematchConfig)
       await start()
@@ -388,6 +475,7 @@ export function MatchBoard() {
       setDialogActionPending(false)
     }
   }, [
+    ensureRoundResultSubmitted,
     hasNextRound,
     nextRound,
     modelAId,
@@ -533,7 +621,7 @@ export function MatchBoard() {
 
   return (
     <>
-      <Dialog open={roundDialogOpen} onOpenChange={setRoundSummaryOpen}>
+      <Dialog open={roundDialogOpen} onOpenChange={handleRoundDialogOpenChange}>
         {roundDialogOpen && latestRoundSummary ? (
           <DialogContent className="max-w-[90vw] sm:max-w-[90vw] border-white/15 bg-[#040716]/95 text-white">
             <DialogHeader className="gap-2">
