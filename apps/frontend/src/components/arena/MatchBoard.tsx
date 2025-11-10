@@ -254,6 +254,7 @@ export function MatchBoard() {
   const celebrationTypeRef = useRef<'fireworks' | 'sideCannons'>('sideCannons')
   const [roundSummaryOpen, setRoundSummaryOpen] = useState(false)
   const [dialogActionPending, setDialogActionPending] = useState(false)
+  const [roundSubmitPending, setRoundSubmitPending] = useState(false)
   const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null)
   const [roundSaves, setRoundSaves] = useState<Record<number, RoundResultResponse>>({})
   const lastDialogRoundRef = useRef<number | null>(null)
@@ -336,7 +337,8 @@ export function MatchBoard() {
     : null
   const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
   const rematchReady = modelAId != null && modelBId != null
-  const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
+  const dialogActionDisabled =
+    dialogActionPending || roundSubmitPending || (!hasNextRound && !rematchReady)
 
   const latestRoundBoard =
     latestRoundSummary && latestRoundSummary.round > 0
@@ -408,6 +410,7 @@ export function MatchBoard() {
         return
       }
 
+      setRoundSubmitPending(true)
       const submissionPromise = submitRoundResult(payload)
         .then((result) => {
           lastSubmittedRoundRef.current = roundNumber
@@ -421,6 +424,7 @@ export function MatchBoard() {
           if (roundSubmissionRef.current?.round === roundNumber) {
             roundSubmissionRef.current = null
           }
+          setRoundSubmitPending(false)
         })
 
       roundSubmissionRef.current = { round: roundNumber, promise: submissionPromise }
