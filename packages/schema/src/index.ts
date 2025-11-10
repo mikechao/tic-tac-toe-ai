@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+export const modelIdSchema = z.number().int().min(1)
+export type ModelId = z.infer<typeof modelIdSchema>
+
 export const roundMoveSchema = z.object({
   turnIndex: z.number().int().nonnegative(),
   cell: z.number().int().nonnegative(),

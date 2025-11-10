@@ -28,3 +28,9 @@ The Hugging Face model card confirms the Apache-2.0 license and 360M-parameter f
 - We treat Transformers.js as a WebGPU-only option for now. If `doesBrowserSupportTransformersJS()` returns `false`, the SmolLM2 card stays disabled with messaging like “Requires WebGPU-capable Chromium”; we do not fall back to `gpu`/`cpu` because CPU inference on 360M params blocks the UI and fails our UX SLAs.
 - When support is detected, we initialize the model with `{ device: 'webgpu', dtype: 'q4f16' }` to balance download size and throughput. `q4f16` keeps VRAM <2 GB and matches Xenova’s recommended quantization for SmolLM2; if the SDK exposes better auto-quantization later we can revisit.
 - Future enhancement: detect `navigator.gpu` but missing required features (e.g., `shaderF16`). If that surfaces in testing we can consider a `device: 'gpu'` fallback with a warning banner, but it remains explicitly out-of-scope for this rollout.
+
+## Catalog metadata
+
+- `apps/frontend/src/data/models.ts` now exposes a `LocalModelProvider` union (`'chrome-builtin' | 'edge-builtin' | 'transformers-js'`) plus helper fields like `estimatedDownloadSizeMB`/`notes`. Gemini Nano reports `0` MB (preinstalled), while SmolLM2 lists `~220` MB to prime upcoming UI copy.
+- The SmolLM2 record uses `ModelId = 2` and keeps the `variant` label simple for UI badges: “Transformers.js (WebGPU)”. Additional strings (e.g., vendor badges) should reuse these fields instead of embedding constants in components.
+- When we eventually surface disabled cards, `LocalAIModel.notes` should carry the “Requires WebGPU-capable Chromium” copy so other views (leaderboards, match telemetry) can stay in sync.

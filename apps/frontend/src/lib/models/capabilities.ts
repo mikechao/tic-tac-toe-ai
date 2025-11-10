@@ -1,4 +1,4 @@
-import type { BuiltInAIProvider } from '@/data/models'
+import type { LocalModelProvider } from '@/data/models'
 
 export interface ProviderCapabilities {
   supportsDownloadMonitor: boolean
@@ -14,6 +14,13 @@ const chromeCapabilities: ProviderCapabilities = {
   hasOnDeviceFallback: true,
 }
 
+const transformersCapabilities: ProviderCapabilities = {
+  supportsDownloadMonitor: true,
+  requiresUserGesture: true,
+  supportsBackgroundInstall: false,
+  hasOnDeviceFallback: false,
+}
+
 const defaults: ProviderCapabilities = {
   supportsDownloadMonitor: false,
   requiresUserGesture: false,
@@ -22,10 +29,13 @@ const defaults: ProviderCapabilities = {
 }
 
 export function getProviderCapabilities(
-  provider: BuiltInAIProvider,
+  provider: LocalModelProvider,
 ): ProviderCapabilities {
   if (provider === 'chrome-builtin') {
     return chromeCapabilities
+  }
+  if (provider === 'transformers-js') {
+    return transformersCapabilities
   }
   return defaults
 }
