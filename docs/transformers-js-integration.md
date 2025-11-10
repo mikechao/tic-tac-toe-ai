@@ -39,3 +39,8 @@ The Hugging Face model card confirms the Apache-2.0 license and 360M-parameter f
 
 - `pnpm view @built-in-ai/transformers-js peerDependencies` reports a single peer: `ai: ">=5.0.0"`. Our frontend already pins `ai` to `^5.0.87`, so we clear the peer floor with room for future 5.x patches.
 - No adapters are required—the provider APIs in the docs match AI SDK v5 semantics (`streamText`, `doesBrowserSupportTransformersJS`, etc.). If we ever upgrade to AI SDK v6+, re-run the same `pnpm view … peerDependencies` check in case the provider jumps major versions.
+
+## Provider wiring
+
+- `apps/frontend/src/integrations/transformers/provider.ts` wraps `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { device: 'webgpu' })`, exposes `detectSupport`, `checkAvailability`, `startDownload`, `reset`, and `getPrimaryModelId`, then registers itself via `registerModelProvider`. Importing it in `src/main.tsx` ensures registration happens once on app bootstrap.
+- The provider currently focuses on client-side availability + download orchestration. A dedicated `TransformersJSProvider` context (Phase 2 follow-up) will eventually own state so `useLocalModelAvailability` can show fine-grained statuses instead of the Gemini defaults.

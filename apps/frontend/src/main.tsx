@@ -4,6 +4,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import * as Sentry from '@sentry/react'
 
 import { getRouter } from './router'
+import '@/integrations/transformers/provider'
 
 const router = getRouter()
 
