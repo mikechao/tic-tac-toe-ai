@@ -25,6 +25,14 @@ function normalizeBoardSize(boardSize: number): 3 | 4 | 5 {
   return 3
 }
 
+function toSafeInt(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0
+  }
+  const rounded = Math.round(value)
+  return Number.isSafeInteger(rounded) ? rounded : 0
+}
+
 export function buildRoundResultPayload({
   summary,
   moves,
@@ -48,7 +56,7 @@ export function buildRoundResultPayload({
     0,
     timestamps.length ? finishedAtMs - Math.min(...timestamps) : 0,
   )
-  const durationMs = Math.max(summary.durationMs ?? inferredDuration, 0)
+  const durationMs = Math.max(toSafeInt(summary.durationMs ?? inferredDuration), 0)
   const startedAtMs = finishedAtMs - durationMs
 
   const winner =
@@ -76,7 +84,7 @@ export function buildRoundResultPayload({
       turnIndex: Math.max(0, entry.turn - 1),
       cell: Math.max(0, entry.moveNumber - 1),
       symbol: actorToSymbol[entry.actor],
-      elapsedMs: Math.max(0, entry.durationMs),
+      elapsedMs: Math.max(0, toSafeInt(entry.durationMs)),
     })),
     rematchRequested,
   }

@@ -32,6 +32,6 @@
 
 ## 6. Documentation & verification
 
-6.1 [ ] Document the helper usage (arguments, return value, error states) in the frontend README or data-layer docs.
+6.1 [x] Document the helper usage (arguments, return value, error states) in the frontend README or data-layer docs.
 6.2 [ ] Add unit tests or integration tests that mock the backend to cover success, idempotent retry, `ROUND_CONFLICT`, and `MATCH_NOT_FOUND` scenarios.
 6.3 [ ] Demo the full flow (play round → recap dialog save → verify DB row) before connecting to Hyperdrive/Xata.
