@@ -24,4 +24,11 @@ export default defineConfig({
     host: true,
     port: 3000,
   },
+  optimizeDeps: {
+    exclude: ['@huggingface/transformers', '@huggingface/transformers/tokenizers'],
+  },
+  assetsInclude: ['**/*.wasm'],
+  ssr: {
+    noExternal: ['@huggingface/transformers'],
+  },
 })

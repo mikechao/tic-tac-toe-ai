@@ -20,8 +20,8 @@ The Hugging Face model card confirms the Apache-2.0 license and 360M-parameter f
 ## Frontend bundler readiness (Vite)
 
 - `apps/frontend/vite.config.ts` currently uses stock Vite 5 + React plugins with no custom asset handling. Vite already supports `new URL('./worker.ts', import.meta.url)` out of the box, so the Transformers worker can live beside the provider without extra plugins; just ensure the file sits inside `src/integrations/transformers/`. 
-- WASM blobs pulled in by `@huggingface/transformers` ship as ES modules; per Vite guidance we should add `optimizeDeps.exclude: ['@huggingface/transformers']` (and the companion `@huggingface/transformers/tokenizers` package once introduced) so pre-bundling doesn't choke on their dynamic `fs` fallbacks. No `worker.loaders` override is needed because Vite in module mode already emits ESM workers, but we should document that WebGPU-only environments must run the app in browsers that expose `navigator.gpu`.
-- Action item: patch `apps/frontend/vite.config.ts` with an `optimizeDeps.exclude` array and, if transformers pulls in WASM via `new URL('*.wasm', import.meta.url)`, add `assetsInclude: ['**/*.wasm']` to be safe. We'll revisit once the provider lands, but for now there are no blockers.
+- WASM blobs pulled in by `@huggingface/transformers` ship as ES modules; per Vite guidance we added `optimizeDeps.exclude: ['@huggingface/transformers', '@huggingface/transformers/tokenizers']` and `assetsInclude: ['**/*.wasm']` so pre-bundling doesn’t choke on their dynamic `fs` fallbacks while still copying WASM artifacts. No `worker.loaders` override is needed because Vite in module mode already emits ESM workers, but we should document that WebGPU-only environments must run the app in browsers that expose `navigator.gpu`.
+- SSR builds shouldn’t attempt to externalize the Transformers dependency, so Vite now sets `ssr.noExternal = ['@huggingface/transformers']`. Combined with the worker import this keeps the bundle self-contained for our browser-only use case.
 
 ## Device & dtype strategy
 
