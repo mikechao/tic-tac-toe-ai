@@ -18,7 +18,7 @@
 - [x] Update `apps/frontend/vite.config.ts` with any required `optimizeDeps.exclude`/`ssr.noExternal` entries (e.g., `@huggingface/transformers`) or asset loaders so WASM + worker chunks load correctly, mirroring the README guidance.
 - [x] Implement a `useTransformersModel` hook that instantiates `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { worker, device, initProgressCallback })`, surfaces `availability()`/`createSessionWithProgress()`, and pushes progress events into the shared model-state map; ensure `initProgressCallback` converts the README's 0-1 `progress` value to 0-100 `percent` for `ModelDownloadProgress`.
 - [x] Research Transformers.js cache storage mechanism (likely browser IndexedDB under the `@huggingface/transformers` namespace) and implement a cache-clearing utility for the provider's `reset()` method to support retry flows.
-- [ ] Wire `startDownload` for the new provider to honor user gestures, call `createSessionWithProgress`, and update `RoundProgressBar` with `%` just like Gemini; include retry logic in the error handler that invokes the cache-clearing utility before re-attempting download.
+- [x] Wire `startDownload` for the new provider to honor user gestures, call `createSessionWithProgress`, and update `RoundProgressBar` with `%` just like Gemini; include retry logic in the error handler that invokes the cache-clearing utility before re-attempting download.
 - [ ] Capture and log download telemetry (size, duration, failures) through Sentry similarly to Gemini so ops can trace large-model issues.
 
 ## Phase 4 – Gameplay & inference integration

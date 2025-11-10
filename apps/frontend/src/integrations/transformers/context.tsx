@@ -86,6 +86,19 @@ function ensureState(state?: TransformersModelState): TransformersModelState {
   }
 }
 
+function hasActiveUserGesture(): boolean {
+  if (typeof navigator === 'undefined') {
+    return true
+  }
+  const activation = (navigator as Navigator & {
+    userActivation?: { isActive: boolean }
+  }).userActivation
+  if (!activation) {
+    return true
+  }
+  return activation.isActive
+}
+
 export function TransformersJSProvider({
   children,
 }: {
@@ -199,6 +212,17 @@ export function TransformersJSProvider({
         return
       }
 
+      if (!hasActiveUserGesture()) {
+        const permissionError = new Error('Activate the download with a click or tap.')
+        updateModelState(modelId, (current) => ({
+          ...current,
+          status: 'downloadable',
+          progress: null,
+          error: permissionError,
+        }))
+        return
+      }
+
       updateModelState(modelId, (current) => ({
         ...current,
         status: 'downloading',
@@ -206,31 +230,48 @@ export function TransformersJSProvider({
         progress: buildProgress('starting', 0),
       }))
 
-      try {
-        await startTransformersDownload({
-          onProgress: (progress) => {
+      let attempt = 0
+      while (attempt < 2) {
+        try {
+          await startTransformersDownload({
+            onProgress: (progress) => {
+              updateModelState(modelId, (current) => ({
+                ...current,
+                status: 'downloading',
+                progress,
+              }))
+            },
+          })
+
+          updateModelState(modelId, (current) => ({
+            ...current,
+            status: 'ready',
+            progress: buildProgress('completed', 1),
+            error: null,
+          }))
+          return
+        } catch (error) {
+          attempt += 1
+          await resetTransformersModel()
+          if (attempt >= 2) {
             updateModelState(modelId, (current) => ({
               ...current,
-              status: 'downloading',
-              progress,
+              status: 'error',
+              progress: buildProgress('failed', 0),
+              error:
+                error instanceof Error
+                  ? error
+                  : new Error('Transformers download failed'),
             }))
-          },
-        })
-
-        updateModelState(modelId, (current) => ({
-          ...current,
-          status: 'ready',
-          progress: buildProgress('completed', 1),
-          error: null,
-        }))
-      } catch (error) {
-        await resetTransformersModel()
-        updateModelState(modelId, (current) => ({
-          ...current,
-          status: 'error',
-          progress: buildProgress('failed', 0),
-          error: error instanceof Error ? error : new Error('Transformers download failed'),
-        }))
+            return
+          }
+          updateModelState(modelId, (current) => ({
+            ...current,
+            status: 'downloading',
+            progress: buildProgress('starting', 0),
+            error: null,
+          }))
+        }
       }
     },
     [managedModelIds, updateModelState],
