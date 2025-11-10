@@ -179,8 +179,8 @@ export function MatchControls() {
 
   const isModelAReady = modelAState?.status === 'ready'
   const isModelBReady = modelBState?.status === 'ready'
-  const modelAProgress = Math.round((modelAState?.progress?.percent ?? 0) * 100)
-  const modelBProgress = Math.round((modelBState?.progress?.percent ?? 0) * 100)
+  const modelAProgress = Math.round(modelAState?.progress?.percent ?? 0)
+  const modelBProgress = Math.round(modelBState?.progress?.percent ?? 0)
 
   const isRoundCountValid = totalRounds >= 1 && totalRounds <= 100
   const isConfigurationValid = isRoundCountValid

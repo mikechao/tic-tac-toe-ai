@@ -83,8 +83,9 @@ function createInitialModelStates(): Record<ModelId, GeminiModelState> {
 
 function buildProgress(
   phase: ModelDownloadProgress['phase'],
-  percent: number,
+  fraction: number,
 ): ModelDownloadProgress {
+  const percent = Math.min(100, Math.max(0, Math.round(fraction * 100)))
   return {
     phase,
     percent,
@@ -464,13 +465,7 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
       startDownload: async (options) => {
         await ensureGeminiChatModel({
           onDownloadProgress: (progressValue) => {
-            options?.onProgress?.({
-              phase: 'downloading',
-              percent: progressValue,
-              receivedBytes: null,
-              totalBytes: null,
-              lastUpdatedAt: Date.now(),
-            })
+            options?.onProgress?.(buildProgress('downloading', progressValue))
           },
         })
       },

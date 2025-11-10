@@ -33,7 +33,7 @@ function GeminiBoundary({ children }: { children: React.ReactNode }) {
   const percentProgress = useMemo(() => {
     const percent = progress?.percent
     if (percent == null) return null
-    return Math.min(100, Math.max(0, Math.round(percent * 100)))
+    return Math.min(100, Math.max(0, Math.round(percent)))
   }, [progress])
 
   if (status === 'ready') {

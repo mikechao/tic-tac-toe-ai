@@ -21,7 +21,7 @@ import {
   startTransformersDownload,
 } from './provider'
 
-type TransformersModelState = {
+export type TransformersModelState = {
   status: BuiltInAIState
   progress: ModelDownloadProgress | null
   error: Error | null
@@ -35,6 +35,10 @@ interface TransformersContextValue {
   startDownload: (modelId: ModelId) => Promise<void>
   retry: () => void
   primaryModelId: ModelId | null
+  mutateModelState: (
+    modelId: ModelId,
+    updater: (current: TransformersModelState) => TransformersModelState,
+  ) => void
 }
 
 const TransformersJSContext = createContext<TransformersContextValue | undefined>(undefined)
@@ -59,8 +63,9 @@ function createInitialStates(): Record<ModelId, TransformersModelState> {
 
 function buildProgress(
   phase: ModelDownloadProgress['phase'],
-  percent: number,
+  fraction: number,
 ): ModelDownloadProgress {
+  const percent = Math.min(100, Math.max(0, Math.round(fraction * 100)))
   return {
     phase,
     percent,
@@ -263,6 +268,7 @@ export function TransformersJSProvider({
       startDownload,
       retry,
       primaryModelId,
+      mutateModelState: updateModelState,
     }),
     [
       modelStates,
@@ -271,6 +277,7 @@ export function TransformersJSProvider({
       getModelProgress,
       startDownload,
       retry,
+      updateModelState,
     ],
   )
 

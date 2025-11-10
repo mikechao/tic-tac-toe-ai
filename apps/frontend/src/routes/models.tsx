@@ -116,7 +116,7 @@ function ModelCard({ modelId }: { modelId: number }) {
     return null
   }
 
-  const progressPercent = progress?.percent ? Math.round(progress.percent * 100) : 0
+  const progressPercent = progress?.percent != null ? Math.round(progress.percent) : 0
   const isDownloading = status === 'downloading' || status === 'installing'
 
   return (

@@ -12,7 +12,7 @@ import type {
 
 export const TRANSFORMERS_PROVIDER_ID = 'transformers-js'
 export const TRANSFORMERS_MODEL_ID = 2 as ModelId
-const TRANSFORMERS_MODEL_SLUG = 'HuggingFaceTB/SmolLM2-360M-Instruct'
+export const TRANSFORMERS_MODEL_SLUG = 'HuggingFaceTB/SmolLM2-360M-Instruct'
 
 type TransformersAvailability = 'unavailable' | 'downloadable' | 'available'
 
@@ -36,13 +36,23 @@ function getWorker(): Worker | undefined {
   return workerInstance
 }
 
+export function getTransformersWorker(): Worker | undefined {
+  return getWorker()
+}
+
+export function createTransformersModel(options?: {
+  initProgressCallback?: (payload: { progress?: number }) => void
+}) {
+  return transformersJS(TRANSFORMERS_MODEL_SLUG, {
+    ...defaultModelOptions,
+    worker: getWorker(),
+    ...options,
+  })
+}
+
 function getModel() {
   if (!cachedModel) {
-    const worker = getWorker()
-    cachedModel = transformersJS(TRANSFORMERS_MODEL_SLUG, {
-      ...defaultModelOptions,
-      worker,
-    })
+    cachedModel = createTransformersModel()
   }
   return cachedModel
 }
@@ -60,8 +70,9 @@ function mapAvailability(state: TransformersAvailability): BuiltInAIState {
 
 function buildProgress(
   phase: ModelDownloadProgress['phase'],
-  percent: number,
+  fraction: number,
 ): ModelDownloadProgress {
+  const percent = Math.min(100, Math.max(0, Math.round(fraction * 100)))
   return {
     phase,
     percent,
