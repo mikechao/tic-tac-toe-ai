@@ -1,10 +1,10 @@
 # Plan: Add HuggingFaceTB/SmolLM2-360M-Instruct
 
 ## Phase 1 – Requirements & capability gating
-- [ ] Re-read `docs/built-in-ai-transformer-README.md` sections **Basic Usage**, **Advanced Usage (Web Worker)**, and **Download Progress Tracking** to lock in the recommended `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { device: "webgpu" })` defaults, worker scaffolding, and progress APIs.
-- [ ] Confirm the Hugging Face model card (size, license, context window) and ensure its weights are cached locally by Transformers.js without violating repository policies; capture decisions in a project-owned note such as `docs/transformers-js-integration.md` (or append to `docs/TECH_STACK.md`) instead of the upstream library README.
-- [ ] Audit the Vite frontend bundler (`apps/frontend/vite.config.ts`) for Web Worker + WebGPU readiness (i.e., `new URL('./worker.ts', import.meta.url)` support & wasm asset handling) and list any needed config toggles (e.g., `worker.loaders`, `optimizeDeps.exclude`).
-- [ ] Decide on device fallbacks (`webgpu` → `gpu` → `cpu`) and dtype (`q4f16` vs `fp16`) strategies so the provider can degrade gracefully when `doesBrowserSupportTransformersJS()` returns false.
+- [x] Re-read `docs/built-in-ai-transformer-README.md` sections **Basic Usage**, **Advanced Usage (Web Worker)**, and **Download Progress Tracking** to lock in the recommended `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { device: "webgpu" })` defaults, worker scaffolding, and progress APIs.
+- [x] Confirm the Hugging Face model card (size, license, context window) and ensure its weights are cached locally by Transformers.js without violating repository policies; capture decisions in a project-owned note such as `docs/transformers-js-integration.md` (or append to `docs/TECH_STACK.md`) instead of the upstream library README.
+- [x] Audit the Vite frontend bundler (`apps/frontend/vite.config.ts`) for Web Worker + WebGPU readiness (i.e., `new URL('./worker.ts', import.meta.url)` support & wasm asset handling) and list any needed config toggles (e.g., `worker.loaders`, `optimizeDeps.exclude`).
+- [x] Decide on device fallbacks (`webgpu` → `gpu` → `cpu`) and dtype (`q4f16` vs `fp16`) strategies so the provider can degrade gracefully when `doesBrowserSupportTransformersJS()` returns false.
 
 ## Phase 2 – Data & provider scaffolding
 - [ ] Extend `apps/frontend/src/data/models.ts`: replace `BuiltInAIProvider` type with a broader `LocalModelProvider` union like `'chrome-builtin' | 'edge-builtin' | 'transformers-js'` (since Transformers.js is not a browser built-in provider), append the SmolLM2 record using the next available `ModelId` (coordinate with backend and update `packages/schema/src/index.ts` if `ModelId` is a defined type/enum, likely `2`), and expose helper metadata like estimated download size for UI copy.
