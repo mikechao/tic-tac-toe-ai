@@ -40,7 +40,6 @@ export function registerApiRoutes(
 
   app.post('/matches/complete', async (c) => {
     const { runtimeEnv } = c.var
-
     let payload: unknown
     try {
       payload = await c.req.json()
@@ -95,6 +94,7 @@ export function registerApiRoutes(
           {
             logMessage: 'Database error while persisting round result',
             context: { error: extractErrorMessage(error.cause ?? error) },
+            details: extractErrorMessage(error.cause ?? error),
           },
         )
       }
@@ -106,6 +106,7 @@ export function registerApiRoutes(
         {
           logMessage: 'Unexpected error while saving round result',
           context: { error: extractErrorMessage(error) },
+          details: extractErrorMessage(error),
         },
       )
     }

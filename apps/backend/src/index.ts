@@ -13,14 +13,9 @@ type AppVariables = AuthVariables & LoggerVariables & RuntimeVariables
 
 const app = new Hono<{ Bindings: WorkerEnv; Variables: AppVariables }>()
 
-app.use('*', async (c, next) => {
-  const env = validateEnv(c.env)
-  c.set('runtimeEnv', env)
-  const logger = initLogger()
-  c.set('logger', logger)
-
+app.use('*', (c, next) => {
   const corsHandler = cors({
-    origin: env.FRONTEND_ORIGIN ?? '*',
+    origin: c.env.FRONTEND_ORIGIN ?? '*',
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
@@ -28,6 +23,14 @@ app.use('*', async (c, next) => {
   })
 
   return corsHandler(c, next)
+})
+
+app.use('*', async (c, next) => {
+  const env = validateEnv(c.env)
+  c.set('runtimeEnv', env)
+  const logger = initLogger()
+  c.set('logger', logger)
+  return next()
 })
 
 const authMiddleware = createAuthMiddleware()

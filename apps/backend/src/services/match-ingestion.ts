@@ -107,6 +107,10 @@ export async function recordRoundResult(
       idempotent: false,
     }
   } catch (error) {
+    // Temporary debug logging to trace backend 500s during dev
+    console.error('[recordRoundResult] failed to persist round', {
+      message: error instanceof Error ? error.message : error,
+    })
     if (isUniqueViolation(error)) {
       const [existing] = await db
         .select({
@@ -182,7 +186,7 @@ function normalizePayload(payload: RoundResultPayload) {
     playerOneModel,
     playerTwoModel,
     opponentType,
-    difficulty: payload.difficulty ?? null,
+    difficulty: payload.difficulty ?? 'standard',
     boardSize: payload.boardSize,
     currentRound: payload.currentRound,
     totalRounds: payload.totalRounds,

@@ -14,8 +14,8 @@ const cfVersionMetadataSchema = z
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   ENVIRONMENT: z.enum(['development', 'staging', 'production']).optional(),
-  SENTRY_DSN: z.string().url().optional(),
-  FRONTEND_ORIGIN: z.string().url().optional(),
+  SENTRY_DSN: z.string().url().optional().or(z.literal('')).transform(val => val || undefined),
+  FRONTEND_ORIGIN: z.string().url().optional().or(z.literal('')).transform(val => val || undefined),
   CF_VERSION_METADATA: cfVersionMetadataSchema,
 })
 

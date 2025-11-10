@@ -11,6 +11,7 @@ export function registerRoutes(
   app: Hono<{ Bindings: WorkerEnv; Variables: AppVariables }>,
 ): void {
   app.get('/health', (c) => c.json({ status: 'ok' }))
+  app.options('*', (c) => c.body(null, 204))
 
   const api = new Hono<{
     Bindings: WorkerEnv

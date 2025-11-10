@@ -15,7 +15,7 @@ export const matches = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     matchId: uuid('match_id').notNull(),
-    roundId: uuid('round_id').notNull().defaultRandom(),
+    roundId: uuid('round_id').notNull().defaultRandom().unique(),
     playerOneModel: text('player_one_model').notNull(),
     playerTwoModel: text('player_two_model').notNull(),
     opponentType: text('opponent_type').notNull(),
@@ -34,7 +34,6 @@ export const matches = pgTable(
     createdAt: timestamptz('created_at').defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex('matches_round_id_unique').on(table.roundId),
     uniqueIndex('matches_recap_hash_unique').on(table.recapHash),
     uniqueIndex('matches_match_round_unique').on(
       table.matchId,
