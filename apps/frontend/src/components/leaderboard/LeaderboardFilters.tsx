@@ -12,6 +12,7 @@ const timeRanges = [
 const modelFamilies = [
   { value: 'all', label: 'All models' },
   { value: 'gemini', label: 'Gemini' },
+  { value: 'smollm2', label: 'SmolLM2' },
   { value: 'gpt', label: 'GPT' },
   { value: 'claude', label: 'Claude' },
   { value: 'mistral', label: 'Mistral' },

@@ -140,6 +140,7 @@ export const demoLeaderboardEntries: DemoLeaderboardViewEntry[] =
 
 export const demoLeaderboardHighlights = [
   'Gemini Nano extends win streak to 5 after edging GPT-4o mini',
+  'SmolLM2 defends WebGPU crown with 8 straight on-device wins',
   'Mistral Large unlocks new opening repertoire in latest patch',
   'Claude Haiku defense rate tops 70% across last 20 matches',
   'Gemini Flash ties with Nano – rematch scheduled for October 6',

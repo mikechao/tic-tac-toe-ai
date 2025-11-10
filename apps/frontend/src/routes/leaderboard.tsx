@@ -17,22 +17,26 @@ export const Route = createFileRoute('/leaderboard')({
 function LeaderboardRoute() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d')
   const [family, setFamily] = useState<
-    'all' | 'gemini' | 'gpt' | 'claude' | 'mistral'
+    'all' | 'gemini' | 'smollm2' | 'gpt' | 'claude' | 'mistral'
   >('all')
 
   const filteredEntries = useMemo(() => {
     if (family === 'all') return demoLeaderboardEntries
 
     const matchesFamily = {
-      gemini: (name: string) => name.toLowerCase().includes('gemini'),
-      gpt: (name: string) => name.toLowerCase().includes('gpt'),
-      claude: (name: string) => name.toLowerCase().includes('claude'),
-      mistral: (name: string) => name.toLowerCase().includes('mistral'),
+      gemini: (entry: typeof demoLeaderboardEntries[number]) =>
+        entry.model?.name.toLowerCase().includes('gemini') ?? false,
+      smollm2: (entry: typeof demoLeaderboardEntries[number]) =>
+        entry.model?.provider === 'transformers-js',
+      gpt: (entry: typeof demoLeaderboardEntries[number]) =>
+        entry.model?.name.toLowerCase().includes('gpt') ?? false,
+      claude: (entry: typeof demoLeaderboardEntries[number]) =>
+        entry.model?.name.toLowerCase().includes('claude') ?? false,
+      mistral: (entry: typeof demoLeaderboardEntries[number]) =>
+        entry.model?.name.toLowerCase().includes('mistral') ?? false,
     }[family]
 
-    return demoLeaderboardEntries.filter((entry) =>
-      entry.model ? matchesFamily(entry.model.name) : false,
-    )
+    return demoLeaderboardEntries.filter((entry) => matchesFamily(entry))
   }, [family])
 
   const totalMatches = useMemo(

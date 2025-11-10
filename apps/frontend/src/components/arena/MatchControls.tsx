@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ModelId } from '@arena/schema'
 
-import { localAIModels } from '@/data/models'
+import { getProviderMeta, localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import {
   BentoCard,
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useBuiltInAI } from '@/integrations/gemini/context'
+import { useTransformersJS } from '@/integrations/transformers/context'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { MatchConfig } from '@/lib/game/game-loop'
 
@@ -102,16 +103,36 @@ function ModelSelect({
   )
 }
 
+function ModelDetails({ model }: { model: ModelOption }) {
+  const providerMeta = getProviderMeta(model.provider)
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+      <p className="text-sm font-semibold text-white">{model.vendor}</p>
+      <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+        {model.variant}
+      </p>
+      <span
+        className={cn(
+          'mt-3 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-white',
+          providerMeta.badgeClass,
+        )}
+      >
+        {providerMeta.label}
+      </span>
+      {model.notes ? (
+        <p className="mt-2 text-xs text-white/60">{model.notes}</p>
+      ) : null}
+    </div>
+  )
+}
+
 export function MatchControls() {
   const { getModelState } = useBuiltInAI()
   const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
 
-  const availableModels = useMemo(
-    () => localAIModels.filter((model) => model.vendor === 'Google DeepMind'),
-    [],
-  )
-  const defaultModelId = availableModels[0]?.id ?? localAIModels[0]?.id ?? 1
+  const availableModels = useMemo(() => localAIModels, [])
+  const defaultModelId = availableModels[0]?.id ?? 1
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
   const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
@@ -174,8 +195,9 @@ export function MatchControls() {
     [modelBId],
   )
 
-  const modelAState = getModelState(modelAId)
-  const modelBState = getModelState(modelBId)
+  const { getModelState: getTransformersState } = useTransformersJS()
+  const modelAState = getTransformersState(modelAId) ?? getModelState(modelAId)
+  const modelBState = getTransformersState(modelBId) ?? getModelState(modelBId)
 
   const isModelAReady = modelAState?.status === 'ready'
   const isModelBReady = modelBState?.status === 'ready'
@@ -192,8 +214,8 @@ export function MatchControls() {
 
   const statusMessage =
     !isModelAReady || !isModelBReady
-      ? 'Download models from the Models page before starting'
-      : 'Gemini Nano ready for local inference'
+      ? 'Download local models from the Models page before starting'
+      : 'Local models ready for inference'
   const isBusyPhase = state.phase === 'initializing' || state.phase === 'running'
   const [isStarting, setIsStarting] = useState(false)
   const busyLabel =
@@ -314,9 +336,7 @@ export function MatchControls() {
                   options={availableModels}
                   disabled={isBusyPhase}
                 />
-                {selectedModelA ? (
-                  <p className="sr-only">{selectedModelA.variant}</p>
-                ) : null}
+                {selectedModelA ? <ModelDetails model={selectedModelA} /> : null}
               </CardContent>
             </MagicCard>
           </div>
@@ -343,9 +363,7 @@ export function MatchControls() {
                   options={availableModels}
                   disabled={isBusyPhase}
                 />
-                {selectedModelB ? (
-                  <p className="sr-only">{selectedModelB.variant}</p>
-                ) : null}
+                {selectedModelB ? <ModelDetails model={selectedModelB} /> : null}
               </CardContent>
             </MagicCard>
           </div>

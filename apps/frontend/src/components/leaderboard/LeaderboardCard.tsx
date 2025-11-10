@@ -3,6 +3,7 @@ import type {
   DemoLeaderboardViewEntry,
   RecentResult,
 } from '@/data/demo.leaderboard'
+import { getProviderMeta } from '@/data/models'
 import { cn } from '@/lib/utils'
 
 const resultColor: Record<RecentResult, string> = {
@@ -25,7 +26,9 @@ export function LeaderboardCard({
 }) {
   const modelName = entry.model?.name ?? `Model ${entry.modelId}`
   const variant = entry.model?.variant ?? 'Variant TBD'
-  const provider = entry.model?.provider ?? 'Unknown provider'
+  const providerMeta = entry.model
+    ? getProviderMeta(entry.model.provider)
+    : { label: 'Unknown provider', badgeClass: 'border-white/20 bg-white/10 text-white/60' }
   const opponentName =
     entry.opponent?.name ?? `Model ${entry.lastMatchup.opponentId}`
 
@@ -39,8 +42,13 @@ export function LeaderboardCard({
           <h3 className="font-display text-xl leading-tight">{modelName}</h3>
           <p className="text-sm text-white/60">{variant}</p>
         </div>
-        <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
-          {provider}
+        <span
+          className={cn(
+            'rounded-full border px-3 py-1 text-xs uppercase tracking-[0.3em] text-white',
+            providerMeta.badgeClass,
+          )}
+        >
+          {providerMeta.label}
         </span>
       </header>
 

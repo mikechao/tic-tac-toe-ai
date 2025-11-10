@@ -22,7 +22,7 @@
 - [x] Capture and log download telemetry (size, duration, failures) through Sentry similarly to Gemini so ops can trace large-model issues.
 
 ## Phase 4 – Gameplay & inference integration
-- [ ] Update arena UI consumers (`MatchControls`, `MatchBoard`, `MatchTelemetry`, leaderboard demo data) to surface the SmolLM2 option, ensuring vendor badges, tooltips, and opponent filters understand the new provider.
+- [x] Update arena UI consumers (`MatchControls`, `MatchBoard`, `MatchTelemetry`, leaderboard demo data) to surface the SmolLM2 option, ensuring vendor badges, tooltips, and opponent filters understand the new provider.
 - [ ] Implement inference plumbing: when the SmolLM2 model is selected, call `streamText`/`generateText` with the initialized Transformers.js instance (entirely client-side). If `doesBrowserSupportTransformersJS()` is false, disable or gray out the model with a “WebGPU required” (or “slow CPU fallback”) message instead of attempting a backend fallback.
 - [ ] Ensure match result payloads include the new `player*Model` strings so backend persistence + analytics can differentiate Gemini vs SmolLM2 (update any schema enums or type guards if applicable).
 - [ ] Add guardrails for resource usage (e.g., limit concurrent matches, expose a “model busy” toast) since Transformers.js can tie up the main thread without a worker.

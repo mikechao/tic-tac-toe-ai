@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RoundResultResponse } from '@arena/schema'
 
-import { localAIModels } from '@/data/models'
+import { getProviderMeta, localAIModels } from '@/data/models'
 import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { submitRoundResult } from '@/lib/round-results'
 import { buildRoundResultPayload } from '@/lib/round-results/build-round-result-payload'
@@ -149,16 +149,14 @@ function getActiveTurnText(
 
 function PlayerBadge({
   title,
-  name,
-  variant,
+  model,
   mark,
   accentClass,
   isActive,
   stats,
 }: {
   title: string
-  name: string
-  variant: string
+  model?: (typeof localAIModels)[number]
   mark: 'X' | 'O'
   accentClass: string
   isActive?: boolean
@@ -171,6 +169,9 @@ function PlayerBadge({
   const wins = stats?.wins ?? 0
   const losses = stats?.losses ?? 0
   const ties = stats?.ties ?? 0
+  const providerMeta = model ? getProviderMeta(model.provider) : null
+  const name = model?.name ?? 'Model'
+  const variant = model?.variant ?? 'On-device variant'
 
   return (
     <Card className="border-none bg-transparent p-0 shadow-none">
@@ -191,13 +192,23 @@ function PlayerBadge({
           </CardTitle>
         </CardHeader>
         <CardContent className="px-2 py-2">
-          <div className="flex items-center gap-2.5">
-            <MarkAvatar mark={mark} className={accentClass} />
-            <div className="flex flex-col">
-              <span className="text-base font-semibold text-white">{name}</span>
-              <span className="text-xs text-white/60">{variant}</span>
+            <div className="flex items-center gap-2.5">
+              <MarkAvatar mark={mark} className={accentClass} />
+              <div className="flex flex-col">
+                <span className="text-base font-semibold text-white">{name}</span>
+                <span className="text-xs text-white/60">{variant}</span>
+                {providerMeta ? (
+                  <span
+                    className={cn(
+                      'mt-1 w-fit rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.3em] text-white',
+                      providerMeta.badgeClass,
+                    )}
+                  >
+                    {providerMeta.label}
+                  </span>
+                ) : null}
+              </div>
             </div>
-          </div>
         </CardContent>
         <CardFooter className="border-t border-white/10 px-5 pt-1! pb-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
           <div className="flex flex-wrap gap-4">
@@ -705,8 +716,7 @@ export function MatchBoard() {
             <div className="grid gap-3 sm:grid-cols-2">
               <PlayerBadge
                 title="Player 1"
-                name={modelA?.name ?? 'Model A'}
-                variant={modelA?.variant ?? 'On-device prototype'}
+                model={modelA}
                 mark="X"
                 accentClass="bg-[#4ff2c2]/30 border border-[#4ff2c2]/50"
                 isActive={activeMark === 'X'}
@@ -718,8 +728,7 @@ export function MatchBoard() {
               />
               <PlayerBadge
                 title="Player 2"
-                name={modelB?.name ?? 'Model B'}
-                variant={modelB?.variant ?? 'Experimental release'}
+                model={modelB}
                 mark="O"
                 accentClass="bg-[#f15bb5]/25 border border-[#f15bb5]/45"
                 isActive={activeMark === 'O'}

@@ -16,6 +16,30 @@ export interface LocalAIModel {
   notes?: string
 }
 
+type ProviderMeta = {
+  label: string
+  badgeClass: string
+}
+
+const providerMetaMap: Record<LocalModelProvider, ProviderMeta> = {
+  'chrome-builtin': {
+    label: 'Chrome Built-In',
+    badgeClass: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/40',
+  },
+  'edge-builtin': {
+    label: 'Edge Built-In',
+    badgeClass: 'bg-sky-500/15 text-sky-200 border-sky-400/40',
+  },
+  'transformers-js': {
+    label: 'Transformers.js (WebGPU)',
+    badgeClass: 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/40',
+  },
+}
+
+export function getProviderMeta(provider: LocalModelProvider): ProviderMeta {
+  return providerMetaMap[provider]
+}
+
 export const localAIModels: LocalAIModel[] = [
   {
     id: 1,

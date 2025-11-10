@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { localAIModels } from '@/data/models'
+import { getProviderMeta, localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
@@ -91,6 +91,38 @@ export function MatchTelemetry() {
         ? modelB
         : undefined
 
+  const ModelChip = ({
+    label,
+    model,
+  }: {
+    label: string
+    model?: (typeof localAIModels)[number]
+  }) => {
+    if (!model) {
+      return (
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/50">
+          {label}: TBD
+        </span>
+      )
+    }
+    const providerMeta = getProviderMeta(model.provider)
+    return (
+      <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.3em] text-white/70">
+        <span className="font-semibold text-white/90">{label}</span>
+        <span>{model.name}</span>
+        <span className="text-white/50">{model.variant}</span>
+        <span
+          className={cn(
+            'rounded-full border px-2 py-0.5 text-[10px] text-white',
+            providerMeta.badgeClass,
+          )}
+        >
+          {providerMeta.label}
+        </span>
+      </span>
+    )
+  }
+
   if (!hasConfiguredMatch) {
     return (
       <MyMagicCard
@@ -139,6 +171,10 @@ export function MatchTelemetry() {
           <p className="text-sm text-white/70">
             Countdown and streak insights update in real time while models duel.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <ModelChip label="Player 1" model={modelA} />
+            <ModelChip label="Player 2" model={modelB} />
+          </div>
         </header>
 
         <div className="grid gap-4 sm:grid-cols-3">
