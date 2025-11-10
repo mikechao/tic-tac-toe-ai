@@ -14,9 +14,9 @@
 
 ## 3. Implement retry & idempotency handling
 
-3.1 [ ] Wrap POST attempts with exponential backoff (recommended delays: 250 ms, 1 s, 4 s) and stop after three tries.
-3.2 [ ] If a retry receives a `200`/`201` with `idempotent: true`, treat the save as complete and halt further retries.
-3.3 [ ] Log or surface telemetry when retries exhaust without success so we can monitor flaky networks.
+3.1 [x] Wrap POST attempts with exponential backoff (recommended delays: 250 ms, 1 s, 4 s) and stop after three tries.
+3.2 [x] If a retry receives a `200`/`201` with `idempotent: true`, treat the save as complete and halt further retries.
+3.3 [x] Log or surface telemetry when retries exhaust without success so we can monitor flaky networks.
 
 ## 4. Surface backend errors to the UI
 
