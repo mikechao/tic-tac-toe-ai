@@ -43,4 +43,4 @@ The Hugging Face model card confirms the Apache-2.0 license and 360M-parameter f
 ## Provider wiring
 
 - `apps/frontend/src/integrations/transformers/provider.ts` wraps `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { device: 'webgpu' })`, exposes `detectSupport`, `checkAvailability`, `startDownload`, `reset`, and `getPrimaryModelId`, then registers itself via `registerModelProvider`. Importing it in `src/main.tsx` ensures registration happens once on app bootstrap.
-- The provider currently focuses on client-side availability + download orchestration. A dedicated `TransformersJSProvider` context (Phase 2 follow-up) will eventually own state so `useLocalModelAvailability` can show fine-grained statuses instead of the Gemini defaults.
+- `apps/frontend/src/integrations/transformers/context.tsx` implements `TransformersJSProvider` / `useTransformersJS`, mirroring the Gemini context but scoped to transformer-backed models. It tracks per-model status, errors, and `ModelDownloadProgress`, feeds those into `useLocalModelAvailability`, and hooks into the provider helpers so UI cards stay in sync with download/availability events.

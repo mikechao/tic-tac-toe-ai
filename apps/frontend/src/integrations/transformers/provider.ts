@@ -10,8 +10,8 @@ import type {
   ModelDownloadProgress,
 } from '@/lib/models/types'
 
-const TRANSFORMERS_PROVIDER_ID = 'transformers-js'
-const TRANSFORMERS_MODEL_ID = 2 as ModelId
+export const TRANSFORMERS_PROVIDER_ID = 'transformers-js'
+export const TRANSFORMERS_MODEL_ID = 2 as ModelId
 const TRANSFORMERS_MODEL_SLUG = 'HuggingFaceTB/SmolLM2-360M-Instruct'
 
 type TransformersAvailability = 'unavailable' | 'downloadable' | 'available'
@@ -54,7 +54,11 @@ function buildProgress(
   }
 }
 
-async function checkAvailability(): Promise<BuiltInAIState> {
+export function detectTransformersSupport(): boolean {
+  return doesBrowserSupportTransformersJS()
+}
+
+export async function checkTransformersAvailability(): Promise<BuiltInAIState> {
   if (!doesBrowserSupportTransformersJS()) {
     return 'not-supported'
   }
@@ -62,7 +66,7 @@ async function checkAvailability(): Promise<BuiltInAIState> {
   return mapAvailability(availability as TransformersAvailability)
 }
 
-async function startDownload(options?: {
+export async function startTransformersDownload(options?: {
   onProgress?: (progress: ModelDownloadProgress) => void
 }): Promise<void> {
   if (!doesBrowserSupportTransformersJS()) {
@@ -79,7 +83,7 @@ async function startDownload(options?: {
   options?.onProgress?.(buildProgress('completed', 1))
 }
 
-async function reset(): Promise<void> {
+export async function resetTransformersModel(): Promise<void> {
   cachedModel = null
 }
 
@@ -90,10 +94,10 @@ export function registerTransformersProvider(): void {
 
   registerModelProvider({
     id: TRANSFORMERS_PROVIDER_ID,
-    detectSupport: () => doesBrowserSupportTransformersJS(),
-    checkAvailability,
-    startDownload,
-    reset,
+    detectSupport: detectTransformersSupport,
+    checkAvailability: checkTransformersAvailability,
+    startDownload: startTransformersDownload,
+    reset: resetTransformersModel,
     getPrimaryModelId: () => TRANSFORMERS_MODEL_ID,
   })
 

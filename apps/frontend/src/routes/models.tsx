@@ -6,6 +6,7 @@ import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
 import { localAIModels } from '@/data/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { BuiltInAIProvider, useBuiltInAI } from '@/integrations/gemini/context'
+import { TransformersJSProvider } from '@/integrations/transformers/context'
 import { BuiltInAINotSupported } from '@/components/gemini/BuiltInAINotSupported'
 
 export const Route = createFileRoute('/models')({
@@ -14,9 +15,11 @@ export const Route = createFileRoute('/models')({
 
 function ModelsRoute() {
   return (
-    <BuiltInAIProvider>
-      <ModelsPage />
-    </BuiltInAIProvider>
+    <TransformersJSProvider>
+      <BuiltInAIProvider>
+        <ModelsPage />
+      </BuiltInAIProvider>
+    </TransformersJSProvider>
   )
 }
 
