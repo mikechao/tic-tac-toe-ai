@@ -34,3 +34,8 @@ The Hugging Face model card confirms the Apache-2.0 license and 360M-parameter f
 - `apps/frontend/src/data/models.ts` now exposes a `LocalModelProvider` union (`'chrome-builtin' | 'edge-builtin' | 'transformers-js'`) plus helper fields like `estimatedDownloadSizeMB`/`notes`. Gemini Nano reports `0` MB (preinstalled), while SmolLM2 lists `~220` MB to prime upcoming UI copy.
 - The SmolLM2 record uses `ModelId = 2` and keeps the `variant` label simple for UI badges: “Transformers.js (WebGPU)”. Additional strings (e.g., vendor badges) should reuse these fields instead of embedding constants in components.
 - When we eventually surface disabled cards, `LocalAIModel.notes` should carry the “Requires WebGPU-capable Chromium” copy so other views (leaderboards, match telemetry) can stay in sync.
+
+## Dependency alignment
+
+- `pnpm view @built-in-ai/transformers-js peerDependencies` reports a single peer: `ai: ">=5.0.0"`. Our frontend already pins `ai` to `^5.0.87`, so we clear the peer floor with room for future 5.x patches.
+- No adapters are required—the provider APIs in the docs match AI SDK v5 semantics (`streamText`, `doesBrowserSupportTransformersJS`, etc.). If we ever upgrade to AI SDK v6+, re-run the same `pnpm view … peerDependencies` check in case the provider jumps major versions.
