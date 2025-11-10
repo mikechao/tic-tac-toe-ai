@@ -1,5 +1,3 @@
-import type { MatchStatusResource } from '@arena/schema'
-
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://127.0.0.1:8787'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -80,5 +78,3 @@ export const apiClient = {
   post: <TResponse, TBody = unknown>(path: string, body: TBody) =>
     request<TResponse, TBody>('POST', path, { body }),
 }
-
-export type SessionResponse = { session: MatchStatusResource }
