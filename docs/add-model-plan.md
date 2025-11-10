@@ -19,7 +19,7 @@
 - [x] Implement a `useTransformersModel` hook that instantiates `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { worker, device, initProgressCallback })`, surfaces `availability()`/`createSessionWithProgress()`, and pushes progress events into the shared model-state map; ensure `initProgressCallback` converts the README's 0-1 `progress` value to 0-100 `percent` for `ModelDownloadProgress`.
 - [x] Research Transformers.js cache storage mechanism (likely browser IndexedDB under the `@huggingface/transformers` namespace) and implement a cache-clearing utility for the provider's `reset()` method to support retry flows.
 - [x] Wire `startDownload` for the new provider to honor user gestures, call `createSessionWithProgress`, and update `RoundProgressBar` with `%` just like Gemini; include retry logic in the error handler that invokes the cache-clearing utility before re-attempting download.
-- [ ] Capture and log download telemetry (size, duration, failures) through Sentry similarly to Gemini so ops can trace large-model issues.
+- [x] Capture and log download telemetry (size, duration, failures) through Sentry similarly to Gemini so ops can trace large-model issues.
 
 ## Phase 4 – Gameplay & inference integration
 - [ ] Update arena UI consumers (`MatchControls`, `MatchBoard`, `MatchTelemetry`, leaderboard demo data) to surface the SmolLM2 option, ensuring vendor badges, tooltips, and opponent filters understand the new provider.

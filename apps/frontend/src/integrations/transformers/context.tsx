@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react'
+import * as Sentry from '@sentry/react'
 import type { ModelId } from '@arena/schema'
 
 import { localAIModels } from '@/data/models'
@@ -65,7 +66,7 @@ function buildProgress(
   phase: ModelDownloadProgress['phase'],
   fraction: number,
 ): ModelDownloadProgress {
-  const percent = Math.min(100, Math.max(0, Math.round(fraction * 100)))
+  const percent = Math.min(100, Math.max(0, Math.round((fraction ?? 0) * 100)))
   return {
     phase,
     percent,
@@ -73,6 +74,55 @@ function buildProgress(
     totalBytes: null,
     lastUpdatedAt: Date.now(),
   }
+}
+
+type DownloadOutcome = 'success' | 'failure' | 'blocked'
+
+function captureTransformersDownloadTelemetry(
+  modelId: ModelId,
+  payload: {
+    outcome: DownloadOutcome
+    durationMs?: number
+    attempt: number
+    error?: unknown
+    reason?: string
+  },
+): void {
+  const meta = localAIModels.find((model) => model.id === modelId)
+
+  Sentry.withScope((scope) => {
+    scope.setTag('model.id', String(modelId))
+    scope.setTag('model.provider', meta?.provider ?? 'transformers-js')
+    scope.setTag('model.vendor', meta?.vendor ?? 'unknown')
+    scope.setTag('transformers.download.outcome', payload.outcome)
+    if (payload.reason) {
+      scope.setTag('transformers.download.reason', payload.reason)
+    }
+    scope.setExtra('download.attempt', payload.attempt)
+    if (payload.durationMs != null) {
+      scope.setExtra('download.durationMs', payload.durationMs)
+    }
+    if (meta?.estimatedDownloadSizeMB != null) {
+      scope.setExtra('model.estimatedDownloadSizeMB', meta.estimatedDownloadSizeMB)
+    }
+
+    if (payload.outcome === 'success') {
+      Sentry.captureMessage('transformers_download_success', 'info')
+      return
+    }
+
+    const normalizedError =
+      payload.error instanceof Error
+        ? payload.error
+        : new Error(payload.reason ?? 'Transformers download failure')
+
+    if (payload.outcome === 'blocked') {
+      Sentry.captureMessage(normalizedError.message, 'warning')
+      return
+    }
+
+    Sentry.captureException(normalizedError)
+  })
 }
 
 function ensureState(state?: TransformersModelState): TransformersModelState {
@@ -97,6 +147,13 @@ function hasActiveUserGesture(): boolean {
     return true
   }
   return activation.isActive
+}
+
+function now(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now()
+  }
+  return Date.now()
 }
 
 export function TransformersJSProvider({
@@ -220,6 +277,12 @@ export function TransformersJSProvider({
           progress: null,
           error: permissionError,
         }))
+        captureTransformersDownloadTelemetry(modelId, {
+          outcome: 'blocked',
+          attempt: 0,
+          reason: 'user_gesture_required',
+          error: permissionError,
+        })
         return
       }
 
@@ -230,9 +293,11 @@ export function TransformersJSProvider({
         progress: buildProgress('starting', 0),
       }))
 
+      const startTime = now()
       let attempt = 0
       while (attempt < 2) {
         try {
+          attempt += 1
           await startTransformersDownload({
             onProgress: (progress) => {
               updateModelState(modelId, (current) => ({
@@ -249,9 +314,13 @@ export function TransformersJSProvider({
             progress: buildProgress('completed', 1),
             error: null,
           }))
+          captureTransformersDownloadTelemetry(modelId, {
+            outcome: 'success',
+            durationMs: now() - startTime,
+            attempt,
+          })
           return
         } catch (error) {
-          attempt += 1
           await resetTransformersModel()
           if (attempt >= 2) {
             updateModelState(modelId, (current) => ({
@@ -263,6 +332,14 @@ export function TransformersJSProvider({
                   ? error
                   : new Error('Transformers download failed'),
             }))
+            captureTransformersDownloadTelemetry(modelId, {
+              outcome: 'failure',
+              durationMs: now() - startTime,
+              attempt,
+              error,
+              reason:
+                error instanceof Error ? error.message : 'Transformers download failed',
+            })
             return
           }
           updateModelState(modelId, (current) => ({
