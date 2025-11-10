@@ -2,9 +2,9 @@
 
 ## 1. Build the round-result SDK helper
 
-1.1 [ ] Create `submitRoundResult` (or similar) inside the frontend data layer that formats the payload per `RoundResult` schema and POSTs to `/api/matches/complete`.
-1.2 [ ] Ensure the helper omits `matchId` on the first round submission and attaches it once the backend response includes it.
-1.3 [ ] Parse the JSON response and return `{ matchId, roundId, moveCount, persistedAt, idempotent }` to the caller.
+1.1 [x] Create `submitRoundResult` (or similar) inside the frontend data layer that formats the payload per `RoundResult` schema and POSTs to `/api/matches/complete`.
+1.2 [x] Ensure the helper omits `matchId` on the first round submission and attaches it once the backend response includes it.
+1.3 [x] Parse the JSON response and return `{ matchId, roundId, moveCount, persistedAt, idempotent }` to the caller.
 
 ## 2. Persist identifiers between rounds
 
