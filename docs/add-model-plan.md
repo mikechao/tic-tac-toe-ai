@@ -14,7 +14,7 @@
 - [x] Add workspace dependency wiring (`pnpm add -w @built-in-ai/transformers-js`) plus any required type packages, and verify lockfile + Turbo scopes stay consistent.
 
 ## Phase 3 – Download lifecycle & worker plumbing
-- [ ] Add `apps/frontend/src/integrations/transformers/worker.ts` using the README's `TransformersJSWorkerHandler` example and update Vite to include it in the bundle.
+- [x] Add `apps/frontend/src/integrations/transformers/worker.ts` using the README's `TransformersJSWorkerHandler` example and update Vite to include it in the bundle.
 - [ ] Update `apps/frontend/vite.config.ts` with any required `optimizeDeps.exclude`/`ssr.noExternal` entries (e.g., `@huggingface/transformers`) or asset loaders so WASM + worker chunks load correctly, mirroring the README guidance.
 - [ ] Implement a `useTransformersModel` hook that instantiates `transformersJS("HuggingFaceTB/SmolLM2-360M-Instruct", { worker, device, initProgressCallback })`, surfaces `availability()`/`createSessionWithProgress()`, and pushes progress events into the shared model-state map; ensure `initProgressCallback` converts the README's 0-1 `progress` value to 0-100 `percent` for `ModelDownloadProgress`.
 - [ ] Research Transformers.js cache storage mechanism (likely browser IndexedDB under the `@huggingface/transformers` namespace) and implement a cache-clearing utility for the provider's `reset()` method to support retry flows.

@@ -22,10 +22,27 @@ const defaultModelOptions = {
 
 let cachedModel: ReturnType<typeof transformersJS> | null = null
 let isRegistered = false
+let workerInstance: Worker | null = null
+
+function getWorker(): Worker | undefined {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+  if (!workerInstance) {
+    workerInstance = new Worker(new URL('./worker.ts', import.meta.url), {
+      type: 'module',
+    })
+  }
+  return workerInstance
+}
 
 function getModel() {
   if (!cachedModel) {
-    cachedModel = transformersJS(TRANSFORMERS_MODEL_SLUG, defaultModelOptions)
+    const worker = getWorker()
+    cachedModel = transformersJS(TRANSFORMERS_MODEL_SLUG, {
+      ...defaultModelOptions,
+      worker,
+    })
   }
   return cachedModel
 }
@@ -85,6 +102,10 @@ export async function startTransformersDownload(options?: {
 
 export async function resetTransformersModel(): Promise<void> {
   cachedModel = null
+  if (workerInstance) {
+    workerInstance.terminate()
+    workerInstance = null
+  }
 }
 
 export function registerTransformersProvider(): void {
