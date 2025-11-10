@@ -27,7 +27,7 @@
 ## 5. Wire the recap dialog/workflow
 
 5.1 [x] Invoke the helper when the recap dialog is confirmed/dismissed, passing the latest board data, winner, and round metadata.
-5.2 [ ] Use the helper response to update the recap UI immediately (e.g., show saved timestamp, move count) without another fetch.
+5.2 [x] Use the helper response to update the recap UI immediately (e.g., show saved timestamp, move count) without another fetch.
 5.3 [ ] Disable the recap confirm button while a submission is in flight to prevent duplicate requests.
 
 ## 6. Documentation & verification

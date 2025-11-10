@@ -255,6 +255,7 @@ export function MatchBoard() {
   const [roundSummaryOpen, setRoundSummaryOpen] = useState(false)
   const [dialogActionPending, setDialogActionPending] = useState(false)
   const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null)
+  const [roundSaves, setRoundSaves] = useState<Record<number, RoundResultResponse>>({})
   const lastDialogRoundRef = useRef<number | null>(null)
   const lastSubmittedRoundRef = useRef<number | null>(null)
   const roundSubmissionRef = useRef<{
@@ -324,6 +325,15 @@ export function MatchBoard() {
   const player1Name = modelA?.name ?? 'Model A'
   const player2Name = modelB?.name ?? 'Model B'
   const dialogScoreLine = `Player 1 (${player1Name}) W: ${scoreboard.modelA} L: ${scoreboard.modelB} T: ${scoreboard.ties} • Player 2 (${player2Name}) W: ${scoreboard.modelB} L: ${scoreboard.modelA} T: ${scoreboard.ties}`
+  const latestRoundSave = latestRoundSummary
+    ? roundSaves[latestRoundSummary.round]
+    : undefined
+  const savedTimestampLabel = latestRoundSave
+    ? `Saved ${new Date(latestRoundSave.persistedAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`
+    : null
   const roundDialogOpen = roundSummaryOpen && Boolean(latestRoundSummary)
   const rematchReady = modelAId != null && modelBId != null
   const dialogActionDisabled = dialogActionPending || (!hasNextRound && !rematchReady)
@@ -401,6 +411,10 @@ export function MatchBoard() {
       const submissionPromise = submitRoundResult(payload)
         .then((result) => {
           lastSubmittedRoundRef.current = roundNumber
+          setRoundSaves((current) => ({
+            ...current,
+            [roundNumber]: result,
+          }))
           return result
         })
         .finally(() => {
@@ -651,9 +665,14 @@ export function MatchBoard() {
               </div>
             </div>
             <DialogFooter className="mt-4 w-full items-center justify-between gap-3 sm:flex">
-              <span className="text-xs uppercase tracking-[0.3em] text-white/60">
-                {dialogScoreLine}
-              </span>
+              <div className="flex flex-col gap-1 text-xs uppercase tracking-[0.3em] text-white/60">
+                <span>{dialogScoreLine}</span>
+                {savedTimestampLabel ? (
+                  <span className="text-[10px] uppercase tracking-[0.35em] text-white/50">
+                    {savedTimestampLabel}
+                  </span>
+                ) : null}
+              </div>
               <RainbowButton
                 onClick={() => {
                   void handleRoundDialogAction()
