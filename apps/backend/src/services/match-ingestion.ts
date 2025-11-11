@@ -295,6 +295,15 @@ function isUniqueViolation(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) {
     return false
   }
-  const maybeError = error as { code?: string }
-  return maybeError.code === '23505'
+  const maybeError = error as { code?: string; cause?: unknown }
+  // Check if the error itself has the code
+  if (maybeError.code === '23505') {
+    return true
+  }
+  // Check if the cause has the code (wrapped by Drizzle)
+  if (typeof maybeError.cause === 'object' && maybeError.cause !== null) {
+    const maybeCause = maybeError.cause as { code?: string }
+    return maybeCause.code === '23505'
+  }
+  return false
 }

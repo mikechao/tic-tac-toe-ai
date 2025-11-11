@@ -71,7 +71,7 @@ function ensureMatchIdLoaded() {
   }
 }
 
-function clearMatchId() {
+export function clearMatchId() {
   activeMatchId = undefined
 
   if (typeof window === 'undefined') {
@@ -108,7 +108,9 @@ async function postRoundResultWithRetry(
           throw error
         }
         if (error.code === 'ROUND_CONFLICT') {
-          emitRoundConflictEvent({ matchId: activeMatchId })
+          const conflictingMatchId = activeMatchId
+          clearMatchId()
+          emitRoundConflictEvent({ matchId: conflictingMatchId })
           throw error
         }
 

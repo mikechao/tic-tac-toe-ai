@@ -1,6 +1,7 @@
 import type { Move, PlayerMark } from './board-state'
 import { BoardState } from './board-state'
 import { MatchLog, type MoveLogEntry } from './match-log'
+import { clearMatchId } from '../round-results'
 
 export type GameLoopPhase =
   | 'idle'
@@ -733,6 +734,7 @@ export function createGameLoopController(
     validateConfig(nextConfig)
     config = nextConfig
     matchLog.clear()
+    clearMatchId()
     dispatch({ type: 'CONFIGURE', config: nextConfig })
   }
 
