@@ -130,7 +130,6 @@ export function MatchControls() {
   const { getModelState } = useBuiltInAI()
   const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
-  const transformersBusyToastShown = useRef(false)
 
   const availableModels = useMemo(() => localAIModels, [])
   const defaultModelId = availableModels[0]?.id ?? 1
@@ -250,7 +249,7 @@ export function MatchControls() {
         showToast({
           title: 'Model busy',
           description: 'SmolLM2 is still processing its previous move.',
-          variant: 'info',
+          variant: 'default',
         })
       }
       return
@@ -502,15 +501,3 @@ export function MatchControls() {
     </MyMagicCard>
   )
 }
-  useEffect(() => {
-    if (isTransformersBusy && !transformersBusyToastShown.current) {
-      showToast({
-        title: 'Model busy',
-        description: 'SmolLM2 is finishing its current move. Please wait for it to complete.',
-        variant: 'info',
-      })
-      transformersBusyToastShown.current = true
-    } else if (!isTransformersBusy) {
-      transformersBusyToastShown.current = false
-    }
-  }, [isTransformersBusy, showToast])
