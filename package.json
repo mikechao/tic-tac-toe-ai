@@ -20,6 +20,6 @@
     "@commitlint/cli": "^19.4.1",
     "@commitlint/config-conventional": "^19.4.1",
     "dotenv": "^17.2.3",
-    "turbo": "2.6.0"
+    "turbo": "2.6.1"
   }
 }
