@@ -26,7 +26,7 @@
 - [x] Implement inference plumbing: when the SmolLM2 model is selected, call `streamText`/`generateText` with the initialized Transformers.js instance (entirely client-side). If `doesBrowserSupportTransformersJS()` is false, disable or gray out the model with a “WebGPU required” (or “slow CPU fallback”) message instead of attempting a backend fallback.
 - [x] Ensure match result payloads include the new `player*Model` strings so backend persistence + analytics can differentiate Gemini vs SmolLM2 (update any schema enums or type guards if applicable).
 - [x] Add guardrails for resource usage (e.g., limit concurrent matches, expose a “model busy” toast) since Transformers.js can tie up the main thread without a worker.
-- [ ] Update `docs/component-architecture.md` (or a new architecture subsection) to document how the Gemini and Transformers.js providers coexist, where contexts are mounted, and how arena components select between them.
+- [x] Update `docs/component-architecture.md` (or a new architecture subsection) to document how the Gemini and Transformers.js providers coexist, where contexts are mounted, and how arena components select between them.
 
 ## Phase 5 – Validation, docs, and rollout
 - [ ] Add Vitest coverage for the provider layer (mock `transformersJS`) plus React tests that verify the Models page shows SmolLM2 download states and the retry button routes through the new provider, then run an integration test (or manual harness) that exercises `streamText` inside the arena game loop to ensure moves stream correctly end-to-end.

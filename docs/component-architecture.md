@@ -14,6 +14,11 @@ fit together today and where new pages or components can plug in.
     so React Query and TRPC hooks are available anywhere inside the tree.
   - `setupRouterSsrQueryIntegration` keeps the router and query client in sync
     for server-side rendering and hydration.
+  - November 2025 update: the `Wrap` stack now nests `PreferencesProvider`,
+    `LiveRegionProvider`, **`TransformersJSProvider`**, then `GameLoopProvider`.
+    This ensures both Gemini (Prompt API) and Transformers.js share a single
+    client-side registry so arena components can query/download status without
+    mounting duplicate contexts.
 - `src/routes/__root.tsx`
   - Defines the root layout the router renders for every page. It sets up
     `<html>` scaffolding, links shared styles from `src/styles.css`, renders the
@@ -41,6 +46,32 @@ fit together today and where new pages or components can plug in.
 - Devtools helpers in `src/integrations/tanstack-query/` supply the
   `TanstackQuery.Provider` wrapper and renderable panel definition consumed by
   the root layout.
+
+### Local AI Providers
+
+- `integrations/gemini/context.tsx`
+  - Owns the Gemini Nano Prompt API state machine. It registers the Chrome-built
+    provider via `registerModelProvider`, listens for availability/download
+    events, feeds progress into `useLocalModelAvailability`, and exposes
+    `useBuiltInAI()`/`useBuiltInAIModel()` for arena views.
+- `integrations/transformers/provider.ts`
+  - Wraps `@built-in-ai/transformers-js`, instantiates the SmolLM2 worker, and
+    registers the `'transformers-js'` provider so the shared registry knows how
+    to start downloads, reset caches, and report availability.
+- `integrations/transformers/context.tsx`
+  - Mirrors the Gemini context but scopes state to Transformers.js models. It
+    tracks download status/progress, exposes `startDownload`/`retry`, and now
+    keeps an `isInferenceActive` flag so the game loop can guard against
+    overlapping SmolLM2 turns.
+- `hooks/useTransformersModel.ts`
+  - Convenience hook that lazily loads the Transformers.js model, wires the
+    worker and `initProgressCallback`, exposes `createSessionWithProgress`, and
+    toggles the shared `isInferenceActive` flag.
+
+All arena routes (MatchControls, MatchBoard, MatchTelemetry, etc.) consume the
+contexts via `useBuiltInAI()` for Gemini-specific state and `useTransformersJS()`
+for SmolLM2 state. `useLocalModelAvailability` fans out to whichever provider a
+model references so UI status lines remain unified.
 
 ## Routing Structure
 
