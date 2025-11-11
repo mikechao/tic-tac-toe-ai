@@ -130,13 +130,39 @@ export function MatchControls() {
   const { getModelState } = useBuiltInAI()
   const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
+  const {
+    getModelState: getTransformersState,
+    isInferenceActive: transformersInferenceActive,
+  } = useTransformersJS()
 
-  const availableModels = useMemo(() => localAIModels, [])
+  const availableModels = useMemo(() => {
+    return localAIModels.filter((model) => {
+      const modelState = getTransformersState(model.id) ?? getModelState(model.id)
+      return modelState?.status === 'ready'
+    })
+  }, [getModelState, getTransformersState])
+  
   const defaultModelId = availableModels[0]?.id ?? 1
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
   const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
   const [roundCount, setRoundCount] = useState<number>(5)
+
+  // Ensure selected models are always available in the dropdown
+  useEffect(() => {
+    if (availableModels.length === 0) return
+    
+    const modelAAvailable = availableModels.some((m) => m.id === modelAId)
+    const modelBAvailable = availableModels.some((m) => m.id === modelBId)
+    
+    if (!modelAAvailable) {
+      setModelAId(availableModels[0].id)
+    }
+    if (!modelBAvailable) {
+      setModelBId(availableModels[0].id)
+    }
+  }, [availableModels, modelAId, modelBId])
+
   const totalRounds = clamp(
     Number.isFinite(roundCount) ? roundCount : 1,
     1,
@@ -195,10 +221,6 @@ export function MatchControls() {
     [modelBId],
   )
 
-  const {
-    getModelState: getTransformersState,
-    isInferenceActive: transformersInferenceActive,
-  } = useTransformersJS()
   const modelAState = getTransformersState(modelAId) ?? getModelState(modelAId)
   const modelBState = getTransformersState(modelBId) ?? getModelState(modelBId)
 
