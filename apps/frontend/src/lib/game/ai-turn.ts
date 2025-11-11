@@ -1,4 +1,4 @@
-import { generateObject } from 'ai'
+import { generateObject, generateText } from 'ai'
 import { z } from 'zod'
 
 import type { BoardState, Move, PlayerMark } from './board-state'
@@ -131,6 +131,7 @@ type ModelResolver = () => Promise<unknown>
 type ProviderMetadata = {
   id: string
   label: string
+  supportsStructuredOutput?: boolean
 }
 
 async function requestMoveWithResolver(
@@ -181,22 +182,81 @@ async function requestMoveWithResolver(
     const controller = mergeAbortSignals(request.abortSignal, timeoutMs)
 
     try {
-      const result = await generateObject({
-        model: model as any,
-        schema: moveResponseSchema,
-        prompt: currentPrompt,
-        temperature: request.temperature ?? 0.1,
-        abortSignal: controller.signal,
-        experimental_telemetry: {
-          isEnabled: true,
-          recordInputs: true,
-          recordOutputs: true,
-        }
-      })
-        .finally(() => {
-          controller.dispose()
+      const supportsStructuredOutput = provider.supportsStructuredOutput ?? true
+      
+      let object: z.infer<typeof moveResponseSchema>
+      let rawResponse: unknown
+
+      if (supportsStructuredOutput) {
+        // Use generateObject for models that support structured output (e.g., Gemini Nano)
+        const result = await generateObject({
+          model: model as any,
+          schema: moveResponseSchema,
+          prompt: currentPrompt,
+          temperature: request.temperature ?? 0.1,
+          abortSignal: controller.signal,
+          experimental_telemetry: {
+            isEnabled: true,
+            recordInputs: true,
+            recordOutputs: true,
+          }
         })
-      const { object } = result
+        
+        controller.dispose()
+        object = result.object
+        rawResponse = result.response.body
+      } else {
+        // Use generateText for models that don't support structured output (e.g., TransformersJS)
+        const result = await generateText({
+          model: model as any,
+          prompt: currentPrompt,
+          temperature: request.temperature ?? 0.1,
+          abortSignal: controller.signal,
+          experimental_telemetry: {
+            isEnabled: true,
+            recordInputs: true,
+            recordOutputs: true,
+          }
+        })
+
+        controller.dispose()
+        rawResponse = result.response.body
+        console.log('[AI Turn] Text response received', result.text)
+
+        // Parse JSON from text response
+        try {
+          const textResponse = result.text.trim()
+          // Try to extract JSON from the response if it's wrapped in markdown code blocks
+          const jsonMatch = textResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || 
+                           textResponse.match(/(\{[\s\S]*\})/)
+          
+          const jsonText = jsonMatch ? jsonMatch[1] : textResponse
+          const parsed = JSON.parse(jsonText)
+          object = moveResponseSchema.parse(parsed)
+        } catch (parseError) {
+          console.error('[AI Turn] Failed to parse text response as JSON', {
+            error: parseError,
+            text: result.text,
+          })
+          const finishedAt = typeof performance !== 'undefined'
+            ? performance.now()
+            : Date.now()
+          const durationMs = finishedAt - startedAt
+          
+          lastError = {
+            ok: false,
+            reason: 'invalid-response',
+            message: `Failed to parse response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+            raw: result.response.body,
+            durationMs,
+            startedAt,
+            finishedAt,
+          }
+          currentPrompt = `Previous response was not valid JSON. Respond ONLY with valid JSON in format: { "nextMove": number, "rationale": string }.\n${buildPrompt(request, asciiBoard)}`
+          continue
+        }
+      }
+
       const finishedAt = typeof performance !== 'undefined'
         ? performance.now()
         : Date.now()
@@ -210,7 +270,7 @@ async function requestMoveWithResolver(
           ok: false,
           reason: 'invalid-response',
           message: `Model selected occupied cell ${object.nextMove}.`,
-          raw: result.response.body,
+          raw: rawResponse,
           durationMs,
           startedAt,
           finishedAt,
@@ -230,7 +290,7 @@ async function requestMoveWithResolver(
         move,
         cellNumber: object.nextMove,
         rationale: object.rationale,
-        raw: result.response.body,
+        raw: rawResponse,
         durationMs,
         startedAt,
         finishedAt,
@@ -289,6 +349,7 @@ export async function requestGeminiMove(
   return requestMoveWithResolver(request, ensureGeminiChatModel, {
     id: 'chrome-builtin',
     label: 'Gemini Nano',
+    supportsStructuredOutput: true,
   })
 }
 
@@ -299,5 +360,6 @@ export async function requestTransformersMove(
   return requestMoveWithResolver(request, ensureModel, {
     id: 'transformers-js',
     label: 'SmolLM2',
+    supportsStructuredOutput: false,
   })
 }

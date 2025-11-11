@@ -254,7 +254,9 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
     })()
 
     return () => {
-      if (!abortController.signal.aborted) {
+      // Only abort if no turn is currently in flight
+      // If a turn is in flight, let it complete naturally or abort itself
+      if (!abortController.signal.aborted && !turnInFlightRef.current) {
         abortController.abort()
       }
     }
