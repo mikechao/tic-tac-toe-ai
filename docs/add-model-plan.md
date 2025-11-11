@@ -24,7 +24,7 @@
 ## Phase 4 – Gameplay & inference integration
 - [x] Update arena UI consumers (`MatchControls`, `MatchBoard`, `MatchTelemetry`, leaderboard demo data) to surface the SmolLM2 option, ensuring vendor badges, tooltips, and opponent filters understand the new provider.
 - [x] Implement inference plumbing: when the SmolLM2 model is selected, call `streamText`/`generateText` with the initialized Transformers.js instance (entirely client-side). If `doesBrowserSupportTransformersJS()` is false, disable or gray out the model with a “WebGPU required” (or “slow CPU fallback”) message instead of attempting a backend fallback.
-- [ ] Ensure match result payloads include the new `player*Model` strings so backend persistence + analytics can differentiate Gemini vs SmolLM2 (update any schema enums or type guards if applicable).
+- [x] Ensure match result payloads include the new `player*Model` strings so backend persistence + analytics can differentiate Gemini vs SmolLM2 (update any schema enums or type guards if applicable).
 - [ ] Add guardrails for resource usage (e.g., limit concurrent matches, expose a “model busy” toast) since Transformers.js can tie up the main thread without a worker.
 - [ ] Update `docs/component-architecture.md` (or a new architecture subsection) to document how the Gemini and Transformers.js providers coexist, where contexts are mounted, and how arena components select between them.
 

@@ -252,8 +252,16 @@ export function MatchBoard() {
     return localAIModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
-  const playerOneModelName = modelA?.name
-  const playerTwoModelName = modelB?.name
+  const formatModelLabel = (model: (typeof localAIModels)[number] | undefined): string => {
+    if (!model) {
+      return 'unknown-model'
+    }
+    const providerMeta = getProviderMeta(model.provider)
+    return `${model.name} (${providerMeta.label})`
+  }
+
+  const playerOneModelLabel = formatModelLabel(modelA)
+  const playerTwoModelLabel = formatModelLabel(modelB)
 
   const totalRounds = state.totalRounds
   const boardStatus = `Round ${Math.max(state.currentRound, 1)} of ${totalRounds}`
@@ -409,8 +417,8 @@ export function MatchBoard() {
         moves: roundMoves,
         boardSize,
         totalRounds,
-        playerOneModel: playerOneModelName,
-        playerTwoModel: playerTwoModelName,
+        playerOneModel: playerOneModelLabel,
+        playerTwoModel: playerTwoModelLabel,
         rematchRequested,
       })
 
@@ -446,8 +454,8 @@ export function MatchBoard() {
       roundMoves,
       boardSize,
       totalRounds,
-      playerOneModelName,
-      playerTwoModelName,
+      playerOneModelLabel,
+      playerTwoModelLabel,
     ],
   )
 
