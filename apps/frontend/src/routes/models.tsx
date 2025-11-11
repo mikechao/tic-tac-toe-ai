@@ -21,15 +21,13 @@ function ModelsRoute() {
 }
 
 function ModelsPage() {
-  const { modelStates } = useBuiltInAI()
+  const { modelStates, status: builtInAIStatus } = useBuiltInAI()
   const readyCount = localAIModels.filter((model) => {
     const state = modelStates[model.id]
     return state?.status === 'ready'
   }).length
-  const hasUnsupported = localAIModels.some((model) => {
-    const state = modelStates[model.id]
-    return state?.status === 'not-supported'
-  })
+  // Only show "not supported" warning if browser Built-in AI is unsupported AND no models are ready
+  const shouldShowNotSupported = builtInAIStatus === 'unsupported' && readyCount === 0
 
   return (
     <GridBackground className="min-h-screen" gridSize="6:6">
@@ -61,7 +59,7 @@ function ModelsPage() {
             </ul>
           </div>
         </header>
-        {hasUnsupported ? (
+        {shouldShowNotSupported ? (
           <BuiltInAINotSupported />
         ) : null}
         <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-6">
