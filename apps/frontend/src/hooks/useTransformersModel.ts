@@ -26,7 +26,7 @@ function buildProgress(
 }
 
 export function useTransformersModel(modelId: ModelId = TRANSFORMERS_MODEL_ID) {
-  const { mutateModelState } = useTransformersJS()
+  const { mutateModelState, isInferenceActive, setInferenceActive } = useTransformersJS()
   const modelRef = useRef<ReturnType<typeof createTransformersModel> | null>(null)
 
   const emitProgress = useCallback(
@@ -83,8 +83,17 @@ export function useTransformersModel(modelId: ModelId = TRANSFORMERS_MODEL_ID) {
       checkAvailability,
       createSessionWithProgress,
       reset,
+      isInferenceActive,
+      setInferenceActive,
     }),
-    [checkAvailability, createSessionWithProgress, ensureModel, reset],
+    [
+      checkAvailability,
+      createSessionWithProgress,
+      ensureModel,
+      reset,
+      isInferenceActive,
+      setInferenceActive,
+    ],
   )
 
   return value

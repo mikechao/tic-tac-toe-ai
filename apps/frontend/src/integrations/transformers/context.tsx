@@ -40,6 +40,8 @@ interface TransformersContextValue {
     modelId: ModelId,
     updater: (current: TransformersModelState) => TransformersModelState,
   ) => void
+  isInferenceActive: boolean
+  setInferenceActive: (active: boolean) => void
 }
 
 const TransformersJSContext = createContext<TransformersContextValue | undefined>(undefined)
@@ -164,6 +166,7 @@ export function TransformersJSProvider({
   const [modelStates, setModelStates] = useState<Record<ModelId, TransformersModelState>>(
     createInitialStates,
   )
+  const [isInferenceActive, setInferenceActive] = useState(false)
 
   const applyToManagedModels = useCallback(
     (
@@ -387,6 +390,8 @@ export function TransformersJSProvider({
       retry,
       primaryModelId,
       mutateModelState: updateModelState,
+      isInferenceActive,
+      setInferenceActive,
     }),
     [
       modelStates,
@@ -396,6 +401,7 @@ export function TransformersJSProvider({
       startDownload,
       retry,
       updateModelState,
+      isInferenceActive,
     ],
   )
 

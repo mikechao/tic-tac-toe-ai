@@ -130,6 +130,7 @@ export function MatchControls() {
   const { getModelState } = useBuiltInAI()
   const { state, configure, start } = useGameLoop()
   const { showToast } = useToast()
+  const transformersBusyToastShown = useRef(false)
 
   const availableModels = useMemo(() => localAIModels, [])
   const defaultModelId = availableModels[0]?.id ?? 1
@@ -195,7 +196,10 @@ export function MatchControls() {
     [modelBId],
   )
 
-  const { getModelState: getTransformersState } = useTransformersJS()
+  const {
+    getModelState: getTransformersState,
+    isInferenceActive: transformersInferenceActive,
+  } = useTransformersJS()
   const modelAState = getTransformersState(modelAId) ?? getModelState(modelAId)
   const modelBState = getTransformersState(modelBId) ?? getModelState(modelBId)
 
@@ -212,10 +216,16 @@ export function MatchControls() {
   }`
   const summaryDetails = `${totalRounds} ${totalRounds === 1 ? 'round' : 'rounds'}`
 
+  const transformersSelected =
+    selectedModelA?.provider === 'transformers-js' || selectedModelB?.provider === 'transformers-js'
+  const isTransformersBusy = transformersSelected && transformersInferenceActive
+
   const statusMessage =
     !isModelAReady || !isModelBReady
       ? 'Download local models from the Models page before starting'
-      : 'Local models ready for inference'
+      : isTransformersBusy
+        ? 'SmolLM2 is finishing a move — hang tight'
+        : 'Local models ready for inference'
   const isBusyPhase = state.phase === 'initializing' || state.phase === 'running'
   const [isStarting, setIsStarting] = useState(false)
   const busyLabel =
@@ -223,7 +233,12 @@ export function MatchControls() {
       ? 'Match preparing…'
       : 'Match running…'
   const isStartDisabled =
-    !isConfigurationValid || isBusyPhase || isStarting || !isModelAReady || !isModelBReady
+    !isConfigurationValid ||
+    isBusyPhase ||
+    isStarting ||
+    !isModelAReady ||
+    !isModelBReady ||
+    isTransformersBusy
 
   const handleRoundCountChange = (value: number) => {
     setRoundCount(clamp(Math.round(value || 1), 1, 100))
@@ -231,6 +246,13 @@ export function MatchControls() {
 
   const handleStartMatch = async () => {
     if (isStartDisabled) {
+      if (isTransformersBusy) {
+        showToast({
+          title: 'Model busy',
+          description: 'SmolLM2 is still processing its previous move.',
+          variant: 'info',
+        })
+      }
       return
     }
     if (!isRoundCountValid) {
@@ -480,3 +502,15 @@ export function MatchControls() {
     </MyMagicCard>
   )
 }
+  useEffect(() => {
+    if (isTransformersBusy && !transformersBusyToastShown.current) {
+      showToast({
+        title: 'Model busy',
+        description: 'SmolLM2 is finishing its current move. Please wait for it to complete.',
+        variant: 'info',
+      })
+      transformersBusyToastShown.current = true
+    } else if (!isTransformersBusy) {
+      transformersBusyToastShown.current = false
+    }
+  }, [isTransformersBusy, showToast])

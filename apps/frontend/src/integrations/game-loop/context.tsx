@@ -47,8 +47,12 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
     controllerRef.current = createGameLoopController()
   }
   const controller = controllerRef.current
-  const { ensureModel: ensureTransformersModel, isSupported: transformersSupported } =
-    useTransformersModel()
+  const {
+    ensureModel: ensureTransformersModel,
+    isSupported: transformersSupported,
+    isInferenceActive: transformersInferenceActive,
+    setInferenceActive: setTransformersInferenceActive,
+  } = useTransformersModel()
 
   const [state, setState] = useState<GameLoopState>(() => controller.getState())
   const [lastEvent, setLastEvent] = useState<GameLoopEvent | undefined>()
@@ -162,6 +166,17 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    let releaseInference: (() => void) | undefined
+    if (providerId === 'transformers-js') {
+      if (transformersInferenceActive) {
+        console.warn('[GameLoopProvider] Transformers inference already active')
+        controller.abort('SmolLM2 is busy completing another turn. Please wait.')
+        return
+      }
+      setTransformersInferenceActive(true)
+      releaseInference = () => setTransformersInferenceActive(false)
+    }
+
     const abortController = new AbortController()
     turnAbortRef.current = abortController
     turnInFlightRef.current = true
@@ -228,6 +243,9 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
           controller.abort(message)
         }
       } finally {
+        if (releaseInference) {
+          releaseInference()
+        }
         if (turnAbortRef.current === abortController) {
           turnAbortRef.current = null
         }
@@ -246,6 +264,8 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
     lastEvent,
     ensureTransformersModel,
     transformersSupported,
+    transformersInferenceActive,
+    setTransformersInferenceActive,
   ])
 
   return (
