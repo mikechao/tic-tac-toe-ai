@@ -92,8 +92,91 @@ export async function checkTransformersAvailability(): Promise<BuiltInAIState> {
   if (!doesBrowserSupportTransformersJS()) {
     return 'not-supported'
   }
+  
+  // First, check if model files are actually cached in browser storage
+  const isCached = await isModelCached()
+  if (isCached) {
+    return 'ready'
+  }
+  
+  // If not cached, check the model instance availability
+  // (this will return 'downloadable' since instance isn't initialized)
   const availability = await getModel().availability()
   return mapAvailability(availability as TransformersAvailability)
+}
+
+
+// Debug utility to check what's in browser storage
+// Check if model files are actually cached in browser storage
+async function isModelCached(): Promise<boolean> {
+  if (typeof window === 'undefined' || typeof caches === 'undefined') {
+    return false
+  }
+  
+  try {
+    // Check Cache API for model files
+    const cacheNames = await caches.keys()
+    const transformersCaches = cacheNames.filter(name => 
+      name.includes('huggingface') || name.includes('transformers')
+    )
+    
+    if (transformersCaches.length === 0) {
+      return false
+    }
+    
+    // Check if any of these caches have entries for our specific model
+    for (const cacheName of transformersCaches) {
+      const cache = await caches.open(cacheName)
+      const keys = await cache.keys()
+      
+      // Look for model files (ONNX models, tokenizer files, etc.)
+      const hasModelFiles = keys.some(request => 
+        request.url.includes(TRANSFORMERS_MODEL_SLUG) ||
+        request.url.includes('SmolLM2-360M')
+      )
+      
+      if (hasModelFiles) {
+        console.log(`[TransformersProvider] Found cached model files in: ${cacheName}`)
+        return true
+      }
+    }
+    
+    return false
+  } catch (error) {
+    console.warn('[TransformersProvider] Error checking cache:', error)
+    return false
+  }
+}
+
+async function debugStorageState(): Promise<void> {
+  // This function can be uncommented for debugging cache issues
+  // Keeping the structure here for future troubleshooting
+  return
+  
+  /* Uncomment to debug storage state:
+  if (typeof window === 'undefined') return
+  
+  console.log('[TransformersProvider] Storage debug:')
+  
+  // Check Cache API
+  if (typeof caches !== 'undefined') {
+    const cacheNames = await caches.keys()
+    console.log('- Cache API keys:', cacheNames)
+    for (const name of cacheNames) {
+      if (name.includes('huggingface') || name.includes('transformers')) {
+        const cache = await caches.open(name)
+        const keys = await cache.keys()
+        console.log(`  - ${name}: ${keys.length} entries`)
+      }
+    }
+  }
+  
+  // Check IndexedDB
+  if (typeof indexedDB !== 'undefined') {
+    const dbs = await indexedDB.databases?.() ?? []
+    console.log('- IndexedDB databases:', dbs.map(db => db.name))
+  }
+  */
 }
 
 export async function startTransformersDownload(options?: {
