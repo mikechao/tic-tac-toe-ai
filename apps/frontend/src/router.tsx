@@ -4,6 +4,7 @@ import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 import { PreferencesProvider } from './integrations/state/preferences'
 import { LiveRegionProvider } from './integrations/a11y'
 import { GameLoopProvider } from './integrations/game-loop/context'
+import { TransformersJSProvider } from './integrations/transformers/context'
 import { routeTree } from './routeTree.gen.ts'
 
 export const getRouter = () => {
@@ -17,7 +18,9 @@ export const getRouter = () => {
       <TanstackQuery.Provider queryClient={queryClient}>
         <PreferencesProvider>
           <LiveRegionProvider>
-            <GameLoopProvider>{children}</GameLoopProvider>
+            <TransformersJSProvider>
+              <GameLoopProvider>{children}</GameLoopProvider>
+            </TransformersJSProvider>
           </LiveRegionProvider>
         </PreferencesProvider>
       </TanstackQuery.Provider>

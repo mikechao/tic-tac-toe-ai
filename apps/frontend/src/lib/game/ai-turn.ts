@@ -3,7 +3,6 @@ import { z } from 'zod'
 
 import type { BoardState, Move, PlayerMark } from './board-state'
 import { ensureGeminiChatModel } from '@/integrations/gemini/model'
-import type { BuiltInAIChatLanguageModel } from '@built-in-ai/core'
 
 const moveResponseSchema = z.object({
   nextMove: z.number().int(),
@@ -127,26 +126,39 @@ Respond with JSON { "nextMove": number, "rationale": string } only.`,
   ].join('\n')
 }
 
-export async function requestGeminiMove(
+type ModelResolver = () => Promise<unknown>
+
+type ProviderMetadata = {
+  id: string
+  label: string
+}
+
+async function requestMoveWithResolver(
   request: GeminiMoveRequest,
+  resolveModel: ModelResolver,
+  provider: ProviderMetadata,
 ): Promise<GeminiMoveResult> {
-  console.debug('[AI Turn] Requesting Gemini move', {
+  console.debug('[AI Turn] Requesting move', {
+    provider: provider.id,
     activeMark: request.activeMark,
     opponentMark: request.opponentMark,
     round: request.round,
     totalRounds: request.totalRounds,
     actorLabel: request.actorLabel,
   })
-  let model: BuiltInAIChatLanguageModel
+
+  let model: unknown
   try {
-    model = await ensureGeminiChatModel()
+    model = await resolveModel()
   } catch (error) {
-    console.error('[AI Turn] Failed to ensure Gemini model', error)
+    console.error(`[AI Turn] Failed to ensure ${provider.label} model`, error)
     return {
       ok: false,
       reason: 'unavailable',
       message:
-        error instanceof Error ? error.message : 'Failed to initialize Gemini',
+        error instanceof Error
+          ? error.message
+          : `Failed to initialize ${provider.label}`,
     }
   }
 
@@ -170,7 +182,7 @@ export async function requestGeminiMove(
 
     try {
       const result = await generateObject({
-        model,
+        model: model as any,
         schema: moveResponseSchema,
         prompt: currentPrompt,
         temperature: request.temperature ?? 0.1,
@@ -208,7 +220,7 @@ export async function requestGeminiMove(
       }
 
       const move = request.board.fromIndex(object.nextMove - 1)
-      console.debug('[AI Turn] Gemini move parsed', {
+      console.debug('[AI Turn] Move parsed', {
         moveIndex: object.nextMove,
         rationale: object.rationale,
       })
@@ -229,11 +241,14 @@ export async function requestGeminiMove(
         ? performance.now()
         : Date.now()
       const durationMs = finishedAt - startedAt
-      console.error('[AI Turn] Gemini call failed', error)
+      console.error('[AI Turn] Move call failed', {
+        provider: provider.id,
+        error,
+      })
       if (isAbortError(error)) {
         const message = controller?.didTimeout()
-          ? 'Gemini move inference timed out.'
-          : 'Gemini move inference aborted.'
+          ? `${provider.label} move inference timed out.`
+          : `${provider.label} move inference aborted.`
         lastError = {
           ok: false,
           reason: 'unavailable',
@@ -248,7 +263,9 @@ export async function requestGeminiMove(
         ok: false,
         reason: 'unavailable',
         message:
-          error instanceof Error ? error.message : 'Failed to call Gemini model',
+          error instanceof Error
+            ? error.message
+            : `Failed to call ${provider.label} model`,
         finishedAt,
         durationMs,
         startedAt,
@@ -261,7 +278,26 @@ export async function requestGeminiMove(
     lastError ?? {
       ok: false,
       reason: 'invalid-response',
-      message: 'Gemini did not return a valid move.',
+      message: `${provider.label} did not return a valid move.`,
     }
   )
+}
+
+export async function requestGeminiMove(
+  request: GeminiMoveRequest,
+): Promise<GeminiMoveResult> {
+  return requestMoveWithResolver(request, ensureGeminiChatModel, {
+    id: 'chrome-builtin',
+    label: 'Gemini Nano',
+  })
+}
+
+export async function requestTransformersMove(
+  request: GeminiMoveRequest,
+  ensureModel: () => Promise<unknown>,
+): Promise<GeminiMoveResult> {
+  return requestMoveWithResolver(request, ensureModel, {
+    id: 'transformers-js',
+    label: 'SmolLM2',
+  })
 }

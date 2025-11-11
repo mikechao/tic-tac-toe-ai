@@ -15,8 +15,14 @@ import {
   type MatchConfig,
   type RecordMoveInput,
 } from '@/lib/game/game-loop'
-import { requestGeminiMove } from '@/lib/game/ai-turn'
+import {
+  requestGeminiMove,
+  requestTransformersMove,
+  type GeminiMoveRequest,
+} from '@/lib/game/ai-turn'
 import type { PlayerMark } from '@/lib/game/board-state'
+import { localAIModels } from '@/data/models'
+import { useTransformersModel } from '@/hooks/useTransformersModel'
 
 type GameLoopContextValue = {
   state: GameLoopState
@@ -41,6 +47,8 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
     controllerRef.current = createGameLoopController()
   }
   const controller = controllerRef.current
+  const { ensureModel: ensureTransformersModel, isSupported: transformersSupported } =
+    useTransformersModel()
 
   const [state, setState] = useState<GameLoopState>(() => controller.getState())
   const [lastEvent, setLastEvent] = useState<GameLoopEvent | undefined>()
@@ -98,6 +106,10 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
       hasConfig: Boolean(config),
     })
 
+    if (!config) {
+      return
+    }
+
     const shouldRunTurn =
       config &&
       state.phase === 'running' &&
@@ -137,35 +149,57 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    const actorModelId = actor === 'modelA' ? config.modelAId : config.modelBId
+    const actorModelMeta =
+      localAIModels.find((model) => model.id === actorModelId) ?? localAIModels[0]
+    const providerId = actorModelMeta?.provider ?? 'chrome-builtin'
+    const providerLabel =
+      providerId === 'transformers-js' ? 'SmolLM2' : 'Gemini Nano'
+
+    if (providerId === 'transformers-js' && !transformersSupported) {
+      console.warn('[GameLoopProvider] Transformers.js unsupported in this browser')
+      controller.abort('SmolLM2 requires a WebGPU-capable browser. Select another model.')
+      return
+    }
+
     const abortController = new AbortController()
     turnAbortRef.current = abortController
     turnInFlightRef.current = true
 
-    console.debug('[GameLoopProvider] requesting Gemini move', {
+    console.debug('[GameLoopProvider] requesting move', {
+      provider: providerId,
       activePlayer: actor,
       round: snapshot.currentRound,
     })
 
+    const baseRequest: GeminiMoveRequest = {
+      board,
+      activeMark: actorMark,
+      opponentMark,
+      round: snapshot.currentRound,
+      totalRounds: snapshot.totalRounds,
+      actorLabel: actor,
+      timeoutMs: config.moveTimeoutMs,
+      abortSignal: abortController.signal,
+    }
+
     ;(async () => {
       try {
-        const result = await requestGeminiMove({
-          board,
-          activeMark: actorMark,
-          opponentMark,
-          round: snapshot.currentRound,
-          totalRounds: snapshot.totalRounds,
-          actorLabel: actor,
-          timeoutMs: config.moveTimeoutMs,
-          abortSignal: abortController.signal,
-        })
+        const result =
+          providerId === 'transformers-js'
+            ? await requestTransformersMove(baseRequest, async () => ensureTransformersModel())
+            : await requestGeminiMove(baseRequest)
 
         if (abortController.signal.aborted) {
-          console.debug('[GameLoopProvider] Gemini turn aborted')
+          console.debug('[GameLoopProvider] turn aborted', { provider: providerId })
           return
         }
 
         if (result.ok) {
-          console.debug('[GameLoopProvider] Gemini move result', result)
+          console.debug('[GameLoopProvider] move result', {
+            provider: providerId,
+            result,
+          })
           controller.recordMove({
             actor,
             move: result.move,
@@ -177,11 +211,17 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
             timeout: false,
           })
         } else {
-          console.warn('[GameLoopProvider] Gemini move failure', result)
+          console.warn('[GameLoopProvider] move failure', {
+            provider: providerId,
+            result,
+          })
           controller.abort(result.message)
         }
       } catch (error) {
-        console.error('[GameLoopProvider] Gemini turn executor error', error)
+        console.error('[GameLoopProvider] turn executor error', {
+          provider: providerId,
+          error,
+        })
         if (!abortController.signal.aborted) {
           const message =
             error instanceof Error ? error.message : 'Unexpected AI turn error'
@@ -200,7 +240,13 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
         abortController.abort()
       }
     }
-  }, [controller, state, lastEvent])
+  }, [
+    controller,
+    state,
+    lastEvent,
+    ensureTransformersModel,
+    transformersSupported,
+  ])
 
   return (
     <GameLoopContext.Provider

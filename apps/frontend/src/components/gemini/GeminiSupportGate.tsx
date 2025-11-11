@@ -4,7 +4,6 @@ import { localAIModels } from '@/data/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { MyMagicCard, RainbowButton } from '@/components/ui'
 import { BuiltInAIProvider } from '@/integrations/gemini/context'
-import { TransformersJSProvider } from '@/integrations/transformers/context'
 import { BuiltInAINotSupported } from '@/components/gemini/BuiltInAINotSupported'
 
 interface GeminiSupportGateProps {
@@ -13,11 +12,9 @@ interface GeminiSupportGateProps {
 
 export function GeminiSupportGate({ children }: GeminiSupportGateProps) {
   return (
-    <TransformersJSProvider>
-      <BuiltInAIProvider>
-        <GeminiBoundary>{children}</GeminiBoundary>
-      </BuiltInAIProvider>
-    </TransformersJSProvider>
+    <BuiltInAIProvider>
+      <GeminiBoundary>{children}</GeminiBoundary>
+    </BuiltInAIProvider>
   )
 }
 

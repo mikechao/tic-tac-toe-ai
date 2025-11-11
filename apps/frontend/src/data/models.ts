@@ -59,6 +59,6 @@ export const localAIModels: LocalAIModel[] = [
     variant: 'Transformers.js (WebGPU)',
     website: 'https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct',
     estimatedDownloadSizeMB: 220,
-    notes: 'Approximate one-time download for q4f16 weights cached via Transformers.js.',
+    notes: 'Requires WebGPU (Chrome/Edge Canary). Approx. 220MB download cached via Transformers.js.',
   },
 ]
