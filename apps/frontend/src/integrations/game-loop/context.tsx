@@ -34,6 +34,8 @@ type GameLoopContextValue = {
   abort: (reason?: string) => void
   nextRound: () => void
   recordMove: (input: RecordMoveInput) => void
+  cancelMatch: () => void
+  reset: () => void
   controller: GameLoopController
 }
 
@@ -97,6 +99,8 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
     (input: RecordMoveInput) => controller.recordMove(input),
     [controller],
   )
+  const reset = useCallback(() => controller.reset(), [controller])
+  const cancelMatch = useCallback(() => controller.cancelMatch(), [controller])
 
   useEffect(() => {
     const config = matchConfigRef.current
@@ -282,6 +286,8 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
         abort,
         nextRound,
         recordMove,
+        cancelMatch,
+        reset,
         controller,
       }}
     >

@@ -35,7 +35,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <RoundResultToastListener />
         <Confetti
           manualstart
-          className="pointer-events-none fixed inset-0 z-50 h-screen w-screen"
+          className="pointer-events-none fixed inset-0 z-[9999] h-screen w-screen"
         >
           <div className="min-h-screen bg-slate-950 text-white antialiased">
             <AppHeader />

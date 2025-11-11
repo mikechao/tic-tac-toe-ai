@@ -232,7 +232,7 @@ function StatTicker({ label, value }: { label: string; value: number }) {
 }
 
 export function MatchBoard() {
-  const { state, configure, start, nextRound } = useGameLoop()
+  const { state, configure, start, nextRound, cancelMatch } = useGameLoop()
   const board = state.board
   const boardSize = board.size
 
@@ -463,10 +463,14 @@ export function MatchBoard() {
     (nextOpen: boolean) => {
       if (!nextOpen) {
         void ensureRoundResultSubmitted({ rematchRequested: false })
+        // If we're closing the dialog by dismissing it (not clicking Next Round/Rematch), cancel the match
+        if (state.phase === 'betweenRounds' || state.phase === 'completed') {
+          cancelMatch()
+        }
       }
       setRoundSummaryOpen(nextOpen)
     },
-    [ensureRoundResultSubmitted],
+    [ensureRoundResultSubmitted, state.phase, cancelMatch],
   )
 
   const handleRoundDialogAction = useCallback(async () => {
@@ -529,7 +533,7 @@ export function MatchBoard() {
     }
     const duration = 5000
     const animationEnd = Date.now() + duration
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 }
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
     const randomInRange = (min: number, max: number) =>
       Math.random() * (max - min) + min
 
@@ -576,6 +580,7 @@ export function MatchBoard() {
         startVelocity: 60,
         origin: { x: 0, y: 0.5 },
         colors: [...colors],
+        zIndex: 9999,
       })
       confetti.fire({
         particleCount: 2,
@@ -584,6 +589,7 @@ export function MatchBoard() {
         startVelocity: 60,
         origin: { x: 1, y: 0.5 },
         colors: [...colors],
+        zIndex: 9999,
       })
       rafId = window.requestAnimationFrame(frame)
     }
@@ -716,6 +722,17 @@ export function MatchBoard() {
         <h2 className="font-display text-3xl font-semibold">
           {modelA?.name ?? 'Model A'} vs {modelB?.name ?? 'Model B'}
         </h2>
+        <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/50">
+          <span>{boardStatus}</span>
+          <span aria-live="polite">
+            {turnsRemaining === 0
+              ? 'Final round underway'
+              : `${turnsRemaining} ${
+                  turnsRemaining === 1 ? 'round' : 'rounds'
+                } remaining`}
+          </span>
+        </div>
+        <RoundProgressBar value={progressPercent} />
       </header>
 
       <MyMagicCard className="border-white/15 bg-white/4" spotlight={false}>
@@ -747,20 +764,6 @@ export function MatchBoard() {
                 }}
               />
             </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/50">
-              <span>{boardStatus}</span>
-              <span aria-live="polite">
-                {turnsRemaining === 0
-                  ? 'Final round underway'
-                  : `${turnsRemaining} ${
-                      turnsRemaining === 1 ? 'round' : 'rounds'
-                    } remaining`}
-              </span>
-            </div>
-            <RoundProgressBar value={progressPercent} />
           </div>
 
           <BoardGrid

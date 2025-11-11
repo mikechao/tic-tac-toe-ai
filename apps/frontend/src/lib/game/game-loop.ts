@@ -9,6 +9,7 @@ export type GameLoopPhase =
   | 'running'
   | 'betweenRounds'
   | 'completed'
+  | 'match-canceled'
   | 'error'
 
 export interface MatchConfig {
@@ -73,6 +74,8 @@ export interface GameLoopController {
   abort(reason?: string): void
   nextRound(): void
   recordMove(input: RecordMoveInput): void
+  cancelMatch(): void
+  reset(): void
   dispose(): void
 }
 
@@ -140,6 +143,7 @@ type GameLoopAction =
   | { type: 'ABORT'; reason?: string }
   | { type: 'ADVANCE_TO_BETWEEN_ROUNDS' }
   | { type: 'RECORD_MOVE'; payload: RecordMoveActionPayload }
+  | { type: 'CANCEL_MATCH' }
   | { type: 'ERROR'; message: string }
 
 type RecordMoveActionPayload = {
@@ -544,6 +548,19 @@ const transitionMap: Record<
         ],
       }
     },
+    CANCEL_MATCH: (current) => {
+      console.debug('[GameLoopController] transition betweenRounds.CANCEL_MATCH')
+      return {
+        state: {
+          ...current,
+          phase: 'match-canceled',
+          isPaused: false,
+        },
+        events: [
+          { type: 'phase:change', phase: 'match-canceled' },
+        ],
+      }
+    },
   },
   completed: {
     CONFIGURE: (current, action) => {
@@ -577,6 +594,35 @@ const transitionMap: Record<
   error: {
     CONFIGURE: (current, action) => {
       console.debug('[GameLoopController] transition error.CONFIGURE')
+      const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
+      const board = new BoardState(config.boardSize)
+      return {
+        state: {
+          ...current,
+          phase: 'idle',
+          currentRound: 0,
+          totalRounds: config.totalRounds,
+          modelAId: config.modelAId,
+          modelBId: config.modelBId,
+          activePlayer: null,
+          board,
+          roundBoards: [],
+          score: { ...defaultScore },
+          moveHistory: [],
+          roundSummaries: [],
+          lastError: undefined,
+          isPaused: false,
+        },
+        events: [
+          { type: 'phase:change', phase: 'idle' },
+          { type: 'board:update', board },
+        ],
+      }
+    },
+  },
+  'match-canceled': {
+    CONFIGURE: (current, action) => {
+      console.debug('[GameLoopController] transition match-canceled.CONFIGURE')
       const { config } = action as Extract<GameLoopAction, { type: 'CONFIGURE' }>
       const board = new BoardState(config.boardSize)
       return {
@@ -767,6 +813,10 @@ export function createGameLoopController(
     dispatch({ type: 'ABORT', reason: _reason })
   }
 
+  const cancelMatch = (): void => {
+    dispatch({ type: 'CANCEL_MATCH' })
+  }
+
   const nextRound = (): void => {
     if (!config) {
       throw new Error('Match configuration missing. Call configure() first.')
@@ -855,13 +905,17 @@ export function createGameLoopController(
     })
   }
 
-  const dispose = (): void => {
-    listeners.clear()
+  const reset = (): void => {
     state = createInitialState()
     config = null
     matchLog.clear()
     notify()
     notify({ type: 'phase:change', phase: state.phase })
+  }
+
+  const dispose = (): void => {
+    listeners.clear()
+    reset()
   }
 
   return {
@@ -876,6 +930,8 @@ export function createGameLoopController(
     abort,
     nextRound,
     recordMove,
+    cancelMatch,
+    reset,
     dispose,
   }
 }

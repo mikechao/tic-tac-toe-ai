@@ -6,7 +6,6 @@ import { getProviderMeta, localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import {
   BentoCard,
-  BentoGrid,
   MagicCard,
   MarkAvatar,
   MyMagicCard,
@@ -246,7 +245,7 @@ export function MatchControls() {
       ? 'Download local models from the Models page before starting'
       : isTransformersBusy
         ? 'SmolLM2 is finishing a move — hang tight'
-        : 'Local models ready for inference'
+        : ''
   const isBusyPhase = state.phase === 'initializing' || state.phase === 'running'
   const [isStarting, setIsStarting] = useState(false)
   const busyLabel =
@@ -322,7 +321,7 @@ export function MatchControls() {
   }
 
   return (
-    <MyMagicCard className="relative h-full overflow-hidden">
+    <MyMagicCard className="relative overflow-hidden p-0 [&>div]:p-3">
       {isBusyPhase ? (
         <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#050918]/85 text-center text-white backdrop-blur">
           <p className="text-sm font-semibold uppercase tracking-[0.3em]">
@@ -338,31 +337,31 @@ export function MatchControls() {
       </span>
       <div
         className={cn(
-          'flex flex-col gap-6 text-white transition-opacity',
+          'flex flex-col gap-3 text-white transition-opacity',
           isBusyPhase ? 'pointer-events-none opacity-60' : 'opacity-100',
         )}
       >
-        <header className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-            Match Controls
-          </p>
-          <h2 className="font-display text-2xl">Configure the showdown</h2>
+        <header className="space-y-1">
+          <h2 className="font-display text-2xl">Match Controls</h2>
           <p className="text-sm text-white/70">
-            Choose your contenders and define how long the series runs.
+            Choose your contenders and define how long the series runs
           </p>
         </header>
 
-        <p className="text-xs font-medium uppercase tracking-[0.3em] text-emerald-300/80">
-          {statusMessage}
-        </p>
+        {statusMessage && (
+          <p className="text-xs font-medium uppercase tracking-[0.3em] text-emerald-300/80">
+            {statusMessage}
+          </p>
+        )}
 
-        <BentoGrid className="gap-5 md:auto-rows-auto">
-          <div className="md:col-span-12">
+        <div className="flex flex-col gap-5 w-full">
+          {/* Player Selection - Side by side */}
+          <div className="flex flex-col sm:flex-row gap-5">
             <MagicCard
               gradientFrom="#4ff2c2"
               gradientTo="rgba(79,242,194,0.25)"
               gradientColor="#16382f"
-              className="rounded-[1.75rem] border border-white/10 bg-white/5 text-white"
+              className="rounded-[1.75rem] border border-white/10 bg-white/5 text-white flex-1 min-w-0"
             >
               <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-5 pt-4 pb-3">
                 <MarkAvatar mark="X" className="size-11" />
@@ -382,14 +381,12 @@ export function MatchControls() {
                 {selectedModelA ? <ModelDetails model={selectedModelA} /> : null}
               </CardContent>
             </MagicCard>
-          </div>
 
-          <div className="md:col-span-12">
             <MagicCard
               gradientFrom="#f15bb5"
               gradientTo="rgba(241,91,181,0.25)"
               gradientColor="#3c1428"
-              className="rounded-[1.75rem] border border-white/10 bg-white/5 text-white"
+              className="rounded-[1.75rem] border border-white/10 bg-white/5 text-white flex-1 min-w-0"
             >
               <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-5 pt-4 pb-3">
                 <MarkAvatar mark="O" className="size-11" />
@@ -411,114 +408,112 @@ export function MatchControls() {
             </MagicCard>
           </div>
 
-          <BentoCard colSpanClassName="md:col-span-12" className="space-y-4">
-            <fieldset
-              className="space-y-4 p-0 outline-none focus-within:outline-none [border:0] m-0"
-              style={{ minInlineSize: 0 }}
-            >
-              <legend className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                Round count
-              </legend>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-                  Set number of rounds
-                </p>
-                <p className="mt-1 text-xs text-white/60">
-                  Choose between 1 and 100 rounds for this showdown.
-                </p>
-                <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
-                  <button
-                    type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => handleRoundCountChange(totalRounds - 1)}
-                    aria-label="Decrease rounds"
-                    disabled={isBusyPhase}
-                  >
-                    –
-                  </button>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={100}
-                    value={totalRounds}
-                    onChange={(event) =>
-                      handleRoundCountChange(Number(event.target.value))
-                    }
-                    className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-white/40"
-                    disabled={isBusyPhase}
-                    aria-label="Round count"
-                  />
-                  <button
-                    type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isBusyPhase}
-                    onClick={() => handleRoundCountChange(totalRounds + 1)}
-                    aria-label="Increase rounds"
-                  >
-                    +
-                  </button>
-                  <span className="ml-auto text-xs uppercase tracking-[0.2em] text-white/40">
-                    1–100
-                  </span>
-                </div>
-              </div>
-              <div aria-live="polite" className="sr-only">
-                {roundAnnouncement}
-              </div>
-            </fieldset>
-          </BentoCard>
-
-          <BentoCard colSpanClassName="md:col-span-12" className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-              Match summary
-            </p>
-            <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
-              <div>
-                <p className="text-base font-medium text-white">
-                  {summaryLine}
-                </p>
-                <p className="text-sm text-white/60">{summaryDetails}</p>
-              </div>
-              <RainbowButton
-                type="button"
-                disabled={isStartDisabled}
-                className="w-full uppercase tracking-[0.25em] disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void handleStartMatch()
-                }}
+          {/* Bottom Controls - Side by side */}
+          <div className="flex flex-col sm:flex-row gap-5">
+            <BentoCard className="space-y-4 flex-1 min-w-0">
+              <fieldset
+                className="space-y-4 p-0 outline-none focus-within:outline-none [border:0] m-0"
+                style={{ minInlineSize: 0 }}
               >
-                Start Match
-              </RainbowButton>
-            </div>
-            {!isRoundCountValid ? (
-              <p className="text-sm font-medium text-amber-300/80">
-                Adjust the matchup to start—keep the round count between 1 and 100.
+                <legend className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+                  Round count
+                </legend>
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+                    Set number of rounds
+                  </p>
+                  <p className="mt-1 text-xs text-white/60">
+                    Choose between 1 and 100 rounds for this showdown.
+                  </p>
+                  <div className="mt-3 flex items-center gap-3 rounded-full bg-white/5 px-3 py-2">
+                    <button
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => handleRoundCountChange(totalRounds - 1)}
+                      aria-label="Decrease rounds"
+                      disabled={isBusyPhase}
+                    >
+                      –
+                    </button>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={100}
+                      value={totalRounds}
+                      onChange={(event) =>
+                        handleRoundCountChange(Number(event.target.value))
+                      }
+                      className="w-16 appearance-none bg-transparent text-center text-lg font-semibold text-white outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-white/40"
+                      disabled={isBusyPhase}
+                      aria-label="Round count"
+                    />
+                    <button
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#4ff2c2]/70 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isBusyPhase}
+                      onClick={() => handleRoundCountChange(totalRounds + 1)}
+                      aria-label="Increase rounds"
+                    >
+                      +
+                    </button>
+                    <span className="ml-auto text-xs uppercase tracking-[0.2em] text-white/40">
+                      1–100
+                    </span>
+                  </div>
+                </div>
+                <div aria-live="polite" className="sr-only">
+                  {roundAnnouncement}
+                </div>
+              </fieldset>
+            </BentoCard>
+
+            <BentoCard className="space-y-4 flex-1 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+                Match summary
               </p>
-            ) : !isModelAReady || !isModelBReady ? (
-              <div className="text-sm font-medium text-white/70">
-                <p>
-                  Download models on the Models page to enable the Start button.
-                </p>
-                {!isModelAReady && (
-                  <p className="text-xs text-white/60">
-                    {selectedModelA?.name ?? 'Model A'} downloading… {modelAProgress}%
+              <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
+                <div>
+                  <p className="text-base font-medium text-white">
+                    {summaryLine}
                   </p>
-                )}
-                {!isModelBReady && (
-                  <p className="text-xs text-white/60">
-                    {selectedModelB?.name ?? 'Model B'} downloading… {modelBProgress}%
-                  </p>
-                )}
+                  <p className="text-sm text-white/60">{summaryDetails}</p>
+                </div>
+                <RainbowButton
+                  type="button"
+                  disabled={isStartDisabled}
+                  className="w-full uppercase tracking-[0.25em] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void handleStartMatch()
+                  }}
+                >
+                  Start Match
+                </RainbowButton>
               </div>
-            ) : (
-              <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                Ready when you are — launch the battle when the arena looks
-                good.
-              </p>
-            )}
-          </BentoCard>
-        </BentoGrid>
+              {!isRoundCountValid ? (
+                <p className="text-sm font-medium text-amber-300/80">
+                  Adjust the matchup to start—keep the round count between 1 and 100.
+                </p>
+              ) : !isModelAReady || !isModelBReady ? (
+                <div className="text-sm font-medium text-white/70">
+                  <p>
+                    Download models on the Models page to enable the Start button.
+                  </p>
+                  {!isModelAReady && (
+                    <p className="text-xs text-white/60">
+                      {selectedModelA?.name ?? 'Model A'} downloading… {modelAProgress}%
+                    </p>
+                  )}
+                  {!isModelBReady && (
+                    <p className="text-xs text-white/60">
+                      {selectedModelB?.name ?? 'Model B'} downloading… {modelBProgress}%
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </BentoCard>
+          </div>
+        </div>
       </div>
     </MyMagicCard>
   )
