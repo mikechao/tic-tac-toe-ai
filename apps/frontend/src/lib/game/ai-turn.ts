@@ -121,8 +121,7 @@ const buildPrompt = (request: GeminiMoveRequest, asciiBoard: string): string => 
     '',
     asciiBoard,
     '',
-    `Empty cells: ${availableCells || 'none'}.
-Respond with JSON { "nextMove": number, "rationale": string } only.`,
+    `Empty cells: ${availableCells || 'none'}.`
   ].join('\n')
 }
 
@@ -173,6 +172,13 @@ async function requestMoveWithResolver(
   const attempts = Math.max(1, request.maxRetries ?? 2)
 
   let lastError: GeminiMoveFailure | null = null
+  
+  const supportsStructuredOutput = provider.supportsStructuredOutput ?? true
+  if (!supportsStructuredOutput) {
+    currentPrompt += '\nRespond ONLY with valid JSON in format: { "nextMove": number, "rationale": string }.'
+    currentPrompt += '\nWhere rationale is a brief explanation of your move choice.'
+    currentPrompt += '\nWhere nextMove is the number of the cell you choose to play next.'
+  }
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const startedAt = typeof performance !== 'undefined'
@@ -182,8 +188,6 @@ async function requestMoveWithResolver(
     const controller = mergeAbortSignals(request.abortSignal, timeoutMs)
 
     try {
-      const supportsStructuredOutput = provider.supportsStructuredOutput ?? true
-      
       let object: z.infer<typeof moveResponseSchema>
       let rawResponse: unknown
 
