@@ -6,17 +6,10 @@ import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { submitRoundResult } from '@/lib/round-results'
 import { buildRoundResultPayload } from '@/lib/round-results/build-round-result-payload'
 import { cn } from '@/lib/utils'
-import { MarkAvatar, MyMagicCard, NumberTicker, RainbowButton, StateMessage } from '@/components/ui'
+import { MyMagicCard, RainbowButton, StateMessage } from '@/components/ui'
 import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
 import { MagicCard } from '@/components/ui/magic-card'
 import { useConfetti } from '@/components/ui/confetti'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -147,89 +140,6 @@ function getActiveTurnText(
   return 'Awaiting match configuration.'
 }
 
-function PlayerBadge({
-  title,
-  model,
-  mark,
-  accentClass,
-  isActive,
-  stats,
-}: {
-  title: string
-  model?: (typeof localAIModels)[number]
-  mark: 'X' | 'O'
-  accentClass: string
-  isActive?: boolean
-  stats?: { wins: number; losses: number; ties: number }
-}) {
-  const gradientFrom = mark === 'X' ? '#4ff2c2' : '#f15bb5'
-  const gradientTo = mark === 'X' ? 'rgba(79,242,194,0.35)' : 'rgba(241,91,181,0.35)'
-  const gradientColor = mark === 'X' ? '#16382f' : '#3c1428'
-
-  const wins = stats?.wins ?? 0
-  const losses = stats?.losses ?? 0
-  const ties = stats?.ties ?? 0
-  const providerMeta = model ? getProviderMeta(model.provider) : null
-  const name = model?.name ?? 'Model'
-  const variant = model?.variant ?? 'On-device variant'
-
-  return (
-    <Card className="border-none bg-transparent p-0 shadow-none">
-      <MagicCard
-        gradientColor={gradientColor}
-        gradientFrom={gradientFrom}
-        gradientTo={gradientTo}
-        className={cn(
-          'rounded-2xl border border-white/10 bg-white/5 text-white transition',
-          isActive
-            ? 'border-[#4ff2c2]/50 shadow-[0_0_36px_rgba(79,242,194,0.35)]'
-            : 'border-white/10',
-        )}
-      >
-        <CardHeader className="border-b border-white/10 px-5 pt-3 pb-1!">
-          <CardTitle className="text-xs uppercase tracking-[0.3em] text-white/60">
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-2 py-2">
-            <div className="flex items-center gap-2.5">
-              <MarkAvatar mark={mark} className={accentClass} />
-              <div className="flex flex-col">
-                <span className="text-base font-semibold text-white">{name}</span>
-                <span className="text-xs text-white/60">{variant}</span>
-                {providerMeta ? (
-                  <span
-                    className={cn(
-                      'mt-1 w-fit rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.3em] text-white',
-                      providerMeta.badgeClass,
-                    )}
-                  >
-                    {providerMeta.label}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-        </CardContent>
-        <CardFooter className="border-t border-white/10 px-5 pt-1! pb-3 text-[10px] uppercase tracking-[0.25em] text-white/50">
-          <div className="flex flex-wrap gap-4">
-            <StatTicker label="Wins" value={wins} />
-            <StatTicker label="Losses" value={losses} />
-            <StatTicker label="Ties" value={ties} />
-          </div>
-        </CardFooter>
-      </MagicCard>
-    </Card>
-  )
-}
-
-function StatTicker({ label, value }: { label: string; value: number }) {
-  return (
-    <span className="flex items-center gap-1">
-      {label}:
-      <NumberTicker value={value} className="text-white" duration={0.7} />
-    </span>
-  )
-}
 
 export function MatchBoard() {
   const { state, configure, start, nextRound, cancelMatch } = useGameLoop()
@@ -304,9 +214,6 @@ export function MatchBoard() {
       : state.activePlayer === 'modelB'
         ? modelB?.name ?? 'Model B'
         : undefined
-  const activeMark = state.activePlayer
-    ? actorToMark[state.activePlayer]
-    : null
   const activeTurnText = getActiveTurnText(state.phase, activePlayerName)
   const latestWinner = latestRoundSummary?.winner
   const roundLabel = latestRoundSummary ? `Round ${latestRoundSummary.round}` : 'Round complete'
@@ -737,35 +644,6 @@ export function MatchBoard() {
 
       <MyMagicCard className="border-white/15 bg-white/4" spotlight={false}>
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <PlayerBadge
-                title="Player 1"
-                model={modelA}
-                mark="X"
-                accentClass="bg-[#4ff2c2]/30 border border-[#4ff2c2]/50"
-                isActive={activeMark === 'X'}
-                stats={{
-                  wins: scoreboard.modelA,
-                  losses: scoreboard.modelB,
-                  ties: scoreboard.ties,
-                }}
-              />
-              <PlayerBadge
-                title="Player 2"
-                model={modelB}
-                mark="O"
-                accentClass="bg-[#f15bb5]/25 border border-[#f15bb5]/45"
-                isActive={activeMark === 'O'}
-                stats={{
-                  wins: scoreboard.modelB,
-                  losses: scoreboard.modelA,
-                  ties: scoreboard.ties,
-                }}
-              />
-            </div>
-          </div>
-
           <BoardGrid
             board={board}
             boardSize={boardSize}
@@ -775,22 +653,6 @@ export function MatchBoard() {
                 : undefined
             }
           />
-
-          <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
-            <span className="font-semibold uppercase tracking-[0.2em] text-white/60">
-              Active turn
-            </span>
-            <p className="text-base text-white">
-              {activeTurnText}
-            </p>
-            <span className="text-xs uppercase tracking-[0.3em] text-emerald-300/80">
-              {state.phase === 'running'
-                ? state.activePlayer
-                  ? `${actorToMark[state.activePlayer]} thinking`
-                  : 'Engine live'
-                : 'Awaiting action'}
-            </span>
-          </div>
         </div>
       </MyMagicCard>
     </div>

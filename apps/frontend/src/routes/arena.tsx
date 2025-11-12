@@ -5,6 +5,7 @@ import { MatchControls } from '@/components/arena/MatchControls'
 import { MatchBoard } from '@/components/arena/MatchBoard'
 import { MatchTelemetry } from '@/components/arena/MatchTelemetry'
 import { MatchMoveLog } from '@/components/arena/MatchMoveLog'
+import { PlayerBadges } from '@/components/arena/PlayerBadges'
 import { BuiltInAIProvider } from '@/integrations/gemini/context'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { useGameLoop } from '@/integrations/game-loop/context'
@@ -62,21 +63,23 @@ function ArenaContent() {
               shouldShowBoard ? "opacity-100 relative" : "opacity-0 absolute inset-0 translate-x-full"
             )}
           >
-            <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-              {/* Left Column: Board and Telemetry */}
-              <div className="flex flex-col gap-6">
+            <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+              {/* Left Column: Board */}
+              <div>
                 <WarpBackground className="p-4">
                   <MatchBoard />
                 </WarpBackground>
-
-                <MatchTelemetry />
               </div>
 
-              {/* Right Column: Move Log */}
-              <div>
+              {/* Right Column: Player Badges and Move Log */}
+              <div className="flex flex-col gap-6">
+                <PlayerBadges />
                 <MatchMoveLog />
               </div>
             </div>
+
+            {/* MatchTelemetry - spans full width */}
+            <MatchTelemetry />
           </div>
         </div>
       ) : (

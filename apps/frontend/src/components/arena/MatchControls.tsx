@@ -145,7 +145,7 @@ export function MatchControls() {
 
   const [modelAId, setModelAId] = useState<ModelId>(defaultModelId)
   const [modelBId, setModelBId] = useState<ModelId>(defaultModelId)
-  const [roundCount, setRoundCount] = useState<number>(5)
+  const [roundCount, setRoundCount] = useState<number>(3)
 
   // Ensure selected models are always available in the dropdown
   useEffect(() => {

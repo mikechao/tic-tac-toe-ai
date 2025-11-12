@@ -165,16 +165,6 @@ export function MatchTelemetry() {
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">
             Live Match Telemetry
           </p>
-          <h3 className="font-display text-xl">
-            {activeModel?.name ?? 'Active model'} thinking…
-          </h3>
-          <p className="text-sm text-white/70">
-            Countdown and streak insights update in real time while models duel.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            <ModelChip label="Player 1" model={modelA} />
-            <ModelChip label="Player 2" model={modelB} />
-          </div>
         </header>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -196,24 +186,6 @@ export function MatchTelemetry() {
             emphasis="text-[#ffb547]"
             decimalPlaces={1}
           />
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-          <p className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-            <span>Last move</span>
-            <span>
-              {lastMove
-                ? `${
-                    lastMove.actor === 'modelA'
-                      ? modelA?.name ?? 'Model A'
-                      : modelB?.name ?? 'Model B'
-                  } at ${toCoordinate(lastMove.moveNumber, boardSize)}`
-                : 'Awaiting first move'}
-            </span>
-          </p>
-          <p className="mt-2 text-base text-white">
-            {lastMove ? `“${lastMove.rationale}”` : 'No rationale yet.'}
-          </p>
         </div>
       </div>
     </MyMagicCard>
