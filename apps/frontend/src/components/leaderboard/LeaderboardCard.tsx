@@ -1,4 +1,4 @@
-import { NumberTicker } from '@/components/ui'
+import { ModelLeaderBoardStats } from './ModelLeaderBoardStats'
 import type {
   DemoLeaderboardViewEntry,
   RecentResult,
@@ -12,12 +12,6 @@ const resultColor: Record<RecentResult, string> = {
   T: 'bg-[#ffb547]/20 text-[#ffb547]',
 }
 
-const streakLabel: Record<DemoLeaderboardViewEntry['streak']['type'], string> =
-  {
-    win: 'Win streak',
-    loss: 'Loss streak',
-    tie: 'Tie streak',
-  }
 
 export function LeaderboardCard({
   entry,
@@ -52,110 +46,21 @@ export function LeaderboardCard({
         </span>
       </header>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Stat label="Wins" value={entry.wins} emphasis="text-[#4ff2c2]" />
-        <Stat label="Losses" value={entry.losses} emphasis="text-[#f15bb5]" />
-        <Stat label="Ties" value={entry.ties} emphasis="text-[#ffb547]" />
-        <Stat
-          label="Win rate"
-          value={entry.winRate * 100}
-          suffix="%"
-          decimalPlaces={1}
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 rounded-[1.25rem] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-        <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-          {streakLabel[entry.streak.type]}
-        </span>
-        <span className="text-base font-semibold text-white">
-          ×{entry.streak.length}
-        </span>
-        <span className="text-xs uppercase tracking-[0.3em] text-white/40">
-          Avg turns {entry.averageTurns.toFixed(1)}
-        </span>
-      </div>
-
-      <div className="space-y-2 rounded-[1.25rem] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-        <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-            Recent form
-          </span>
-          <span className="text-xs uppercase tracking-[0.3em] text-white/40">
-            Last {entry.recentForm.length}
-          </span>
-        </div>
-        <div className="flex gap-2">
-          {entry.recentForm.map((result, index) => (
-            <span
-              key={`${entry.modelId}-form-${index}`}
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-sm font-semibold',
-                resultColor[result],
-              )}
-            >
-              {result}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <footer className="mt-auto space-y-1 text-sm text-white/70">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-          Last matchup
-        </p>
-        <p>
-          {opponentName}{' '}
-          <span
-            className={cn(
-              'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.25em]',
-              resultColor[entry.lastMatchup.result],
-            )}
-          >
-            {entry.lastMatchup.result}
-          </span>
-        </p>
-        <p>
-          {new Date(entry.lastMatchup.playedAt).toLocaleString(undefined, {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </p>
-      </footer>
-    </div>
-  )
-}
-
-function Stat({
-  label,
-  value,
-  emphasis,
-  suffix,
-  decimalPlaces,
-}: {
-  label: string
-  value: number
-  emphasis?: string
-  suffix?: string
-  decimalPlaces?: number
-}) {
-  return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-white/5 px-4 py-3">
-      <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-        {label}
-      </p>
-      <div className="mt-1 flex items-end gap-1">
-        <NumberTicker
-          value={value}
-          decimalPlaces={decimalPlaces}
-          className={cn('text-2xl font-semibold text-white', emphasis)}
-        />
-        {suffix ? (
-          <span className="text-sm font-semibold text-white/60">{suffix}</span>
-        ) : null}
-      </div>
+      <ModelLeaderBoardStats
+      wins={entry.wins}
+      losses={entry.losses}
+      ties={entry.ties}
+      winRate={entry.winRate}
+      streakType={entry.streak.type}
+      streakLength={entry.streak.length}
+      averageTurns={entry.averageTurns}
+      lastMatchup={{
+        opponentName,
+        result: entry.lastMatchup.result,
+        playedAt: entry.lastMatchup.playedAt,
+      }}
+      recentForm={entry.recentForm}
+    />
     </div>
   )
 }
