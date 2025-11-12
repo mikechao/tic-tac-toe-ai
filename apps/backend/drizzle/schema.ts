@@ -1,11 +1,13 @@
 import {
   boolean,
+  decimal,
   integer,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
   uuid,
+  varchar,
 } from 'drizzle-orm/pg-core'
 
 const timestamptz = (name: string) => timestamp(name, { withTimezone: true })
@@ -57,5 +59,48 @@ export const moves = pgTable(
   },
   (table) => [
     uniqueIndex('moves_round_turn_unique').on(table.roundId, table.turnIndex),
+  ],
+)
+
+// Leaderboard summary tables
+export const modelStats = pgTable(
+  'model_stats',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    modelId: integer('model_id').notNull(),
+    modelVersion: varchar('model_version', { length: 255 }).notNull(),
+    totalMatches: integer('total_matches').notNull().default(0),
+    wins: integer('wins').notNull().default(0),
+    losses: integer('losses').notNull().default(0),
+    ties: integer('ties').notNull().default(0),
+    averageTurns: decimal('average_turns', { precision: 5, scale: 2 }).notNull().default('0.00'),
+    currentStreakType: varchar('current_streak_type', { length: 10 }).notNull().default('win'), // 'win', 'loss', or 'tie'
+    currentStreakLength: integer('current_streak_length').notNull().default(0),
+    lastUpdatedAt: timestamptz('last_updated_at').notNull().defaultNow(),
+    createdAt: timestamptz('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('model_stats_model_id_version_unique').on(table.modelId, table.modelVersion),
+  ],
+)
+
+export const recentMatches = pgTable(
+  'recent_matches',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    modelId: integer('model_id').notNull(),
+    modelVersion: varchar('model_version', { length: 255 }).notNull(),
+    matchId: uuid('match_id').notNull(),
+    roundId: uuid('round_id').notNull(),
+    result: varchar('result', { length: 1 }).notNull(), // 'W', 'L', or 'T'
+    opponentModelId: integer('opponent_model_id'), // nullable for human opponents
+    opponentModelVersion: varchar('opponent_model_version', { length: 255 }), // nullable
+    playedAt: timestamptz('played_at').notNull(),
+    matchIndex: integer('match_index').notNull(), // 1 = most recent, 5 = oldest
+    createdAt: timestamptz('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('recent_matches_model_version_index_unique').on(table.modelId, table.modelVersion, table.matchIndex),
+    uniqueIndex('recent_matches_model_version_match_unique').on(table.modelId, table.modelVersion, table.matchId),
   ],
 )

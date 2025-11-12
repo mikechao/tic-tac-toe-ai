@@ -3,6 +3,7 @@ import type {
   DemoLeaderboardViewEntry,
   RecentResult,
 } from '@/data/demo.leaderboard'
+import type { LeaderboardViewEntry } from '@/hooks/useLeaderboard'
 import { getProviderMeta } from '@/data/models'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +17,7 @@ const resultColor: Record<RecentResult, string> = {
 export function LeaderboardCard({
   entry,
 }: {
-  entry: DemoLeaderboardViewEntry
+  entry: DemoLeaderboardViewEntry | LeaderboardViewEntry
 }) {
   const modelName = entry.model?.name ?? `Model ${entry.modelId}`
   const variant = entry.model?.variant ?? 'Variant TBD'
@@ -31,7 +32,7 @@ export function LeaderboardCard({
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-            Rank {entry.rank.toString().padStart(2, '0')}
+            {entry.rank ? `Rank ${entry.rank.toString().padStart(2, '0')}` : 'Unranked'}
           </p>
           <h3 className="font-display text-xl leading-tight">{modelName}</h3>
           <p className="text-sm text-white/60">{variant}</p>

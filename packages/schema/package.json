@@ -8,6 +8,18 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./result-mapping": {
+      "import": "./dist/result-mapping.js",
+      "types": "./dist/result-mapping.d.ts"
+    },
+    "./ranking": {
+      "import": "./dist/ranking.js",
+      "types": "./dist/ranking.d.ts"
+    },
+    "./model-registry": {
+      "import": "./dist/model-registry.js",
+      "types": "./dist/model-registry.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",

@@ -10,6 +10,7 @@ import {
   recordRoundResult,
 } from '../../services/match-ingestion'
 import { roundResultSchema } from '../../services/schemas'
+import { getLeaderboard } from '../../services/leaderboard'
 import { postSentry } from './handlers/sentry'
 
 type AppVariables = AuthVariables & LoggerVariables & { runtimeEnv: Env }
@@ -37,6 +38,28 @@ export function registerApiRoutes(
   })
 
   app.post('/sentry', postSentry)
+
+  app.get('/leaderboard', async (c) => {
+    const { runtimeEnv } = c.var
+
+    try {
+      c.var.logger.info('Leaderboard endpoint invoked')
+      const leaderboard = await getLeaderboard(runtimeEnv)
+      return c.json(leaderboard)
+    } catch (error) {
+      return respondWithError(
+        c,
+        500,
+        'PERSISTENCE_ERROR',
+        'Failed to retrieve leaderboard data',
+        {
+          logMessage: 'Database error while fetching leaderboard',
+          context: { error: extractErrorMessage(error) },
+          details: extractErrorMessage(error),
+        },
+      )
+    }
+  })
 
   app.post('/matches/complete', async (c) => {
     const { runtimeEnv } = c.var

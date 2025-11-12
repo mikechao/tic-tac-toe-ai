@@ -98,6 +98,10 @@ export async function recordRoundResult(
       if (moveRows.length > 0) {
         await tx.insert(moves).values(moveRows)
       }
+
+      // Update leaderboard stats after match is saved
+      const { updateLeaderboardForMatch } = await import('./leaderboard-updater')
+      await updateLeaderboardForMatch(tx, matchId, roundId)
     })
     return {
       matchId,
