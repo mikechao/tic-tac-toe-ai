@@ -63,23 +63,33 @@ function ArenaContent() {
               shouldShowBoard ? "opacity-100 relative" : "opacity-0 absolute inset-0 translate-x-full"
             )}
           >
-            <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-              {/* Left Column: Board */}
-              <div>
-                <WarpBackground className="p-4">
-                  <MatchBoard />
-                </WarpBackground>
+            <div className="grid gap-8 lg:grid-cols-[2.7fr_2.3fr]">
+              {/* Left Container: MatchBoard */}
+              <div style={{height: '650px'}}>
+                <div className="h-full border border-white/10 rounded-2xl bg-white/4">
+                  <WarpBackground className="p-4 h-full rounded-2xl">
+                    <MatchBoard />
+                  </WarpBackground>
+                </div>
               </div>
 
-              {/* Right Column: Player Badges and Move Log */}
-              <div className="flex flex-col gap-6">
-                <PlayerBadges />
-                <MatchMoveLog />
+              {/* Right Container: Player Badges + MatchMoveLog */}
+              <div style={{height: '650px'}}>
+                <div className="h-full border border-white/10 rounded-2xl bg-white/4 p-6">
+                  <div className="flex flex-col h-full gap-6">
+                    <PlayerBadges />
+                    <div className="flex-1 min-h-0">
+                      <MatchMoveLog />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* MatchTelemetry - spans full width */}
-            <MatchTelemetry />
+            <div className="mt-8">
+              <MatchTelemetry />
+            </div>
           </div>
         </div>
       ) : (

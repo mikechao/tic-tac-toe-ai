@@ -126,7 +126,10 @@ export function MatchMoveLog({
 
   return (
     <MyMagicCard
-      className="border-white/15 bg-white/4 px-0 py-0"
+      className={cn(
+        "border-white/15 bg-white/4 px-0 py-0",
+        !isRecapVariant && "h-full"
+      )}
       spotlight={false}
     >
       <div className="flex h-full flex-col gap-4 rounded-[1.45rem] bg-[#0b1026]/70 px-6 py-6 text-white backdrop-blur">
@@ -169,23 +172,19 @@ export function MatchMoveLog({
 
         <div
           ref={listRef}
-          className="relative max-h-80 overflow-y-auto pr-1"
+          className="relative flex-1 overflow-y-auto pr-1"
+          style={isRecapVariant ? { maxHeight: '400px' } : { height: '350px' }}
           role="log"
           aria-live={isPaused ? 'off' : 'polite'}
         >
-          {!hasConfiguredMatch ? (
-            <div className="px-2 py-6">
+          {!hasConfiguredMatch || showEmptyState ? (
+            <div className="flex items-center justify-center px-2 py-6 h-full">
               <StateMessage
-                title="No move history yet"
-                description="As soon as a match begins, we’ll record every move with reasoning and timing details."
-                className="w-full"
-              />
-            </div>
-          ) : showEmptyState ? (
-            <div className="px-2 py-6">
-              <StateMessage
-                title="Waiting for the first move"
-                description="Once the contenders make their opening plays, we’ll populate this log with timestamps and rationale."
+                title={!hasConfiguredMatch ? "No move history yet" : "Waiting for the first move"}
+                description={!hasConfiguredMatch
+                  ? "As soon as a match begins, we'll record every move with reasoning and timing details."
+                  : "Once the contenders make their opening plays, we'll populate this log with timestamps and rationale."
+                }
                 className="w-full"
               />
             </div>
@@ -203,7 +202,20 @@ export function MatchMoveLog({
               ))}
             </div>
           ) : (
-            <AnimatedList className="flex flex-col gap-3" delay={600}>
+            <div className="flex flex-col gap-3" style={isRecapVariant ? { maxHeight: '350px' } : { height: '300px' }}>
+              <AnimatedList
+                className="flex flex-col gap-3 h-full"
+                delay={600}
+                onNewItem={() => {
+                  // Auto-scroll to top when new item animates in, unless paused
+                  if (!isPaused && listRef.current) {
+                    listRef.current.scrollTo({
+                      top: 0,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+              >
               {resolvedMoves.map((move) => (
                 <MoveEntry
                   key={move.id}
@@ -211,7 +223,8 @@ export function MatchMoveLog({
                   isLatest={move.id === latestMoveId}
                 />
               ))}
-            </AnimatedList>
+              </AnimatedList>
+            </div>
           )}
         </div>
       </div>
