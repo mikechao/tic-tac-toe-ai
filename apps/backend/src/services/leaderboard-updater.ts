@@ -22,11 +22,12 @@ export async function updateLeaderboardForMatch(
     throw new Error('roundId is required')
   }
 
-  // Get the match that was just saved
+  // Get the specific round that was just saved
   const [match] = await db
     .select()
     .from(matches)
     .where(eq(matches.matchId, matchId))
+    .where(eq(matches.roundId, roundId))  // Also filter by roundId to get the correct round
     .limit(1)
 
   if (!match) {
@@ -53,19 +54,13 @@ export async function updateLeaderboardForMatch(
 
   // Update stats for both players if they're registered models
   if (player1ModelId) {
-    // Use the model registry name as the canonical version to prevent duplicates
-    const player1Info = getModelInfo(player1ModelId)
-    const player1Version = player1Info?.name || match.aiModelVersion || match.playerOneModel
-    await updateModelStats(db, match, player1ModelId, player1Version, moveCount, 'player1')
-    await updateRecentMatches(db, match, player1ModelId, player1Version, player2ModelId, 'player1')
+    await updateModelStats(db, match, player1ModelId, moveCount, 'player1')
+    await updateRecentMatches(db, match, player1ModelId, player2ModelId, 'player1')
   }
 
   if (player2ModelId) {
-    // Use the model registry name as the canonical version to prevent duplicates
-    const player2Info = getModelInfo(player2ModelId)
-    const player2Version = player2Info?.name || match.playerTwoModel
-    await updateModelStats(db, match, player2ModelId, player2Version, moveCount, 'player2')
-    await updateRecentMatches(db, match, player2ModelId, player2Version, player1ModelId, 'player2')
+    await updateModelStats(db, match, player2ModelId, moveCount, 'player2')
+    await updateRecentMatches(db, match, player2ModelId, player1ModelId, 'player2')
   }
 }
 
@@ -76,7 +71,6 @@ async function updateModelStats(
   db: PostgresJsDatabase,
   match: typeof matches.$inferSelect,
   modelId: number,
-  modelVersion: string,
   moveCount: number,
   perspective: 'player1' | 'player2'
 ): Promise<void> {
@@ -85,16 +79,16 @@ async function updateModelStats(
   const isLoss = result === 'L'
   const isTie = result === 'T'
 
-  // Use raw SQL for upsert operation since Drizzle doesn't handle composite unique constraints well
+  // Use raw SQL for upsert operation since Drizzle doesn't handle unique constraints well
   await db.execute(sql`
     INSERT INTO model_stats (
-      model_id, model_version, total_matches, wins, losses, ties, average_turns,
+      model_id, total_matches, wins, losses, ties, average_turns,
       current_streak_type, current_streak_length, last_updated_at
     ) VALUES (
-      ${modelId}, ${modelVersion}, 1, ${isWin ? 1 : 0}, ${isLoss ? 1 : 0},
+      ${modelId}, 1, ${isWin ? 1 : 0}, ${isLoss ? 1 : 0},
       ${isTie ? 1 : 0}, ${moveCount}, ${mapRecentResultToStreakType(result)}, 1, NOW()
     )
-    ON CONFLICT (model_id, model_version) DO UPDATE SET
+    ON CONFLICT (model_id) DO UPDATE SET
       total_matches = model_stats.total_matches + 1,
       wins = model_stats.wins + ${isWin ? 1 : 0},
       losses = model_stats.losses + ${isLoss ? 1 : 0},
@@ -117,16 +111,31 @@ async function updateRecentMatches(
   db: PostgresJsDatabase,
   match: typeof matches.$inferSelect,
   modelId: number,
-  modelVersion: string,
   opponentId: number | null,
   perspective: 'player1' | 'player2'
 ): Promise<void> {
-  const result = mapMatchToRecentResult(perspective, match.winnerSlot as any)
-  const opponentModelVersion = opponentId ? getOpponentModelVersion(match, opponentId) : null
+  console.log('updateRecentMatches called with:', {
+    modelId,
+    opponentId,
+    perspective,
+    matchId: match.matchId,
+    roundId: match.roundId
+  })
 
-  // Check if this match already exists to avoid unnecessary window operations
+  if (!match.matchId || !match.roundId) {
+    console.error('Missing required match properties:', {
+      matchId: match.matchId,
+      roundId: match.roundId
+    })
+    throw new Error('Match must have matchId and roundId')
+  }
+
+  const result = mapMatchToRecentResult(perspective, match.winnerSlot as any)
+
+  // Check if this specific round already exists to avoid unnecessary window operations
+  console.log('Checking for existing round with:', { modelId, matchId: match.matchId, roundId: match.roundId })
   const existingCheck = await db.execute(
-    sql`SELECT id FROM recent_matches WHERE model_id = ${modelId} AND model_version = ${modelVersion} AND match_id = ${match.matchId} LIMIT 1`
+    sql`SELECT id FROM recent_matches WHERE model_id = ${modelId} AND match_id = ${match.matchId} AND round_id = ${match.roundId} LIMIT 1`
   )
 
   // If match already exists, do nothing to preserve the exactly-5 invariant
@@ -134,50 +143,93 @@ async function updateRecentMatches(
     return
   }
 
-  // Remove oldest match if we already have 5 (prevents unique constraint violation)
-  await db.execute(
-    sql`DELETE FROM recent_matches WHERE model_id = ${modelId} AND model_version = ${modelVersion} AND match_index = 5`
-  )
+  // To keep an exact 5-round window, shift all existing indices and drop anything beyond 5
+  try {
+    await db.execute(sql`
+      UPDATE recent_matches
+      SET match_index = match_index + 1
+      WHERE model_id = ${modelId}
+    `)
 
-  // Shift existing matches down (make room for new one at index 1)
-  await db.execute(
-    sql`UPDATE recent_matches SET match_index = match_index + 1 WHERE model_id = ${modelId} AND model_version = ${modelVersion} AND match_index <= 4`
-  )
+    await db.execute(sql`
+      DELETE FROM recent_matches
+      WHERE model_id = ${modelId} AND match_index > 5
+    `)
+  } catch (error) {
+    console.error('Error while normalizing match_index window:', error)
+    throw error
+  }
 
-  // Insert new match as index 1 (most recent)
+  const targetMatchIndex = 1
+
+  // Insert new match with calculated index
   console.log('Inserting recent match with data:', {
-    modelId, modelVersion, matchId: match.matchId, roundId: match.roundId,
-    result, opponentId, opponentModelVersion, playedAt: match.finishedAt
+    modelId, matchId: match.matchId, roundId: match.roundId,
+    result, opponentId, playedAt: match.finishedAt, matchIndex: targetMatchIndex
   })
 
-  const insertQuery = sql`INSERT INTO recent_matches (
-    model_id, model_version, match_id, round_id, result,
-    opponent_model_id, opponent_model_version, played_at, match_index
-  ) VALUES (
-    ${modelId},
-    ${modelVersion},
-    ${match.matchId},
-    ${match.roundId},
-    ${result},
-    ${opponentId},
-    ${opponentModelVersion},
-    ${match.finishedAt.toISOString()},
-    1
-  )`
+  try {
+    const insertQuery = sql`INSERT INTO recent_matches (
+      model_id, match_id, round_id, result,
+      opponent_model_id, played_at, match_index
+    ) VALUES (
+      ${modelId},
+      ${match.matchId},
+      ${match.roundId},
+      ${result},
+      ${opponentId},
+      ${match.finishedAt.toISOString()},
+      ${targetMatchIndex}
+    )`
 
-  await db.execute(insertQuery)
-}
+    await db.execute(insertQuery)
+    console.log('INSERT operation completed successfully')
+  } catch (error) {
+    console.error('Error in INSERT operation:', error)
 
-/**
- * Helper function to extract opponent model version from match data
- */
-function getOpponentModelVersion(
-  match: typeof matches.$inferSelect,
-  opponentId: number
-): string | null {
-  const opponentModelName = opponentId === getModelIdByName(match.playerOneModel)
-    ? match.playerOneModel
-    : match.playerTwoModel
+    // Check if this is a constraint violation and attempt recovery
+    if (error && typeof error === 'object' && 'code' in error) {
+      const pgError = error as { code?: string; detail?: string }
+      if (pgError.code === '23505') {
+        console.log('Constraint violation detected, attempting recovery...')
+        console.log('Constraint detail:', pgError.detail)
 
-  return opponentModelName || null
+        // Try to clean up and retry once more
+        try {
+          await db.execute(sql`
+            WITH ranked_matches AS (
+              SELECT id, ROW_NUMBER() OVER (ORDER BY played_at DESC) as rn
+              FROM recent_matches WHERE model_id = ${modelId}
+            ),
+            matches_to_delete AS (
+              SELECT id FROM ranked_matches WHERE rn > 4
+            )
+            DELETE FROM recent_matches WHERE id IN (SELECT id FROM matches_to_delete);
+          `)
+
+          // Retry the insert
+          await db.execute(sql`INSERT INTO recent_matches (
+            model_id, match_id, round_id, result,
+            opponent_model_id, played_at, match_index
+          ) VALUES (
+            ${modelId},
+            ${match.matchId},
+            ${match.roundId},
+            ${result},
+            ${opponentId},
+            ${match.finishedAt.toISOString()},
+            1
+          )`)
+          console.log('Recovery INSERT operation completed successfully')
+        } catch (recoveryError) {
+          console.error('Recovery attempt failed:', recoveryError)
+          throw recoveryError
+        }
+      } else {
+        throw error
+      }
+    } else {
+      throw error
+    }
+  }
 }

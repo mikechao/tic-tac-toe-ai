@@ -25,6 +25,16 @@ pnpm db:migrate        # Run database migrations
 pnpm --filter backend db:push  # Push schema changes to database
 pnpm --filter backend db:studio # Open Drizzle Studio
 
+## Database Schema Changes
+
+**For all future schema changes, use the migration workflow:**
+
+1. **Make schema changes** in `apps/backend/drizzle/schema.ts`
+2. **Generate migration**: `pnpm --filter backend db:generate`
+3. **Apply migration**: `pnpm --filter backend db:migrate`
+
+This ensures proper migration tracking and safe schema evolution.
+
 # Docker
 pnpm docker:up         # Start PostgreSQL container
 pnpm docker:down       # Stop PostgreSQL container

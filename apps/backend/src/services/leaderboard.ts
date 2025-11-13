@@ -111,14 +111,10 @@ export async function getModelLeaderboardEntry(
 ): Promise<LeaderboardEntry | null> {
   const db = createDb(env)
 
-  const whereClause = modelVersion
-    ? and(eq(modelStats.modelId, modelId), eq(modelStats.modelVersion, modelVersion))
-    : eq(modelStats.modelId, modelId)
-
   const [stat] = await db
     .select()
     .from(modelStats)
-    .where(whereClause)
+    .where(eq(modelStats.modelId, modelId))
     .limit(1)
 
   if (!stat) {
@@ -135,7 +131,6 @@ export async function getModelLeaderboardEntry(
     .from(recentMatches)
     .where(and(
       eq(recentMatches.modelId, stat.modelId),
-      eq(recentMatches.modelVersion, stat.modelVersion),
       eq(recentMatches.matchIndex, 1) // Only get the most recent (index 1) for last matchup
     ))
     .limit(1)
@@ -149,7 +144,6 @@ export async function getModelLeaderboardEntry(
     .from(recentMatches)
     .where(and(
       eq(recentMatches.modelId, stat.modelId),
-      eq(recentMatches.modelVersion, stat.modelVersion),
     ))
     .orderBy(recentMatches.matchIndex)
     .limit(5)

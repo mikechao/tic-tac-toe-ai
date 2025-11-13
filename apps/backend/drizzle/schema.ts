@@ -68,7 +68,6 @@ export const modelStats = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     modelId: integer('model_id').notNull(),
-    modelVersion: varchar('model_version', { length: 255 }).notNull(),
     totalMatches: integer('total_matches').notNull().default(0),
     wins: integer('wins').notNull().default(0),
     losses: integer('losses').notNull().default(0),
@@ -80,7 +79,7 @@ export const modelStats = pgTable(
     createdAt: timestamptz('created_at').notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex('model_stats_model_id_version_unique').on(table.modelId, table.modelVersion),
+    uniqueIndex('model_stats_model_id_unique').on(table.modelId),
   ],
 )
 
@@ -89,18 +88,16 @@ export const recentMatches = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     modelId: integer('model_id').notNull(),
-    modelVersion: varchar('model_version', { length: 255 }).notNull(),
     matchId: uuid('match_id').notNull(),
     roundId: uuid('round_id').notNull(),
     result: varchar('result', { length: 1 }).notNull(), // 'W', 'L', or 'T'
     opponentModelId: integer('opponent_model_id'), // nullable for human opponents
-    opponentModelVersion: varchar('opponent_model_version', { length: 255 }), // nullable
     playedAt: timestamptz('played_at').notNull(),
     matchIndex: integer('match_index').notNull(), // 1 = most recent, 5 = oldest
     createdAt: timestamptz('created_at').notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex('recent_matches_model_version_index_unique').on(table.modelId, table.modelVersion, table.matchIndex),
-    uniqueIndex('recent_matches_model_version_match_unique').on(table.modelId, table.modelVersion, table.matchId),
+    uniqueIndex('recent_matches_model_index_unique').on(table.modelId, table.matchIndex),
+    uniqueIndex('recent_matches_model_match_unique').on(table.modelId, table.matchId, table.roundId),
   ],
 )

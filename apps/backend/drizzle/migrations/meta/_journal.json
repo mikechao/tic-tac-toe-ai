@@ -5,8 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762991697980,
-      "tag": "0000_chunky_sunspot",
+      "when": 1763069753075,
+      "tag": "0000_military_red_wolf",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763073303275,
+      "tag": "0001_abandoned_firebrand",
       "breakpoints": true
     }
   ]

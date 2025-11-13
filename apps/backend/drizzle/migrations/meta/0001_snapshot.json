@@ -1,6 +1,6 @@
 {
-  "id": "115cb3f0-79e2-471a-9781-c0fc1c2dfdcc",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "b21ba835-957c-4d0b-afa8-90899f4ecb16",
+  "prevId": "115cb3f0-79e2-471a-9781-c0fc1c2dfdcc",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -471,6 +471,12 @@
             },
             {
               "expression": "match_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "round_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
