@@ -3,7 +3,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 import { matches } from '../../drizzle/schema'
 import { mapMatchToRecentResult, mapRecentResultToStreakType } from '@arena/schema/result-mapping'
-import { getModelIdByName } from '@arena/schema/model-registry'
+import { getModelIdByName, getModelInfo } from '@arena/schema/model-registry'
 
 /**
  * Update leaderboard statistics after a match is completed
@@ -53,13 +53,17 @@ export async function updateLeaderboardForMatch(
 
   // Update stats for both players if they're registered models
   if (player1ModelId) {
-    const player1Version = match.aiModelVersion || match.playerOneModel
+    // Use the model registry name as the canonical version to prevent duplicates
+    const player1Info = getModelInfo(player1ModelId)
+    const player1Version = player1Info?.name || match.aiModelVersion || match.playerOneModel
     await updateModelStats(db, match, player1ModelId, player1Version, moveCount, 'player1')
     await updateRecentMatches(db, match, player1ModelId, player1Version, player2ModelId, 'player1')
   }
 
   if (player2ModelId) {
-    const player2Version = match.playerTwoModel
+    // Use the model registry name as the canonical version to prevent duplicates
+    const player2Info = getModelInfo(player2ModelId)
+    const player2Version = player2Info?.name || match.playerTwoModel
     await updateModelStats(db, match, player2ModelId, player2Version, moveCount, 'player2')
     await updateRecentMatches(db, match, player2ModelId, player2Version, player1ModelId, 'player2')
   }

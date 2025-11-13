@@ -127,7 +127,7 @@ export function MatchMoveLog({
   return (
     <MyMagicCard
       className={cn(
-        "border-white/15 bg-white/4 px-0 py-0",
+        "bg-white/4 px-0 py-0",
         !isRecapVariant && "h-full"
       )}
       spotlight={false}
@@ -202,9 +202,9 @@ export function MatchMoveLog({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col gap-3" style={isRecapVariant ? { maxHeight: '350px' } : { height: '300px' }}>
+            <div className="flex flex-col gap-3 overflow-hidden" style={isRecapVariant ? { maxHeight: '350px' } : { height: '300px' }}>
               <AnimatedList
-                className="flex flex-col gap-3 h-full"
+                className="flex flex-col gap-3"
                 delay={600}
                 onNewItem={() => {
                   // Auto-scroll to top when new item animates in, unless paused

@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 import type { Env } from '../env'
 import { createDb } from '../lib/db'
@@ -12,17 +12,26 @@ import type { LeaderboardEntry, LeaderboardResponse } from '@arena/schema'
 export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
   const db = createDb(env)
 
-  // Get all model stats
-  const stats = await db
-    .select()
-    .from(modelStats)
-    .orderBy(desc(modelStats.lastUpdatedAt))
+  // Get aggregated stats by modelId (ignoring model_version)
+  const aggregatedStats = await db.execute(sql`
+    SELECT
+      model_id,
+      SUM(total_matches) as total_matches,
+      SUM(wins) as wins,
+      SUM(losses) as losses,
+      SUM(ties) as ties,
+      ROUND(AVG(CAST(average_turns AS NUMERIC)), 2) as average_turns,
+      MAX(last_updated_at) as last_updated_at
+    FROM model_stats
+    GROUP BY model_id
+    ORDER BY MAX(last_updated_at) DESC
+  `)
 
   // Transform to leaderboard entries
   const entries: LeaderboardEntry[] = []
 
-  for (const stat of stats) {
-    // Get recent matches for this model/version
+  for (const stat of aggregatedStats as any[]) {
+    // Get recent matches for this model (any version)
     const recentMatchesData = await db
       .select({
         result: recentMatches.result,
@@ -31,8 +40,7 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
       })
       .from(recentMatches)
       .where(and(
-        eq(recentMatches.modelId, stat.modelId),
-        eq(recentMatches.modelVersion, stat.modelVersion),
+        eq(recentMatches.modelId, stat.model_id as number),
         eq(recentMatches.matchIndex, 1) // Only get the most recent (index 1) for last matchup
       ))
       .limit(1)
@@ -45,8 +53,7 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
       })
       .from(recentMatches)
       .where(and(
-        eq(recentMatches.modelId, stat.modelId),
-        eq(recentMatches.modelVersion, stat.modelVersion),
+        eq(recentMatches.modelId, stat.model_id as number),
       ))
       .orderBy(recentMatches.matchIndex)
       .limit(5)
@@ -64,20 +71,20 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
     } : null
 
     // Calculate win rate
-    const winRate = stat.totalMatches > 0 ? stat.wins / stat.totalMatches : 0
+    const winRate = stat.total_matches > 0 ? stat.wins / stat.total_matches : 0
 
     entries.push({
       rank: null, // Will be set by sorting
-      modelId: stat.modelId,
-      matches: stat.totalMatches,
+      modelId: stat.model_id,
+      matches: stat.total_matches,
       wins: stat.wins,
       losses: stat.losses,
       ties: stat.ties,
-      averageTurns: parseFloat(stat.averageTurns.toString()),
+      averageTurns: parseFloat(stat.average_turns.toString()),
       winRate,
       streak: {
-        type: stat.currentStreakType as any,
-        length: stat.currentStreakLength,
+        type: 'win', // Default streak type since we're aggregating
+        length: 0, // Default streak length since we're aggregating
       },
       recentForm,
       lastMatchup,
