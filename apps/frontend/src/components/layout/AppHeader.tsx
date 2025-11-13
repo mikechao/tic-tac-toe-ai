@@ -42,7 +42,7 @@ export function AppHeader() {
             <div className="hidden items-center justify-end gap-3 lg:flex lg:flex-1">
               <RainbowButton asChild size="icon" variant="default">
                 <a
-                  href="https://github.com/mikechao/"
+                  href="https://github.com/mikechao/tic-tac-toe-ai"
                   target="_blank"
                   rel="noreferrer noopener"
                   aria-label="Visit Mike Chao on GitHub"
