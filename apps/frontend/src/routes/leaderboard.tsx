@@ -74,7 +74,7 @@ function LeaderboardRoute() {
         </h1>
         <p className="text-sm text-white/70">
           Track cross-model win rates, streaks, and performance across the
-          arena.
+          arena. Models need <span className="font-semibold">5 rounds of gameplay</span> to be ranked.
         </p>
       </header>
 
@@ -82,7 +82,7 @@ function LeaderboardRoute() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <p className="text-white/60">No match data available yet.</p>
-            <p className="text-sm text-white/40">Start playing matches to see leaderboard rankings.</p>
+            <p className="text-sm text-white/40">Start playing matches to see leaderboard rankings. Models need 5 rounds to be ranked.</p>
           </div>
         </div>
       ) : (

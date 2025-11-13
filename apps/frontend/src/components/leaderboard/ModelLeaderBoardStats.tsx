@@ -23,7 +23,7 @@ export interface ModelLeaderBoardStatsProps {
   streakType: 'win' | 'loss' | 'tie'
   streakLength: number
   averageTurns: number
-  lastMatchup: {
+  lastMatchup?: {
     opponentName: string
     result: 'W' | 'L' | 'T'
     playedAt: string
@@ -174,12 +174,18 @@ export function ModelLeaderBoardStats({
         value={averageTurns}
         decimalPlaces={1}
       />
-      <MatchupStat
-        opponentName={lastMatchup.opponentName}
-        result={lastMatchup.result}
-        playedAt={lastMatchup.playedAt}
-        className="col-span-2"
-      />
+      {lastMatchup ? (
+        <MatchupStat
+          opponentName={lastMatchup.opponentName}
+          result={lastMatchup.result}
+          playedAt={lastMatchup.playedAt}
+          className="col-span-2"
+        />
+      ) : (
+        <div className="col-span-2 text-center text-white/40 text-sm">
+          No previous matchups
+        </div>
+      )}
       <RecentFormStat recentForm={recentForm} />
     </div>
   )
