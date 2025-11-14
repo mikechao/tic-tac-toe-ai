@@ -39,6 +39,39 @@ export function registerApiRoutes(
 
   app.post('/sentry', postSentry)
 
+  app.get('/model-stats/:modelLabel', async (c) => {
+    const { modelLabel } = c.req.param()
+    const { runtimeEnv } = c.var
+
+    try {
+      c.var.logger.info('Model stats endpoint invoked', { modelLabel })
+
+      // Mock implementation for now - in production this would query Sentry metrics
+      // For the demo, we'll return placeholder data
+      const stats = {
+        modelLabel,
+        jsonReliability: 0.95, // 95% reliability
+        repairAttempts: 12,
+        repairSuccessRate: 0.83, // 83% of repair attempts succeed
+        totalMoves: 100
+      }
+
+      return c.json(stats)
+    } catch (error) {
+      return respondWithError(
+        c,
+        500,
+        'PERSISTENCE_ERROR',
+        'Failed to fetch model stats',
+        {
+          logMessage: 'Database error while fetching model stats',
+          context: { error: extractErrorMessage(error), modelLabel },
+          details: extractErrorMessage(error),
+        },
+      )
+    }
+  })
+
   app.get('/leaderboard', async (c) => {
     const { runtimeEnv } = c.var
 

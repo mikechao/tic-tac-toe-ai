@@ -1,4 +1,5 @@
 import { ModelLeaderBoardStats } from './ModelLeaderBoardStats'
+import { ModelReliabilityBadge } from './ModelReliabilityBadge'
 import type { LeaderboardViewEntry } from '@/hooks/useLeaderboard'
 import { getProviderMeta } from '@/data/models'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,13 @@ export function LeaderboardCard({
           {providerMeta.label}
         </span>
       </header>
+
+      {/* JSON Reliability Section - only show for Transformers.js */}
+      {entry.model?.provider === 'transformers-js' && (
+        <div className="border-t border-white/12 pt-4">
+          <ModelReliabilityBadge modelLabel={entry.model?.name || 'SmolLM2'} />
+        </div>
+      )}
 
       <ModelLeaderBoardStats
       wins={entry.wins}

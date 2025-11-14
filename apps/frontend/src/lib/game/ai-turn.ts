@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { BoardState, Move, PlayerMark } from './board-state'
 import { ensureGeminiChatModel } from '@/integrations/gemini/model'
 
-const moveResponseSchema = z.object({
+export const moveResponseSchema = z.object({
   nextMove: z.number().int(),
   rationale: z.string().min(1, 'Provide a concise rationale'),
 })
@@ -35,7 +35,7 @@ export type GeminiMoveSuccess = {
 
 export type GeminiMoveFailure = {
   ok: false
-  reason: 'invalid-response' | 'unavailable'
+  reason: 'invalid-response' | 'unavailable' | 'json-repair-failed' | 'unexpected-parse-error'
   message: string
   raw?: unknown
   durationMs?: number
@@ -227,36 +227,101 @@ async function requestMoveWithResolver(
         rawResponse = result.response.body
         console.log('[AI Turn] Text response received', result.text)
 
-        // Parse JSON from text response
+        // Parse JSON from text response - try original parsing first, then repair
         try {
           const textResponse = result.text.trim()
+
           // Try to extract JSON from the response if it's wrapped in markdown code blocks
-          const jsonMatch = textResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || 
+          const jsonMatch = textResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) ||
                            textResponse.match(/(\{[\s\S]*\})/)
-          
+
           const jsonText = jsonMatch ? jsonMatch[1] : textResponse
-          const parsed = JSON.parse(jsonText)
-          object = moveResponseSchema.parse(parsed)
+
+          // Try direct parsing first (fast path for valid JSON)
+          try {
+            const parsed = JSON.parse(jsonText)
+            object = moveResponseSchema.parse(parsed)
+            rawResponse = result.response.body
+            // Valid JSON parsed successfully - no repair needed
+          } catch (originalParseError) {
+            // Original parsing failed - now try repair system
+            console.debug('[AI Turn] Original JSON parsing failed, attempting repair', {
+              error: originalParseError instanceof Error ? originalParseError.message : 'Unknown error',
+              text: textResponse.substring(0, 200) + (textResponse.length > 200 ? '...' : '')
+            })
+
+            const { attemptJsonRepair } = await import('./json-repair')
+            const { handleRepairFailure } = await import('./json-repair/toast-handler')
+
+            const repairResult = await attemptJsonRepair(textResponse, {
+              provider: 'transformers-js',
+              repairSteps: [],
+              success: false,
+              processingTimeMs: 0,
+              originalLength: textResponse.length,
+              roundNumber: request.round,
+              modelLabel: 'SmolLM2'
+            })
+
+            if (repairResult.success && repairResult.data) {
+              object = repairResult.data
+              rawResponse = result.response.body
+
+              // Log successful repair for debugging
+              if (repairResult.repairSteps.length > 1 ||
+                  repairResult.repairSteps.includes('jsonrepair-success')) {
+                console.info('[AI Turn] JSON repaired successfully', {
+                  steps: repairResult.repairSteps,
+                  processingTime: `${repairResult.processingTimeMs?.toFixed(2)}ms`
+                })
+              }
+            } else {
+              // Handle repair failure with toast and match termination
+              const finishedAt = performance.now()
+              const durationMs = finishedAt - startedAt
+
+              // Preserve existing error structure
+              lastError = {
+                ok: false,
+                reason: 'json-repair-failed',
+                message: `AI response parsing failed after repair attempts: ${repairResult.error || 'Unknown error'}`,
+                raw: result.response.body,
+                durationMs,
+                startedAt,
+                finishedAt,
+              }
+
+              handleRepairFailure(repairResult.error || 'Unknown repair failure', {
+                provider: 'transformers-js',
+                repairSteps: repairResult.repairSteps,
+                success: false,
+                processingTimeMs: durationMs,
+                originalLength: textResponse.length,
+                roundNumber: request.round,
+                modelLabel: 'SmolLM2'
+              })
+
+              // Continue with retry logic instead of throwing immediately
+              currentPrompt = `Previous response could not be parsed as JSON even after repair attempts. Respond ONLY with valid JSON in format: { "nextMove": number, "rationale": string }.\n${buildPrompt(request, asciiBoard)}`
+              continue
+            }
+          }
         } catch (parseError) {
-          console.error('[AI Turn] Failed to parse text response as JSON', {
-            error: parseError,
-            text: result.text,
-          })
-          const finishedAt = typeof performance !== 'undefined'
-            ? performance.now()
-            : Date.now()
+          // Fallback error handling (preserving existing logic)
+          console.error('[AI Turn] Unexpected parsing error', parseError)
+          const finishedAt = performance.now()
           const durationMs = finishedAt - startedAt
-          
+
           lastError = {
             ok: false,
-            reason: 'invalid-response',
-            message: `Failed to parse response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+            reason: 'unexpected-parse-error',
+            message: `Unexpected parsing error: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
             raw: result.response.body,
             durationMs,
             startedAt,
             finishedAt,
           }
-          currentPrompt = `Previous response was not valid JSON. Respond ONLY with valid JSON in format: { "nextMove": number, "rationale": string }.\n${buildPrompt(request, asciiBoard)}`
+          currentPrompt = `Unexpected parsing error occurred. Respond ONLY with valid JSON in format: { "nextMove": number, "rationale": string }.\n${buildPrompt(request, asciiBoard)}`
           continue
         }
       }
