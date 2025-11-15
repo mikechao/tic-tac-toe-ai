@@ -125,3 +125,6 @@ export function assertValidDbMatchOutcome(value: unknown): asserts value is DbMa
 export function isValidDbMatchOutcome(value: unknown): value is DbMatchOutcome {
   return dbMatchOutcomeSchema.safeParse(value).success
 }
+
+// Re-export telemetry types
+export * from './telemetry'

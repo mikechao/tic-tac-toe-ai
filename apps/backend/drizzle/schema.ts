@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  index,
 } from 'drizzle-orm/pg-core'
 
 const timestamptz = (name: string) => timestamp(name, { withTimezone: true })
@@ -100,4 +101,27 @@ export const recentMatches = pgTable(
     uniqueIndex('recent_matches_model_index_unique').on(table.modelId, table.matchIndex),
     uniqueIndex('recent_matches_model_match_unique').on(table.modelId, table.matchId, table.roundId),
   ],
+)
+
+export const jsonRepairTelemetry = pgTable(
+  'json_repair_telemetry',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    modelId: integer('model_id').notNull(),
+    roundId: uuid('round_id').references(() => matches.roundId, { onDelete: 'cascade' }),
+    repairAttemptAt: timestamptz('repair_attempt_at').notNull(),
+    originalJson: text('original_json').notNull(),
+    repairedJson: text('repaired_json').notNull(),
+    repairSuccessful: boolean('repair_successful').notNull(),
+    repairDurationMs: integer('repair_duration_ms').notNull(),
+    repairSteps: text('repair_steps').array().notNull(),
+    errorType: varchar('error_type', { length: 50 }),
+    errorDetails: text('error_details'),
+    createdAt: timestamptz('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('json_repair_telemetry_model_id_idx').on(table.modelId),
+    index('json_repair_telemetry_round_id_idx').on(table.roundId),
+    index('json_repair_telemetry_created_at_idx').on(table.createdAt),
+  ]
 )

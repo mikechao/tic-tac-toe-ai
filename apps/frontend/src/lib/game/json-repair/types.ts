@@ -16,11 +16,15 @@ export interface JsonRepairTelemetry {
   repairSteps: string[]
   success: boolean
   errorType?: string
+  error?: string
   processingTimeMs: number
   originalLength: number
   repairedLength?: number
   roundNumber: number
   modelLabel: string
+  roundId?: string
+  originalText?: string
+  repairedJson?: string
 }
 
 export interface JsonRepairModule {

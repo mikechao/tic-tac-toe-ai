@@ -1,7 +1,8 @@
 import * as Sentry from '@sentry/react'
+import { apiClient } from '@/lib/api-client'
 import type { JsonRepairTelemetry } from './types'
 
-export function trackRepairTelemetry(telemetry: JsonRepairTelemetry): void {
+export async function trackRepairTelemetry(telemetry: JsonRepairTelemetry): Promise<void> {
   // Console logging for development
   console.debug('[JSONRepair] Telemetry:', {
     provider: telemetry.provider,
@@ -48,6 +49,34 @@ export function trackRepairTelemetry(telemetry: JsonRepairTelemetry): void {
 
   // Leaderboard stats tracking
   trackLeaderboardStats(telemetry)
+
+  // Database logging via API
+  try {
+    await apiClient.post('/telemetry/repairs', {
+      modelLabel: telemetry.modelLabel,
+      roundId: telemetry.roundId || null,
+      repairAttemptAt: new Date().toISOString(),
+      originalText: telemetry.originalText || '',
+      repairedJson: telemetry.repairedJson || '',
+      success: telemetry.success,
+      processingTimeMs: telemetry.processingTimeMs,
+      repairSteps: telemetry.repairSteps,
+      errorType: telemetry.errorType,
+      error: telemetry.error,
+      roundNumber: telemetry.roundNumber,
+      provider: telemetry.provider,
+    })
+  } catch (apiError) {
+    // Fallback to Sentry-only logging if API fails
+    console.warn('Failed to log telemetry to database, using Sentry fallback:', apiError)
+
+    if (!telemetry.success) {
+      Sentry.captureMessage('JSON repair failed', {
+        level: 'warning',
+        extra: telemetry
+      } as any)
+    }
+  }
 }
 
 // Leaderboard tracking for JSON reliability

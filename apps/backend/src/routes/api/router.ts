@@ -11,6 +11,9 @@ import {
 } from '../../services/match-ingestion'
 import { roundResultSchema } from '../../services/schemas'
 import { getLeaderboard } from '../../services/leaderboard'
+import { TelemetryService } from '../../services/telemetry-service'
+import { createDb } from '../../lib/db'
+import { createJsonRepairTelemetrySchema } from '@arena/schema'
 import { postSentry } from './handlers/sentry'
 
 type AppVariables = AuthVariables & LoggerVariables & { runtimeEnv: Env }
@@ -39,6 +42,57 @@ export function registerApiRoutes(
 
   app.post('/sentry', postSentry)
 
+  app.post('/telemetry/repairs', async (c) => {
+    const { runtimeEnv } = c.var
+    let payload: unknown
+
+    try {
+      payload = await c.req.json()
+    } catch (error) {
+      return respondWithError(c, 400, 'INVALID_JSON', 'Invalid JSON body')
+    }
+
+    const parsed = createJsonRepairTelemetrySchema.safeParse(payload)
+    if (!parsed.success) {
+      return respondWithError(
+        c,
+        400,
+        'VALIDATION_FAILED',
+        'Invalid telemetry payload',
+        {
+          logMessage: 'Telemetry validation failed',
+          details: parsed.error.issues,
+        }
+      )
+    }
+
+    try {
+      const db = createDb(runtimeEnv)
+      const telemetryService = new TelemetryService(db)
+      await telemetryService.recordRepairAttempt(parsed.data)
+
+      c.var.logger.info('Repair telemetry recorded', {
+        modelLabel: parsed.data.modelLabel,
+        success: parsed.data.success,
+        roundNumber: parsed.data.roundNumber,
+        repairSteps: parsed.data.repairSteps.length
+      })
+
+      return c.json({ success: true })
+    } catch (error) {
+      return respondWithError(
+        c,
+        500,
+        'PERSISTENCE_ERROR',
+        'Failed to record telemetry',
+        {
+          logMessage: 'Database error while storing telemetry',
+          context: { error: extractErrorMessage(error) },
+        }
+      )
+    }
+  })
+
   app.get('/model-stats/:modelLabel', async (c) => {
     const { modelLabel } = c.req.param()
     const { runtimeEnv } = c.var
@@ -46,15 +100,9 @@ export function registerApiRoutes(
     try {
       c.var.logger.info('Model stats endpoint invoked', { modelLabel })
 
-      // Mock implementation for now - in production this would query Sentry metrics
-      // For the demo, we'll return placeholder data
-      const stats = {
-        modelLabel,
-        jsonReliability: 0.95, // 95% reliability
-        repairAttempts: 12,
-        repairSuccessRate: 0.83, // 83% of repair attempts succeed
-        totalMoves: 100
-      }
+      const db = createDb(runtimeEnv)
+      const telemetryService = new TelemetryService(db)
+      const stats = await telemetryService.getModelReliabilityStats(modelLabel)
 
       return c.json(stats)
     } catch (error) {
@@ -66,8 +114,7 @@ export function registerApiRoutes(
         {
           logMessage: 'Database error while fetching model stats',
           context: { error: extractErrorMessage(error), modelLabel },
-          details: extractErrorMessage(error),
-        },
+        }
       )
     }
   })
