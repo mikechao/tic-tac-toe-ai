@@ -46,7 +46,7 @@ importers:
         version: link:../../packages/schema
       '@hono/zod-validator':
         specifier: ^0.7.4
-        version: 0.7.4(hono@4.10.4)(zod@4.1.12)
+        version: 0.7.4(hono@4.10.5)(zod@4.1.12)
       '@sentry/cloudflare':
         specifier: ^10.22.0
         version: 10.22.0(@cloudflare/workers-types@4.20251014.0)
@@ -57,8 +57,8 @@ importers:
         specifier: ^0.44.7
         version: 0.44.7(@cloudflare/workers-types@4.20251014.0)(@opentelemetry/api@1.9.0)(postgres@3.4.7)
       hono:
-        specifier: ^4.10.4
-        version: 4.10.4
+        specifier: ^4.10.5
+        version: 4.10.5
       postgres:
         specifier: ^3.4.7
         version: 3.4.7
@@ -3018,8 +3018,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.10.4:
-    resolution: {integrity: sha512-YG/fo7zlU3KwrBL5vDpWKisLYiM+nVstBQqfr7gCPbSYURnNEP9BDxEMz8KfsDR9JX0lJWDRNc6nXX31v7ZEyg==}
+  hono@4.10.5:
+    resolution: {integrity: sha512-h/MXuTkoAK8NG1EfDp0jI1YLf6yGdDnfkebRO2pwEh5+hE3RAJFXkCsnD0vamSiARK4ZrB6MY+o3E/hCnOyHrQ==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@4.0.0:
@@ -4857,9 +4857,9 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
-  '@hono/zod-validator@0.7.4(hono@4.10.4)(zod@4.1.12)':
+  '@hono/zod-validator@0.7.4(hono@4.10.5)(zod@4.1.12)':
     dependencies:
-      hono: 4.10.4
+      hono: 4.10.5
       zod: 4.1.12
 
   '@huggingface/jinja@0.5.1': {}
@@ -6411,7 +6411,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.10.4: {}
+  hono@4.10.5: {}
 
   html-encoding-sniffer@4.0.0:
     dependencies:
