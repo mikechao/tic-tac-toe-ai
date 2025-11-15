@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RoundResultResponse } from '@arena/schema'
 
 import { localAIModels } from '@arena/schema/models'
-import { getProviderMeta } from '@arena/schema/models-ui'
 import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { submitRoundResult } from '@/lib/round-results'
 import { buildRoundResultPayload } from '@/lib/round-results/build-round-result-payload'
@@ -141,16 +140,10 @@ export function MatchBoard() {
     return localAIModels.find((model) => model.id === modelBId)
   }, [modelBId])
 
-  const formatModelLabel = (model: (typeof localAIModels)[number] | undefined): string => {
-    if (!model) {
-      return 'unknown-model'
-    }
-    const providerMeta = getProviderMeta(model.provider)
-    return `${model.name} (${providerMeta.label})`
-  }
-
-  const playerOneModelLabel = formatModelLabel(modelA)
-  const playerTwoModelLabel = formatModelLabel(modelB)
+  
+  // Use clean base names for API calls (database storage)
+  const playerOneModelName = modelA?.name
+  const playerTwoModelName = modelB?.name
 
   const totalRounds = state.totalRounds
   const boardStatus = `Round ${Math.max(state.currentRound, 1)} of ${totalRounds}`
@@ -296,8 +289,8 @@ export function MatchBoard() {
         moves: roundMoves,
         boardSize,
         totalRounds,
-        playerOneModel: playerOneModelLabel,
-        playerTwoModel: playerTwoModelLabel,
+        playerOneModel: playerOneModelName,
+        playerTwoModel: playerTwoModelName,
         rematchRequested,
       })
 
@@ -333,8 +326,8 @@ export function MatchBoard() {
       roundMoves,
       boardSize,
       totalRounds,
-      playerOneModelLabel,
-      playerTwoModelLabel,
+      playerOneModelName,
+      playerTwoModelName,
     ],
   )
 

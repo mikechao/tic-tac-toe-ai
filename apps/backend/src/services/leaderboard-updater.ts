@@ -24,11 +24,8 @@ export async function updateLeaderboardForMatch(
   matchId: string,
   roundId: string
 ): Promise<void> {
-  // Debug logging
-  console.log('updateLeaderboardForMatch called with:', { matchId, roundId })
-
+  
   if (!roundId) {
-    console.error('roundId is undefined in updateLeaderboardForMatch')
     throw new Error('roundId is required')
   }
 
@@ -44,7 +41,6 @@ export async function updateLeaderboardForMatch(
   }
 
   // Get move count for this round
-  console.log('Querying move count for roundId:', roundId)
   type MoveCountRow = { count: number | string }
   let moveCountResult: MoveCountRow[] = []
   try {
@@ -59,8 +55,9 @@ export async function updateLeaderboardForMatch(
   const moveCount = Number(moveCountResult[0]?.count ?? 0)
 
   // Extract model IDs and versions from the match
-  const player1ModelId = getModelIdByName(match.playerOneModel)
-  const player2ModelId = getModelIdByName(match.playerTwoModel)
+  // Now using clean base names directly from frontend
+  const player1ModelId = getModelIdByName(match.playerOneModel || '')
+  const player2ModelId = getModelIdByName(match.playerTwoModel || '')
 
   // Update stats for both players if they're registered models
   if (player1ModelId) {
