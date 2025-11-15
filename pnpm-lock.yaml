@@ -48,8 +48,8 @@ importers:
         specifier: ^0.7.4
         version: 0.7.4(hono@4.10.5)(zod@4.1.12)
       '@sentry/cloudflare':
-        specifier: ^10.22.0
-        version: 10.22.0(@cloudflare/workers-types@4.20251014.0)
+        specifier: ^10.25.0
+        version: 10.25.0(@cloudflare/workers-types@4.20251014.0)
       consola:
         specifier: ^3.4.2
         version: 3.4.2
@@ -2150,8 +2150,8 @@ packages:
     resolution: {integrity: sha512-wD2XqN+yeBpQFfdPo6+wlKDMyyuDctVGzZWE4qTPntICKQuwMdAfeq5Ma89ad0Dw+bzG9UijGeyuJQlswF87Mw==}
     engines: {node: '>=18'}
 
-  '@sentry/cloudflare@10.22.0':
-    resolution: {integrity: sha512-uyONKTs5chatOnHC1xoEN7Dy4QhdQop9CB0IYVQ1K4EVpCskKKtoqWglB2NxkDNN7B8UerRuCHFiFHrKuHodPQ==}
+  '@sentry/cloudflare@10.25.0':
+    resolution: {integrity: sha512-oafTyQ1CBTOK3GJhSoxdzAQVlr/l0v5WspwkMIa1bUXqLlOHwmcyZZ1CyoaLoA4gJ1wYL2kONjNwtoNM0utJsw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.x
@@ -2161,6 +2161,10 @@ packages:
 
   '@sentry/core@10.22.0':
     resolution: {integrity: sha512-V1oeHbrOKzxadsCmgtPku3v3Emo/Bpb3VSuKmlLrQefiHX98MWtjJ3XDGfduzD5/dCdh0r/OOLwjcmrO/PZ2aw==}
+    engines: {node: '>=18'}
+
+  '@sentry/core@10.25.0':
+    resolution: {integrity: sha512-mGi4BYIPwZjWdOXHrPoXz1AW4/cQbFoiuW/m+OOATmtSoGTDnWYwP+qZU7VLlL+v8ZEzxfPi2C1NPfJtPj7QWA==}
     engines: {node: '>=18'}
 
   '@sentry/react@10.22.0':
@@ -5561,14 +5565,16 @@ snapshots:
       '@sentry-internal/replay-canvas': 10.22.0
       '@sentry/core': 10.22.0
 
-  '@sentry/cloudflare@10.22.0(@cloudflare/workers-types@4.20251014.0)':
+  '@sentry/cloudflare@10.25.0(@cloudflare/workers-types@4.20251014.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
-      '@sentry/core': 10.22.0
+      '@sentry/core': 10.25.0
     optionalDependencies:
       '@cloudflare/workers-types': 4.20251014.0
 
   '@sentry/core@10.22.0': {}
+
+  '@sentry/core@10.25.0': {}
 
   '@sentry/react@10.22.0(react@19.2.0)':
     dependencies:
