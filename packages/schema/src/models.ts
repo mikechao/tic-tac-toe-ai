@@ -2,7 +2,6 @@ import type { ModelId } from './index'
 
 export type LocalModelProvider =
   | 'chrome-builtin'
-  | 'edge-builtin'
   | 'transformers-js'
 
 export interface LocalAIModel {
@@ -36,36 +35,6 @@ export const localAIModels: LocalAIModel[] = [
     website: 'https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct',
     estimatedDownloadSizeMB: 220,
     notes: 'Requires WebGPU (Chrome/Edge Canary).',
-  },
-  {
-    id: 3,
-    name: 'GPT-4o mini',
-    provider: 'edge-builtin',
-    vendor: 'OpenAI',
-    variant: 'Built into Edge browser',
-    website: 'https://developer.microsoft.com/en-us/microsoft-edge/platform/ai',
-    estimatedDownloadSizeMB: 0,
-    notes: 'Available in Microsoft Edge; no additional download required.',
-  },
-  {
-    id: 4,
-    name: 'Claude Haiku',
-    provider: 'edge-builtin',
-    vendor: 'Anthropic',
-    variant: 'Built into Edge browser',
-    website: 'https://developer.microsoft.com/en-us/microsoft-edge/platform/ai',
-    estimatedDownloadSizeMB: 0,
-    notes: 'Available in Microsoft Edge; no additional download required.',
-  },
-  {
-    id: 5,
-    name: 'Mistral Large',
-    provider: 'edge-builtin',
-    vendor: 'Mistral AI',
-    variant: 'Built into Edge browser',
-    website: 'https://developer.microsoft.com/en-us/microsoft-edge/platform/ai',
-    estimatedDownloadSizeMB: 0,
-    notes: 'Available in Microsoft Edge; no additional download required.',
   },
 ]
 

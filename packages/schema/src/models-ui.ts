@@ -10,10 +10,6 @@ export const providerMetaMap: Record<LocalModelProvider, ProviderMeta> = {
     label: 'Chrome Built-In',
     badgeClass: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/40',
   },
-  'edge-builtin': {
-    label: 'Edge Built-In',
-    badgeClass: 'bg-sky-500/15 text-sky-200 border-sky-400/40',
-  },
   'transformers-js': {
     label: 'Transformers.js (WebGPU)',
     badgeClass: 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/40',
@@ -29,8 +25,6 @@ export function getProviderIcon(provider: LocalModelProvider): string {
   switch (provider) {
     case 'chrome-builtin':
       return '🌐'
-    case 'edge-builtin':
-      return '🔷'
     case 'transformers-js':
       return '⚡'
     default:
