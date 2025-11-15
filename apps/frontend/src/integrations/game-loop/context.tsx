@@ -21,7 +21,7 @@ import {
   type GeminiMoveRequest,
 } from '@/lib/game/ai-turn'
 import type { PlayerMark } from '@/lib/game/board-state'
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { useTransformersModel } from '@/hooks/useTransformersModel'
 
 type GameLoopContextValue = {

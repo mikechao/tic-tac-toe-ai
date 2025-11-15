@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { leaderboardService } from '@/services/leaderboard-service'
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import type { LeaderboardEntry } from '@arena/schema'
 
 export interface LeaderboardViewEntry extends LeaderboardEntry {

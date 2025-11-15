@@ -10,7 +10,7 @@ import {
 import type { ModelId } from '@arena/schema'
 import type { BuiltInAIChatLanguageModel } from '@built-in-ai/core'
 
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { registerModelProvider } from '@/lib/models/providers'
 import type {
   BuiltInAIState,

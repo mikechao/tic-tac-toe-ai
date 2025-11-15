@@ -1,4 +1,9 @@
-import type { ModelId } from '@arena/schema'
+import type { ModelId } from './index'
+
+export type LocalModelProvider =
+  | 'chrome-builtin'
+  | 'edge-builtin'
+  | 'transformers-js'
 
 export interface LocalAIModel {
   id: ModelId
@@ -10,11 +15,6 @@ export interface LocalAIModel {
   estimatedDownloadSizeMB?: number
   notes?: string
 }
-
-export type LocalModelProvider =
-  | 'chrome-builtin'
-  | 'edge-builtin'
-  | 'transformers-js'
 
 export const localAIModels: LocalAIModel[] = [
   {
@@ -35,7 +35,7 @@ export const localAIModels: LocalAIModel[] = [
     variant: 'Transformers.js (WebGPU)',
     website: 'https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct',
     estimatedDownloadSizeMB: 220,
-    notes: 'Requires WebGPU (Chrome/Edge Canary). Approx. 220MB download cached via Transformers.js.',
+    notes: 'Requires WebGPU (Chrome/Edge Canary).',
   },
   {
     id: 3,
@@ -68,3 +68,16 @@ export const localAIModels: LocalAIModel[] = [
     notes: 'Available in Microsoft Edge; no additional download required.',
   },
 ]
+
+// Helper functions for working with models
+export function getModelById(id: ModelId): LocalAIModel | null {
+  return localAIModels.find(model => model.id === id) || null
+}
+
+export function getModelsByProvider(provider: LocalModelProvider): LocalAIModel[] {
+  return localAIModels.filter(model => model.provider === provider)
+}
+
+export function getAllProviders(): LocalModelProvider[] {
+  return [...new Set(localAIModels.map(model => model.provider))]
+}

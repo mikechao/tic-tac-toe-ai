@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { cn } from '@/lib/utils'
 import { MarkAvatar, MagicCard, NumberTicker } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'

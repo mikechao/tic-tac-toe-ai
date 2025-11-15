@@ -3,7 +3,7 @@ import type { KeyboardEvent } from 'react'
 
 import { CirclePause, CirclePlay } from 'lucide-react'
 
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { cn } from '@/lib/utils'
 import { AnimatedList, MyMagicCard, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'

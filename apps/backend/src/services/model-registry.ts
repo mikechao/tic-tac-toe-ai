@@ -1,4 +1,4 @@
-import { localAIModels } from '../data/models'
+import { localAIModels } from '@arena/schema/models'
 
 export function getModelIdFromLabel(modelLabel: string): number {
   const model = localAIModels.find(m => m.name === modelLabel)

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { MyMagicCard, RainbowButton } from '@/components/ui'
 import { BuiltInAIProvider } from '@/integrations/gemini/context'

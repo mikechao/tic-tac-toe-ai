@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ModelId } from '@arena/schema'
 
-import { getProviderMeta, localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
+import { getProviderMeta } from '@arena/schema/models-ui'
 import { cn } from '@/lib/utils'
 import {
   BentoCard,

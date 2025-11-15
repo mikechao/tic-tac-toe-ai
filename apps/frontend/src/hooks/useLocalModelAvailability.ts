@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ModelId } from '@arena/schema'
 
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { useBuiltInAI } from '@/integrations/gemini/context'
 import { useTransformersJS } from '@/integrations/transformers/context'
 import type {

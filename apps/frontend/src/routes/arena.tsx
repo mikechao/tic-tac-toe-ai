@@ -9,7 +9,7 @@ import { PlayerBadges } from '@/components/arena/PlayerBadges'
 import { BuiltInAIProvider } from '@/integrations/gemini/context'
 import { useLocalModelAvailability } from '@/hooks/useLocalModelAvailability'
 import { useGameLoop } from '@/integrations/game-loop/context'
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/arena')({

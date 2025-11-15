@@ -1,4 +1,5 @@
 import type { ModelId } from './index'
+import { localAIModels } from './models'
 
 /**
  * Model Registry - Central place for model identification and metadata
@@ -16,38 +17,15 @@ export interface ModelInfo {
 
 // Current models mapped to their IDs
 // Note: Names must match exactly what's stored in the database
-export const MODEL_REGISTRY: Record<ModelId, ModelInfo> = {
-  1: {
-    id: 1,
-    name: 'Gemini Nano (Chrome Built-In)',
-    provider: 'chrome-builtin',
-    vendor: 'Google DeepMind',
-  },
-  2: {
-    id: 2,
-    name: 'SmolLM2 360M Instruct (Transformers.js (WebGPU))',
-    provider: 'transformers-js',
-    vendor: 'Hugging Face',
-  },
-  3: {
-    id: 3,
-    name: 'GPT-4o mini',
-    provider: 'edge-builtin',
-    vendor: 'OpenAI',
-  },
-  4: {
-    id: 4,
-    name: 'Claude Haiku',
-    provider: 'edge-builtin',
-    vendor: 'Anthropic',
-  },
-  5: {
-    id: 5,
-    name: 'Mistral Large',
-    provider: 'edge-builtin',
-    vendor: 'Mistral AI',
-  },
-}
+export const MODEL_REGISTRY: Record<ModelId, ModelInfo> = localAIModels.reduce((acc, model) => {
+  acc[model.id] = {
+    id: model.id,
+    name: model.name,
+    provider: model.provider,
+    vendor: model.vendor,
+  }
+  return acc
+}, {} as Record<ModelId, ModelInfo>)
 
 // Reverse lookup map: model name to ModelId
 const MODEL_NAME_TO_ID: Record<string, ModelId> = Object.fromEntries(

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RoundResultResponse } from '@arena/schema'
 
-import { getProviderMeta, localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
+import { getProviderMeta } from '@arena/schema/models-ui'
 import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { submitRoundResult } from '@/lib/round-results'
 import { buildRoundResultPayload } from '@/lib/round-results/build-round-result-payload'

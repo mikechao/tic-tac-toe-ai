@@ -1,4 +1,4 @@
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import type { ModelId } from '@arena/schema'
 
 import type { ModelProvider } from './types'

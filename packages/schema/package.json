@@ -20,6 +20,14 @@
       "import": "./dist/model-registry.js",
       "types": "./dist/model-registry.d.ts"
     },
+    "./models": {
+      "import": "./dist/models.js",
+      "types": "./dist/models.d.ts"
+    },
+    "./models-ui": {
+      "import": "./dist/models-ui.js",
+      "types": "./dist/models-ui.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",

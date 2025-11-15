@@ -1,7 +1,7 @@
 import { ModelLeaderBoardStats } from './ModelLeaderBoardStats'
 import { ModelReliabilityBadge } from './ModelReliabilityBadge'
 import type { LeaderboardViewEntry } from '@/hooks/useLeaderboard'
-import { getProviderMeta } from '@/data/models'
+import { getProviderMeta } from '@arena/schema/models-ui'
 import { cn } from '@/lib/utils'
 
 

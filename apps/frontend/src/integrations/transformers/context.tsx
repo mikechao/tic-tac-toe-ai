@@ -10,7 +10,7 @@ import {
 import * as Sentry from '@sentry/react'
 import type { ModelId } from '@arena/schema'
 
-import { localAIModels } from '@/data/models'
+import { localAIModels } from '@arena/schema/models'
 import type {
   BuiltInAIState,
   ModelDownloadProgress,

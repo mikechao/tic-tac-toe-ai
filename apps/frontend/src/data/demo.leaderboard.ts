@@ -1,6 +1,6 @@
 import type { ModelId } from '@arena/schema'
 
-import { localAIModels } from './models'
+import { localAIModels } from '@arena/schema/models'
 
 export type RecentResult = 'W' | 'L' | 'T'
 

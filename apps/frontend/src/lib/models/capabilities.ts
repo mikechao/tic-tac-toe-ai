@@ -1,4 +1,4 @@
-import type { LocalModelProvider } from '@/data/models'
+import type { LocalModelProvider } from '@arena/schema/models'
 
 export interface ProviderCapabilities {
   supportsDownloadMonitor: boolean
