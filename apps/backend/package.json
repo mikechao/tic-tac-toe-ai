@@ -33,6 +33,6 @@
     "tsx": "^4.20.6",
     "typescript": "catalog:",
     "vitest": "catalog:",
-    "wrangler": "^4.45.3"
+    "wrangler": "^4.47.0"
   }
 }
