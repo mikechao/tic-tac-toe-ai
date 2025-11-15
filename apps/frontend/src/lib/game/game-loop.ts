@@ -235,16 +235,17 @@ const transitionMap: Record<
       if (!context.config) {
         throw new Error('Match configuration missing. Call configure() first.')
       }
-      const totalRounds = context.config.totalRounds
+      const config = context.config
+      const totalRounds = config.totalRounds
       const roundBoards = Array.from({ length: totalRounds }, (_, index) => {
         const roundNumber = index + 1
-        const startingPlayer = determineStartingPlayer(context.config!, roundNumber)
+        const startingPlayer = determineStartingPlayer(config, roundNumber)
         return new BoardState(
-          context.config!.boardSize,
+          config.boardSize,
           toPlayerMark(startingPlayer),
         )
       })
-      const firstBoard = roundBoards[0] ?? new BoardState(context.config.boardSize)
+      const firstBoard = roundBoards[0] ?? new BoardState(config.boardSize)
       return {
         state: {
           ...current,

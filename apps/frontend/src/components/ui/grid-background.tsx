@@ -112,18 +112,23 @@ function GridBackground({
         }}
       >
         {/* Grid Cells */}
-        {Array.from({ length: cols * rows }).map((_, index) => (
-          <div
-            key={index}
-            className={cn('relative', borderColor)}
-            style={{
-              borderTopWidth: borderSize,
-              borderLeftWidth: borderSize,
-              borderTopStyle: borderStyle,
-              borderLeftStyle: borderStyle,
-            }}
-          />
-        ))}
+        {Array.from({ length: cols * rows }).map((_, index) => {
+          const rowIndex = Math.floor(index / cols)
+          const columnIndex = index % cols
+          const cellKey = `cell-${rowIndex}-${columnIndex}`
+          return (
+            <div
+              key={cellKey}
+              className={cn('relative', borderColor)}
+              style={{
+                borderTopWidth: borderSize,
+                borderLeftWidth: borderSize,
+                borderTopStyle: borderStyle,
+                borderLeftStyle: borderStyle,
+              }}
+            />
+          )
+        })}
       </div>
 
       {/* Animated Beams */}

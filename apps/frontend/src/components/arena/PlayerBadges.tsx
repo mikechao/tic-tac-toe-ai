@@ -1,11 +1,8 @@
 import { useMemo } from 'react'
 
-import type { ModelId } from '@arena/schema'
-
-import { getProviderMeta, localAIModels } from '@/data/models'
+import { localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import { MarkAvatar, MagicCard, NumberTicker } from '@/components/ui'
-import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useGameLoop } from '@/integrations/game-loop/context'
 
 function StatTicker({ label, value }: { label: string; value: number }) {
@@ -28,7 +25,7 @@ function PlayerBadge({
   title: string
   model?: (typeof localAIModels)[number]
   mark: 'X' | 'O'
-  accentClass: string
+  accentClass?: string
   isActive?: boolean
   stats?: { wins: number; losses: number; ties: number }
 }) {
@@ -45,7 +42,6 @@ function PlayerBadge({
   const wins = stats?.wins ?? 0
   const losses = stats?.losses ?? 0
   const ties = stats?.ties ?? 0
-  const providerMeta = model ? getProviderMeta(model.provider) : null
   const name = model?.name ?? 'Model'
   const variant = model?.variant ?? 'On-device variant'
 
@@ -57,6 +53,7 @@ function PlayerBadge({
         gradientTo={gradientTo}
         className={cn(
           'rounded-2xl border border-white/10 bg-white/5 text-white transition',
+          accentClass,
           isActive
             ? `${activeBorderColor} ${activeShadowColor}`
             : 'border-white/10',

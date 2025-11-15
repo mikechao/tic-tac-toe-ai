@@ -27,10 +27,24 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
     ORDER BY MAX(last_updated_at) DESC
   `)
 
+  type AggregatedStatsRow = {
+    model_id: number
+    total_matches: number
+    wins: number
+    losses: number
+    ties: number
+    average_turns: number | string
+    last_updated_at: Date
+  }
+
+  const aggregatedRows: AggregatedStatsRow[] = (
+    'rows' in aggregatedStats ? aggregatedStats.rows : aggregatedStats
+  ) as AggregatedStatsRow[]
+
   // Transform to leaderboard entries
   const entries: LeaderboardEntry[] = []
 
-  for (const stat of aggregatedStats as any[]) {
+  for (const stat of aggregatedRows) {
     // Get recent matches for this model (any version)
     const recentMatchesData = await db
       .select({
@@ -61,14 +75,16 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
     // Build recent form array (ordered from most recent to oldest)
     const recentForm = recentFormData
       .sort((a, b) => a.matchIndex - b.matchIndex)
-      .map(match => match.result as "W" | "L" | "T")
+      .map(match => match.result as 'W' | 'L' | 'T')
 
     // Get last matchup info
-    const lastMatchup = recentMatchesData[0] ? {
-      opponentId: recentMatchesData[0].opponentModelId,
-      result: recentMatchesData[0].result as "W" | "L" | "T",
-      playedAt: recentMatchesData[0].playedAt.toISOString(),
-    } : null
+    const lastMatchup = recentMatchesData[0]
+      ? {
+          opponentId: recentMatchesData[0].opponentModelId,
+          result: recentMatchesData[0].result as 'W' | 'L' | 'T',
+          playedAt: recentMatchesData[0].playedAt.toISOString(),
+        }
+      : null
 
     // Calculate win rate
     const winRate = stat.total_matches > 0 ? stat.wins / stat.total_matches : 0
@@ -80,7 +96,7 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
       wins: stat.wins,
       losses: stat.losses,
       ties: stat.ties,
-      averageTurns: parseFloat(stat.average_turns.toString()),
+      averageTurns: Number(stat.average_turns),
       winRate,
       streak: {
         type: 'win', // Default streak type since we're aggregating
@@ -107,7 +123,7 @@ export async function getLeaderboard(env: Env): Promise<LeaderboardResponse> {
 export async function getModelLeaderboardEntry(
   env: Env,
   modelId: number,
-  modelVersion?: string
+  _modelVersion?: string
 ): Promise<LeaderboardEntry | null> {
   const db = createDb(env)
 
@@ -151,14 +167,16 @@ export async function getModelLeaderboardEntry(
   // Build recent form array (ordered from most recent to oldest)
   const recentForm = recentFormData
     .sort((a, b) => a.matchIndex - b.matchIndex)
-    .map(match => match.result as "W" | "L" | "T")
+    .map(match => match.result as 'W' | 'L' | 'T')
 
   // Get last matchup info
-  const lastMatchup = recentMatchesData[0] ? {
-    opponentId: recentMatchesData[0].opponentModelId,
-    result: recentMatchesData[0].result as "W" | "L" | "T",
-    playedAt: recentMatchesData[0].playedAt.toISOString(),
-  } : null
+  const lastMatchup = recentMatchesData[0]
+    ? {
+        opponentId: recentMatchesData[0].opponentModelId,
+        result: recentMatchesData[0].result as 'W' | 'L' | 'T',
+        playedAt: recentMatchesData[0].playedAt.toISOString(),
+      }
+    : null
 
   // Calculate win rate
   const winRate = stat.totalMatches > 0 ? stat.wins / stat.totalMatches : 0
@@ -172,10 +190,10 @@ export async function getModelLeaderboardEntry(
     ties: stat.ties,
     averageTurns: parseFloat(stat.averageTurns.toString()),
     winRate,
-    streak: {
-      type: stat.currentStreakType as any,
-      length: stat.currentStreakLength,
-    },
+      streak: {
+        type: stat.currentStreakType as 'win' | 'loss' | 'tie',
+        length: stat.currentStreakLength,
+      },
     recentForm,
     lastMatchup,
   }

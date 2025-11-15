@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { BentoGrid, WarpBackground } from '@/components/ui'
+import { WarpBackground } from '@/components/ui'
 import { GeminiSupportGate } from '@/components/gemini/GeminiSupportGate'
 import { MatchControls } from '@/components/arena/MatchControls'
 import { MatchBoard } from '@/components/arena/MatchBoard'

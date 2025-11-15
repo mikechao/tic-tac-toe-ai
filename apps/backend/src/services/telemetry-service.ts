@@ -1,4 +1,4 @@
-import { type Database } from '../lib/db'
+import type { Database } from '../lib/db'
 import { jsonRepairTelemetry } from '../../drizzle/schema'
 import { createJsonRepairTelemetrySchema } from '@arena/schema'
 import { eq, and, count } from 'drizzle-orm'

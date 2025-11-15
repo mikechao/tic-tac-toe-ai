@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { leaderboardService } from '@/services/leaderboard-service'
-import { getModelInfo } from '@arena/schema/model-registry'
 import { localAIModels } from '@/data/models'
 import type { LeaderboardEntry } from '@arena/schema'
 
@@ -23,8 +22,9 @@ export function useLeaderboard() {
       // Transform API entries to view entries with model information
       return response.entries.map((entry): LeaderboardViewEntry => {
         const model = localAIModels.find((candidate) => candidate.id === entry.modelId)
-        const opponent = entry.lastMatchup?.opponentId
-          ? localAIModels.find((candidate) => candidate.id === entry.lastMatchup!.opponentId)
+        const opponentId = entry.lastMatchup?.opponentId
+        const opponent = opponentId
+          ? localAIModels.find((candidate) => candidate.id === opponentId)
           : undefined
 
         return {

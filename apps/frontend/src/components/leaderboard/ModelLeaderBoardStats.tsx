@@ -125,17 +125,20 @@ function RecentFormStat({
         Last 5 Games
       </p>
       <div className="mt-2 flex gap-2">
-        {recentForm.map((result, index) => (
-          <span
-            key={index}
-            className={cn(
-              'flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-xs font-semibold',
-              resultColor[result],
-            )}
-          >
-            {result}
-          </span>
-        ))}
+        {recentForm.map((result, index) => {
+          const entryKey = `${result}-${recentForm.length - index}`
+          return (
+            <span
+              key={entryKey}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-xs font-semibold',
+                resultColor[result],
+              )}
+            >
+              {result}
+            </span>
+          )
+        })}
       </div>
     </div>
   )

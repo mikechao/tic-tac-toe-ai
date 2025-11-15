@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 
 import { CirclePause, CirclePlay } from 'lucide-react'
 
@@ -103,7 +104,7 @@ export function MatchMoveLog({
     }
     const element = listRef.current
     const lastItem = element.querySelector<HTMLElement>(
-      `[data-move-id=\"${latestMoveId}\"]`,
+      `[data-move-id="${latestMoveId}"]`,
     )
     if (!lastItem) {
       return
@@ -251,6 +252,21 @@ function MoveEntry({
     }
   }
 
+  const interactiveProps = interactive
+    ? {
+        role: 'button' as const,
+        tabIndex: 0,
+        'aria-pressed': isSelected,
+        onClick: handleSelect,
+        onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            handleSelect()
+          }
+        },
+      }
+    : {}
+
   return (
     <article
       data-move-id={move.id}
@@ -260,23 +276,10 @@ function MoveEntry({
           ? 'border-[#ffb547]/60 bg-white/15 shadow-[0_0_28px_rgba(255,181,71,0.3)]'
           : isLatest
             ? 'border-[#4ff2c2]/50 shadow-[0_0_28px_rgba(79,242,194,0.25)]'
-            : 'hover:border-white/25 hover:bg-white/10',
+          : 'hover:border-white/25 hover:bg-white/10',
         interactive && 'cursor-pointer',
       )}
-      role={interactive ? 'button' : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      aria-pressed={interactive ? isSelected : undefined}
-      onClick={interactive ? handleSelect : undefined}
-      onKeyDown={
-        interactive
-          ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                handleSelect()
-              }
-            }
-          : undefined
-      }
+      {...interactiveProps}
     >
       <div className="flex flex-wrap items-center gap-3">
         <span

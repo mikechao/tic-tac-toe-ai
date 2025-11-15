@@ -11,7 +11,7 @@ export async function attemptJsonRepair(
 ): Promise<JsonRepairResult> {
   const startTime = performance.now()
   const steps: string[] = []
-  let originalText = text
+  const originalText = text
 
   try {
     // Quick disable without redeploy

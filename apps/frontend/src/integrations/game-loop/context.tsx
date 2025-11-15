@@ -77,7 +77,7 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
       console.debug('[GameLoopProvider] unsubscribe')
       unsubscribe()
     }
-  }, [])
+  }, [controller])
 
   const configure = useCallback(
     (config: MatchConfig) => {
@@ -161,8 +161,6 @@ export function GameLoopProvider({ children }: { children: React.ReactNode }) {
     const actorModelMeta =
       localAIModels.find((model) => model.id === actorModelId) ?? localAIModels[0]
     const providerId = actorModelMeta?.provider ?? 'chrome-builtin'
-    const providerLabel =
-      providerId === 'transformers-js' ? 'SmolLM2' : 'Gemini Nano'
 
     if (providerId === 'transformers-js' && !transformersSupported) {
       console.warn('[GameLoopProvider] Transformers.js unsupported in this browser')

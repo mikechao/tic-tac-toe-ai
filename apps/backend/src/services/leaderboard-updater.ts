@@ -3,7 +3,17 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 import { matches } from '../../drizzle/schema'
 import { mapMatchToRecentResult, mapRecentResultToStreakType } from '@arena/schema/result-mapping'
-import { getModelIdByName, getModelInfo } from '@arena/schema/model-registry'
+import { getModelIdByName } from '@arena/schema/model-registry'
+
+type WinnerSlot = 'player1' | 'player2' | 'draw'
+
+function toWinnerSlot(winnerSlot: string): WinnerSlot {
+  if (winnerSlot === 'player1' || winnerSlot === 'player2' || winnerSlot === 'draw') {
+    return winnerSlot
+  }
+
+  return 'draw'
+}
 
 /**
  * Update leaderboard statistics after a match is completed
@@ -36,7 +46,8 @@ export async function updateLeaderboardForMatch(
 
   // Get move count for this round
   console.log('Querying move count for roundId:', roundId)
-  let moveCountResult
+  type MoveCountRow = { count: number | string }
+  let moveCountResult: MoveCountRow[] = []
   try {
     moveCountResult = await db.execute(
       sql`SELECT COUNT(*) as count FROM moves WHERE round_id = ${roundId}`
@@ -46,7 +57,7 @@ export async function updateLeaderboardForMatch(
     console.error('Move count query error:', error)
     throw error
   }
-  const moveCount = Number((moveCountResult as any)[0]?.count || 0)
+  const moveCount = Number(moveCountResult[0]?.count ?? 0)
 
   // Extract model IDs and versions from the match
   const player1ModelId = getModelIdByName(match.playerOneModel)
@@ -74,7 +85,8 @@ async function updateModelStats(
   moveCount: number,
   perspective: 'player1' | 'player2'
 ): Promise<void> {
-  const result = mapMatchToRecentResult(perspective, match.winnerSlot as any)
+  const winnerSlot = toWinnerSlot(match.winnerSlot)
+  const result = mapMatchToRecentResult(perspective, winnerSlot)
   const isWin = result === 'W'
   const isLoss = result === 'L'
   const isTie = result === 'T'
@@ -130,7 +142,8 @@ async function updateRecentMatches(
     throw new Error('Match must have matchId and roundId')
   }
 
-  const result = mapMatchToRecentResult(perspective, match.winnerSlot as any)
+  const winnerSlot = toWinnerSlot(match.winnerSlot)
+  const result = mapMatchToRecentResult(perspective, winnerSlot)
 
   // Check if this specific round already exists to avoid unnecessary window operations
   console.log('Checking for existing round with:', { modelId, matchId: match.matchId, roundId: match.roundId })

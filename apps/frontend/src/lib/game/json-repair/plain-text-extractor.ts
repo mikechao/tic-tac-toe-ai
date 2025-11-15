@@ -24,7 +24,7 @@ export function extractFromPlainText(text: string): JsonRepairResult {
   // Extract move number
   for (const pattern of movePatterns) {
     const match = text.match(pattern)
-    if (match && match[1]) {
+    if (match?.[1]) {
       const moveNum = parseInt(match[1], 10)
       if (moveNum >= 1 && moveNum <= 9) {
         nextMove = moveNum
@@ -36,7 +36,7 @@ export function extractFromPlainText(text: string): JsonRepairResult {
   // Extract rationale
   for (const pattern of rationalePatterns) {
     const match = text.match(pattern)
-    if (match && match[1]) {
+    if (match?.[1]) {
       rationale = match[1].trim().substring(0, 500) // Limit length
       break
     }
@@ -52,7 +52,7 @@ export function extractFromPlainText(text: string): JsonRepairResult {
 
   // Fallback: use first sentence as rationale
   if (!rationale) {
-    const sentenceMatch = text.match(/([^\.!?]+[\.!?])/)
+    const sentenceMatch = text.match(/([^.!?]+[.!?])/)
     if (sentenceMatch) {
       rationale = sentenceMatch[1].trim().substring(0, 500)
     } else {

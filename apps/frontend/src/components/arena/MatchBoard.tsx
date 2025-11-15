@@ -5,10 +5,8 @@ import { getProviderMeta, localAIModels } from '@/data/models'
 import { BoardState, type PlayerMark } from '@/lib/game/board-state'
 import { submitRoundResult } from '@/lib/round-results'
 import { buildRoundResultPayload } from '@/lib/round-results/build-round-result-payload'
-import { cn } from '@/lib/utils'
 import { MyMagicCard, RainbowButton, StateMessage } from '@/components/ui'
 import { RoundProgressBar } from '@/components/ui/RoundProgressBar'
-import { MagicCard } from '@/components/ui/magic-card'
 import { useConfetti } from '@/components/ui/confetti'
 import {
   Dialog,
@@ -121,26 +119,6 @@ function getActorHighlightClass(actor: 'modelA' | 'modelB'): string {
     : 'border-[#f15bb5]/60 bg-[#f15bb5]/18 shadow-[0_0_20px_rgba(241,91,181,0.3)]'
 }
 
-function getActiveTurnText(
-  phase: string,
-  playerName?: string,
-): string {
-  if (phase === 'running' && playerName) {
-    return `${playerName} analysing next response...`
-  }
-  if (phase === 'initializing') {
-    return 'Preparing models for the opening move...'
-  }
-  if (phase === 'betweenRounds') {
-    return 'Intermission between rounds — queue the next showdown.'
-  }
-  if (phase === 'completed') {
-    return 'Match completed — configure a rematch to continue.'
-  }
-  return 'Awaiting match configuration.'
-}
-
-
 export function MatchBoard() {
   const { state, configure, start, nextRound, cancelMatch } = useGameLoop()
   const board = state.board
@@ -208,13 +186,6 @@ export function MatchBoard() {
     totalRounds > 0
       ? Math.min(100, (state.currentRound / totalRounds) * 100)
       : 0
-  const activePlayerName =
-    state.activePlayer === 'modelA'
-      ? modelA?.name ?? 'Model A'
-      : state.activePlayer === 'modelB'
-        ? modelB?.name ?? 'Model B'
-        : undefined
-  const activeTurnText = getActiveTurnText(state.phase, activePlayerName)
   const latestWinner = latestRoundSummary?.winner
   const roundLabel = latestRoundSummary ? `Round ${latestRoundSummary.round}` : 'Round complete'
   const winnerPlayerLabel =

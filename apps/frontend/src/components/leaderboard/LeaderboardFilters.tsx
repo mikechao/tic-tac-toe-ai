@@ -95,7 +95,7 @@ function FilterButton({
   label: string
   value: string
   isActive: boolean
-  onSelect: (value: any) => void
+  onSelect: (value: string) => void
 }) {
   const id = `${groupId}-${value}`
   return (

@@ -1,4 +1,4 @@
-import { generateObject, generateText } from 'ai'
+import { generateObject, generateText, type LanguageModelV1 } from 'ai'
 import { z } from 'zod'
 
 import type { BoardState, Move, PlayerMark } from './board-state'
@@ -8,6 +8,8 @@ export const moveResponseSchema = z.object({
   nextMove: z.number().int(),
   rationale: z.string().min(1, 'Provide a concise rationale'),
 })
+
+export type MoveResponse = z.infer<typeof moveResponseSchema>
 
 export type GeminiMoveRequest = {
   board: BoardState
@@ -147,9 +149,9 @@ async function requestMoveWithResolver(
     actorLabel: request.actorLabel,
   })
 
-  let model: unknown
+  let languageModel: LanguageModelV1
   try {
-    model = await resolveModel()
+    languageModel = (await resolveModel()) as LanguageModelV1
   } catch (error) {
     console.error(`[AI Turn] Failed to ensure ${provider.label} model`, error)
     return {
@@ -194,7 +196,7 @@ async function requestMoveWithResolver(
       if (supportsStructuredOutput) {
         // Use generateObject for models that support structured output (e.g., Gemini Nano)
         const result = await generateObject({
-          model: model as any,
+          model: languageModel,
           schema: moveResponseSchema,
           prompt: currentPrompt,
           temperature: request.temperature ?? 0.1,
@@ -212,7 +214,7 @@ async function requestMoveWithResolver(
       } else {
         // Use generateText for models that don't support structured output (e.g., TransformersJS)
         const result = await generateText({
-          model: model as any,
+          model: languageModel,
           prompt: currentPrompt,
           temperature: request.temperature ?? 0.1,
           abortSignal: controller.signal,

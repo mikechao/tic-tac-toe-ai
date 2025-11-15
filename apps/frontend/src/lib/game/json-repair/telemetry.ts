@@ -30,8 +30,8 @@ export async function trackRepairTelemetry(telemetry: JsonRepairTelemetry): Prom
   if (!telemetry.success) {
     Sentry.captureMessage('JSON repair failed', {
       level: 'warning',
-      extra: telemetry
-    } as any)
+      extra: { telemetry },
+    })
   }
 
   // Simple performance tracking via tags and breadcrumbs
@@ -73,8 +73,8 @@ export async function trackRepairTelemetry(telemetry: JsonRepairTelemetry): Prom
     if (!telemetry.success) {
       Sentry.captureMessage('JSON repair failed', {
         level: 'warning',
-        extra: telemetry
-      } as any)
+        extra: { telemetry },
+      })
     }
   }
 }

@@ -148,7 +148,7 @@ async function isModelCached(): Promise<boolean> {
   }
 }
 
-async function debugStorageState(): Promise<void> {
+async function _debugStorageState(): Promise<void> {
   // This function can be uncommented for debugging cache issues
   // Keeping the structure here for future troubleshooting
   return

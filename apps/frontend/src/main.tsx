@@ -15,12 +15,11 @@ declare module '@tanstack/react-router' {
 }
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN
-const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
-    // tunnel: `${backendUrl}/api/sentry`,
+    // tunnel: `${import.meta.env.VITE_BACKEND_URL}/api/sentry`,
     environment: import.meta.env.VITE_SENTRY_ENV ?? 'development',
     tracesSampleRate: Number(
       import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1,

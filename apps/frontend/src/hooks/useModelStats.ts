@@ -32,7 +32,7 @@ export function useModelStats(modelLabel: string) {
 
   useEffect(() => {
     fetchStats()
-  }, [modelLabel]) // Only fetch once when modelLabel changes
+  }, [fetchStats])
 
   return { stats, isLoading, error, refetch: fetchStats }
 }

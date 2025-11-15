@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react'
+import type { ReactNode } from 'react'
 import * as Sentry from '@sentry/react'
 import type { ModelId } from '@arena/schema'
 
@@ -161,7 +162,7 @@ function now(): number {
 export function TransformersJSProvider({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }): JSX.Element {
   const [modelStates, setModelStates] = useState<Record<ModelId, TransformersModelState>>(
     createInitialStates,
@@ -186,7 +187,7 @@ export function TransformersJSProvider({
         return next
       })
     },
-    [managedModelIds],
+    [],
   )
 
   const updateModelState = useCallback(
@@ -202,7 +203,7 @@ export function TransformersJSProvider({
         [modelId]: updater(ensureState(prev[modelId])),
       }))
     },
-    [managedModelIds],
+    [],
   )
 
   const refreshAvailability = useCallback(
@@ -354,7 +355,7 @@ export function TransformersJSProvider({
         }
       }
     },
-    [managedModelIds, updateModelState],
+    [updateModelState],
   )
 
   const retry = useCallback(() => {

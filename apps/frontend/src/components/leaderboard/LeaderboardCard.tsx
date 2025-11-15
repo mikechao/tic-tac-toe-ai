@@ -55,14 +55,14 @@ export function LeaderboardCard({
       streakLength={entry.streak.length}
       averageTurns={entry.averageTurns}
       lastMatchup={
-      entry.lastMatchup && entry.lastMatchup.result && entry.lastMatchup.playedAt
-        ? {
-            opponentName,
-            result: entry.lastMatchup.result,
-            playedAt: entry.lastMatchup.playedAt,
-          }
-        : undefined
-    }
+        entry.lastMatchup?.result && entry.lastMatchup?.playedAt
+          ? {
+              opponentName,
+              result: entry.lastMatchup.result,
+              playedAt: entry.lastMatchup.playedAt,
+            }
+          : undefined
+      }
       recentForm={entry.recentForm}
     />
     </div>

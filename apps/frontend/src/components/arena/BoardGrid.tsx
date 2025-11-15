@@ -44,8 +44,10 @@ export function BoardGrid({
       )}
     >
       <tbody>
-        {rows.map((row, rowIndex) => (
-          <tr key={`row-${rowIndex}`} className="align-middle">
+        {rows.map((row) => {
+          const rowKey = row.length ? `row-${row[0].id}` : 'row-fallback'
+          return (
+            <tr key={rowKey} className="align-middle">
             {row.map((cell) => (
               <td
                 key={cell.id}
@@ -88,8 +90,9 @@ export function BoardGrid({
                 </span>
               </td>
             ))}
-          </tr>
-        ))}
+            </tr>
+          )
+        })}
       </tbody>
     </table>
   )

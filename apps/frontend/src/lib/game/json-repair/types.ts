@@ -1,9 +1,8 @@
-import { z } from 'zod'
-import { moveResponseSchema } from '../ai-turn'
+import type { MoveResponse } from '../ai-turn'
 
 export interface JsonRepairResult {
   success: boolean
-  data?: z.infer<typeof moveResponseSchema>
+  data?: MoveResponse
   error?: string
   repairSteps: string[]
   originalText?: string

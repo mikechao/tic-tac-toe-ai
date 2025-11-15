@@ -119,7 +119,6 @@ function availabilityToState(
       return 'downloadable'
     case 'downloading':
       return 'downloading'
-    case 'unavailable':
     default:
       return 'not-supported'
   }
@@ -321,7 +320,7 @@ export function BuiltInAIProvider({ children }: { children: React.ReactNode }) {
       console.debug('[BuiltInAIProvider] effect cleanup', { attempt })
       isMounted = false
     }
-  }, [attempt, resetManagedModelStates])
+  }, [attempt, resetManagedModelStates, updateModelStates])
 
   const retry = useCallback(() => {
     resetGeminiModelCache()

@@ -1,21 +1,8 @@
-import { useMemo } from 'react'
 
-import { getProviderMeta, localAIModels } from '@/data/models'
 import { cn } from '@/lib/utils'
 import { MyMagicCard, NumberTicker, StateMessage } from '@/components/ui'
 import { useGameLoop } from '@/integrations/game-loop/context'
 import type { GameLoopState } from '@/lib/game/game-loop'
-
-function toCoordinate(moveNumber: number, boardSize: number): string {
-  if (boardSize <= 0 || moveNumber <= 0) {
-    return '—'
-  }
-  const maxCells = boardSize * boardSize
-  if (moveNumber > maxCells) {
-    return '—'
-  }
-  return String(moveNumber)
-}
 
 function computeAverageMoveSeconds(
   totalMs: number,
@@ -53,23 +40,9 @@ function computeCurrentStreak(
 
 export function MatchTelemetry() {
   const { state } = useGameLoop()
-  const boardSize = state.board.size
-
-  const modelAId = state.modelAId
-  const modelBId = state.modelBId
 
   const hasConfiguredMatch =
-    modelAId != null && modelBId != null && state.totalRounds > 0
-
-  const modelA = useMemo(() => {
-    if (modelAId == null) return undefined
-    return localAIModels.find((model) => model.id === modelAId)
-  }, [modelAId])
-
-  const modelB = useMemo(() => {
-    if (modelBId == null) return undefined
-    return localAIModels.find((model) => model.id === modelBId)
-  }, [modelBId])
+    state.modelAId != null && state.modelBId != null && state.totalRounds > 0
 
   const moveHistory = state.moveHistory
   const lastMove = moveHistory.at(-1)
@@ -84,44 +57,6 @@ export function MatchTelemetry() {
   const currentStreak = computeCurrentStreak(state.roundSummaries)
   const activeModelKey =
     state.phase === 'running' ? state.activePlayer ?? undefined : undefined
-  const activeModel =
-    activeModelKey === 'modelA'
-      ? modelA
-      : activeModelKey === 'modelB'
-        ? modelB
-        : undefined
-
-  const ModelChip = ({
-    label,
-    model,
-  }: {
-    label: string
-    model?: (typeof localAIModels)[number]
-  }) => {
-    if (!model) {
-      return (
-        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/50">
-          {label}: TBD
-        </span>
-      )
-    }
-    const providerMeta = getProviderMeta(model.provider)
-    return (
-      <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.3em] text-white/70">
-        <span className="font-semibold text-white/90">{label}</span>
-        <span>{model.name}</span>
-        <span className="text-white/50">{model.variant}</span>
-        <span
-          className={cn(
-            'rounded-full border px-2 py-0.5 text-[10px] text-white',
-            providerMeta.badgeClass,
-          )}
-        >
-          {providerMeta.label}
-        </span>
-      </span>
-    )
-  }
 
   if (!hasConfiguredMatch) {
     return (
