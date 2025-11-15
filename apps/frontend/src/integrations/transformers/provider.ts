@@ -148,10 +148,10 @@ async function isModelCached(): Promise<boolean> {
   }
 }
 
-async function _debugStorageState(): Promise<void> {
+//async function _debugStorageState(): Promise<void> {
   // This function can be uncommented for debugging cache issues
   // Keeping the structure here for future troubleshooting
-  return
+  //return
   
   /* Uncomment to debug storage state:
   if (typeof window === 'undefined') return
@@ -177,7 +177,7 @@ async function _debugStorageState(): Promise<void> {
     console.log('- IndexedDB databases:', dbs.map(db => db.name))
   }
   */
-}
+//}
 
 export async function startTransformersDownload(options?: {
   onProgress?: (progress: ModelDownloadProgress) => void

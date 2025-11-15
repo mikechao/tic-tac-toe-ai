@@ -1,4 +1,4 @@
-import { generateObject, generateText, type LanguageModelV1 } from 'ai'
+import { generateObject, generateText, type LanguageModel } from 'ai'
 import { z } from 'zod'
 
 import type { BoardState, Move, PlayerMark } from './board-state'
@@ -149,9 +149,9 @@ async function requestMoveWithResolver(
     actorLabel: request.actorLabel,
   })
 
-  let languageModel: LanguageModelV1
+  let languageModel: LanguageModel
   try {
-    languageModel = (await resolveModel()) as LanguageModelV1
+    languageModel = (await resolveModel()) as LanguageModel
   } catch (error) {
     console.error(`[AI Turn] Failed to ensure ${provider.label} model`, error)
     return {

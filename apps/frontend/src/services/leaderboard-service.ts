@@ -24,6 +24,3 @@ class HttpLeaderboardService implements LeaderboardService {
 
 // Create singleton instance
 export const leaderboardService = new HttpLeaderboardService()
-
-// Export type for dependency injection in tests
-export type { LeaderboardService }

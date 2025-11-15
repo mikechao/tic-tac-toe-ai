@@ -146,7 +146,7 @@ export function registerApiRoutes(
     let payload: unknown
     try {
       payload = await c.req.json()
-    } catch (_error) {
+    } catch (error) {
       return respondWithError(c, 400, 'INVALID_JSON', 'Invalid JSON body', {
         logMessage: 'Failed to parse round result payload as JSON',
         context: { error: extractErrorMessage(error) },

@@ -40,8 +40,7 @@ export const AnimatedList = React.memo(
     useEffect(() => {
       if (index < childrenArray.length - 1) {
         const timeout = setTimeout(() => {
-          const nextIndex = (prevIndex) => (prevIndex + 1) % childrenArray.length
-          setIndex(nextIndex)
+          setIndex((prevIndex) => (prevIndex + 1) % childrenArray.length)
           onNewItem?.()
         }, delay)
 
@@ -60,11 +59,15 @@ export const AnimatedList = React.memo(
         {...props}
       >
         <AnimatePresence>
-          {itemsToShow.map((item) => (
-            <AnimatedListItem key={(item as React.ReactElement).key}>
-              {item}
-            </AnimatedListItem>
-          ))}
+          {itemsToShow.map((item, itemIndex) => {
+            const element = item as React.ReactElement
+            const itemKey = element.key ?? itemIndex
+            return (
+              <AnimatedListItem key={itemKey}>
+                {item}
+              </AnimatedListItem>
+            )
+          })}
         </AnimatePresence>
       </div>
     )

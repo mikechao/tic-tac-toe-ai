@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 import { matches } from '../../drizzle/schema'
@@ -36,8 +36,7 @@ export async function updateLeaderboardForMatch(
   const [match] = await db
     .select()
     .from(matches)
-    .where(eq(matches.matchId, matchId))
-    .where(eq(matches.roundId, roundId))  // Also filter by roundId to get the correct round
+    .where(and(eq(matches.matchId, matchId), eq(matches.roundId, roundId)))
     .limit(1)
 
   if (!match) {

@@ -879,7 +879,7 @@ export function createGameLoopController(
 
     const roundCompleted = winner !== null
 
-    const roundSummary: RoundSummary | undefined = roundCompleted
+    const roundSummary: RoundSummary | undefined = winner !== null
       ? {
           round: state.currentRound,
           winner,

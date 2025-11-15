@@ -1,3 +1,4 @@
+import type { JSX, ReactNode } from 'react'
 import {
   createContext,
   useCallback,
@@ -6,7 +7,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import type { ReactNode } from 'react'
 import * as Sentry from '@sentry/react'
 import type { ModelId } from '@arena/schema'
 
