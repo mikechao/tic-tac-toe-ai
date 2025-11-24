@@ -19,7 +19,7 @@
   "dependencies": {
     "@arena/schema": "workspace:*",
     "@hono/zod-validator": "^0.7.4",
-    "@sentry/cloudflare": "^10.25.0",
+    "@sentry/cloudflare": "^10.26.0",
     "consola": "^3.4.2",
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.5",
